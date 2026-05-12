@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tablero Gerencial de Proyecto - Guajira</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* ESTILOS BASE */
+        body { 
+            background-color: #f3f4f6;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            position: relative;
+            z-index: 0;
+        }
+        
+        /* MARCA DE AGUA SUTIL */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70vw;
+            height: 80vh;
+            background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Colombia_-_La_Guajira_-_Relief_Map.svg/800px-Colombia_-_La_Guajira_-_Relief_Map.svg.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            opacity: 0.06;
+            z-index: -1; 
+            pointer-events: none; 
+        }
+        
+        .table-container { max-height: 60vh; overflow-y: auto; }
+        thead th { position: sticky; top: 0; background-color: #f8f9fa; z-index: 10; border-bottom: 2px solid #dee2e6; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .progress-bg { background-color: #e9ecef; border-radius: 4px; height: 8px; width: 100%; overflow: hidden; }
+        .progress-bar { background-color: #003B6A; height: 100%; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px;}
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+        
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .tab-active { border-bottom-width: 3px; border-color: #F2C811; color: #003B6A; font-weight: bold; background-color: rgba(242, 200, 17, 0.1); }
+        .tab-inactive { border-bottom-width: 3px; border-color: transparent; color: #6b7280; font-weight: 500; }
+        .tab-inactive:hover { color: #003B6A; background-color: rgba(0, 59, 106, 0.05); }
+    </style>
+</head>
+<body class="text-gray-800 flex flex-col h-screen">
+
+    <header class="bg-[#003B6A] text-white p-4 shadow-lg flex flex-col md:flex-row justify-between items-center shrink-0 gap-4 border-b-4 border-[#F2C811] z-20 relative">
+        <div class="flex items-center gap-4">
+            <div class="bg-white p-2 rounded-full h-12 w-12 flex items-center justify-center shadow-inner">
+                <i class="fas fa-bolt text-[#F2C811] text-2xl"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold">Gerencia Guajira</h1>
+                <p class="text-xs text-blue-200 mt-1 uppercase tracking-wide font-semibold">Ministerio de Minas y Energía</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-4">
+            <div class="flex items-center bg-[#00264A] p-2 rounded-md text-sm text-green-300 font-semibold shadow-inner border border-blue-800" id="syncStatusUI">
+                <i class="fas fa-sync fa-spin mr-2" id="syncIcon"></i> <span id="syncText">Sincronizando datos...</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 p-4 md:p-6 overflow-hidden flex flex-col max-w-[95%] mx-auto w-full relative">
+        <div id="emptyState" class="flex-1 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-8 border border-gray-200">
+            <i class="fas fa-cloud-download-alt text-6xl mb-4 text-blue-500 animate-bounce"></i>
+            <h2 class="text-xl font-semibold text-gray-700 text-center" id="emptyStateTitle">Conectando con la base de datos...</h2>
+            <p class="text-sm mt-4 max-w-lg text-center leading-relaxed text-gray-500" id="emptyStateDesc">Estamos descargando la información más reciente del proyecto.</p>
+        </div>
+
+        <div id="dashboard" class="hidden flex-1 flex flex-col min-h-0 bg-white/90 backdrop-blur-md rounded-xl shadow-2xl border border-gray-200 overflow-hidden">
+            <div class="flex border-b border-gray-200 bg-gray-50/80 pt-2 px-4 overflow-x-auto no-scrollbar">
+                <button onclick="switchTab('resumen')" id="btn-resumen" class="tab-active px-5 py-3 transition-colors rounded-t-lg flex items-center gap-2 whitespace-nowrap text-sm">
+                    <i class="fas fa-chart-pie"></i> Resumen
+                </button>
+                <button onclick="switchTab('territorial')" id="btn-territorial" class="tab-inactive px-5 py-3 transition-colors rounded-t-lg flex items-center gap-2 whitespace-nowrap text-sm">
+                    <i class="fas fa-map-marked-alt"></i> Territorial
+                </button>
+                <button onclick="switchTab('conflictos')" id="btn-conflictos" class="tab-inactive px-5 py-3 transition-colors rounded-t-lg flex items-center gap-2 whitespace-nowrap text-sm">
+                    <i class="fas fa-hands-helping"></i> Conflictos
+                </button>
+                <button onclick="switchTab('ambiental')" id="btn-ambiental" class="tab-inactive px-5 py-3 transition-colors rounded-t-lg flex items-center gap-2 whitespace-nowrap text-sm">
+                    <i class="fas fa-leaf"></i> Ambiental
+                </button>
+                <button onclick="switchTab('etnica')" id="btn-etnica" class="tab-inactive px-5 py-3 transition-colors rounded-t-lg flex items-center gap-2 whitespace-nowrap text-sm">
+                    <i class="fas fa-users"></i> Étnica
+                </button>
+            </div>
+
+            <div id="tab-resumen" class="flex-1 overflow-auto p-6 bg-gray-50/50">
+                <h3 class="text-lg font-bold text-[#003B6A] mb-4 border-b border-gray-200 pb-2"><i class="fas fa-globe-americas mr-2 text-[#F2C811]"></i>Avance General: Oficina de Asuntos Ambientales y Sociales (OAAS)</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="bg-white/95 p-6 rounded-xl shadow-sm border border-gray-200 flex items-center gap-4 border-l-4 border-l-[#003B6A]">
+                        <div class="bg-blue-50 p-4 rounded-full text-[#003B6A]"><i class="fas fa-chart-line text-3xl"></i></div>
+                        <div>
+                            <p class="text-sm text-gray-500 font-bold uppercase tracking-wide">% Completado</p>
+                            <div class="flex items-baseline gap-2">
+                                <h4 class="text-4xl font-black text-[#003B6A]" id="kpi-pct-completado">0%</h4>
+                                <span class="text-xs font-semibold text-gray-400">Avance Real</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white/95 p-6 rounded-xl shadow-sm border border-gray-200 flex items-center gap-4 border-l-4 border-l-purple-500">
+                        <div class="bg-purple-50 p-4 rounded-full text-purple-600"><i class="fas fa-bullseye text-3xl"></i></div>
+                        <div>
+                            <p class="text-sm text-gray-500 font-bold uppercase tracking-wide">% Planeado</p>
+                            <div class="flex items-baseline gap-2">
+                                <h4 class="text-4xl font-black text-purple-600" id="kpi-pct-planeado">0%</h4>
+                                <span class="text-xs font-semibold text-gray-400">Meta Esperada</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="text-lg font-bold text-[#003B6A] mb-4 border-b border-gray-200 pb-2"><i class="fas fa-list-ul mr-2 text-[#F2C811]"></i>Distribución de Tareas del Proyecto</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white/95 p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col border-l-4 border-l-blue-400">
+                        <div class="flex items-center gap-4">
+                            <div class="bg-blue-100 p-3 rounded-full text-blue-600"><i class="fas fa-tasks text-xl"></i></div>
+                            <div>
+                                <p class="text-xs text-gray-500 font-semibold uppercase">Total de Tareas</p>
+                                <h4 class="text-2xl font-bold text-gray-800" id="kpi-total">0</h4>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-gray-100 grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-gray-600">
+                            <div class="flex justify-between"><span>Territorial:</span> <span id="kpi-total-territorial" class="font-bold">0</span></div>
+                            <div class="flex justify-between"><span>Conflictos:</span> <span id="kpi-total-conflictos" class="font-bold">0</span></div>
+                            <div class="flex justify-between"><span>Ambiental:</span> <span id="kpi-total-ambiental" class="font-bold">0</span></div>
+                            <div class="flex justify-between"><span>Étnica:</span> <span id="kpi-total-etnica" class="font-bold">0</span></div>
+                        </div>
+                    </div>
+                    <div class="bg-white/95 p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col border-l-4 border-l-green-500">
+                        <div class="flex items-center gap-4">
+                            <div class="bg-green-100 p-3 rounded-full text-green-600"><i class="fas fa-check-circle text-xl"></i></div>
+                            <div>
+                                <p class="text-xs text-gray-500 font-semibold uppercase">En Cronograma</p>
+                                <h4 class="text-2xl font-bold text-green-600" id="kpi-atiempo">0</h4>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-gray-100 grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-gray-600">
+                            <div class="flex justify-between"><span>Territorial:</span> <span id="kpi-atiempo-territorial" class="font-bold text-green-600">0</span></div>
+                            <div class="flex justify-between"><span>Conflictos:</span> <span id="kpi-atiempo-conflictos" class="font-bold text-green-600">0</span></div>
+                            <div class="flex justify-between"><span>Ambiental:</span> <span id="kpi-atiempo-ambiental" class="font-bold text-green-600">0</span></div>
+                            <div class="flex justify-between"><span>Étnica:</span> <span id="kpi-atiempo-etnica" class="font-bold text-green-600">0</span></div>
+                        </div>
+                    </div>
+                    <div class="bg-white/95 p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col border-l-4 border-l-red-500">
+                        <div class="flex items-center gap-4">
+                            <div class="bg-red-100 p-3 rounded-full text-red-600"><i class="fas fa-exclamation-triangle text-xl"></i></div>
+                            <div>
+                                <p class="text-xs text-gray-500 font-semibold uppercase">Actividades Atrasadas</p>
+                                <h4 class="text-2xl font-bold text-red-600" id="kpi-atrasadas">0</h4>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-gray-100 grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-gray-600">
+                            <div class="flex justify-between"><span>Territorial:</span> <span id="kpi-atrasadas-territorial" class="font-bold text-red-600">0</span></div>
+                            <div class="flex justify-between"><span>Conflictos:</span> <span id="kpi-atrasadas-conflictos" class="font-bold text-red-600">0</span></div>
+                            <div class="flex justify-between"><span>Ambiental:</span> <span id="kpi-atrasadas-ambiental" class="font-bold text-red-600">0</span></div>
+                            <div class="flex justify-between"><span>Étnica:</span> <span id="kpi-atrasadas-etnica" class="font-bold text-red-600">0</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-detalle" class="hidden flex-1 flex-col min-h-0">
+                <div class="p-3 bg-white/95 border-b border-gray-200 flex flex-col xl:flex-row justify-between items-start xl:items-center shrink-0 gap-4">
+                    <div class="flex-1 w-full xl:w-auto">
+                        <div class="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-4">
+                            <h3 class="font-bold text-[#003B6A] text-lg lg:text-xl leading-tight shrink-0" id="detalle-title">
+                                <i class="fas fa-sitemap mr-2 text-[#F2C811]"></i> Detalle de Gestión
+                            </h3>
+                            <div id="detalle-stats" class="hidden flex-wrap items-center gap-x-3 gap-y-1 text-sm border-t border-gray-200 pt-2 lg:border-t-0 lg:pt-0 lg:border-l lg:border-gray-300 lg:pl-3"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-wrap items-center gap-3 shrink-0 w-full xl:w-auto justify-start xl:justify-end">
+                        <div class="flex items-center gap-2 bg-gray-50 p-1.5 rounded border border-gray-200 shadow-inner">
+                            <div class="flex items-center gap-1.5">
+                                <label class="text-[11px] font-bold text-[#003B6A]"><i class="fas fa-filter mr-1 text-gray-400"></i>Estado:</label>
+                                <select id="filter-estado" onchange="renderTable()" class="text-[11px] border border-gray-300 rounded p-1 bg-white outline-none focus:border-blue-500 cursor-pointer">
+                                    <option value="all">Todos</option>
+                                    <option value="🟢 A Tiempo">A Tiempo</option>
+                                    <option value="🔴 Atrasado">Atrasado</option>
+                                </select>
+                            </div>
+                            <div class="flex items-center gap-1.5 border-l border-gray-300 pl-2">
+                                <label class="text-[11px] font-bold text-[#003B6A]"><i class="fas fa-user mr-1 text-gray-400"></i>Responsable:</label>
+                                <select id="filter-responsable" onchange="renderTable()" class="text-[11px] border border-gray-300 rounded p-1 bg-white outline-none focus:border-blue-500 cursor-pointer max-w-[130px]">
+                                    <option value="all">Todos</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button onclick="downloadExcel()" class="bg-[#F2C811] hover:bg-yellow-500 text-[#003B6A] px-3 py-1.5 rounded shadow-sm text-xs font-bold transition-colors flex items-center gap-2 whitespace-nowrap h-full border border-yellow-400">
+                            <i class="fas fa-download"></i> Descargar data
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex-1 overflow-auto table-container bg-white/80">
+                    <table class="w-full text-left border-collapse" style="min-width: 1000px;">
+                        <thead>
+                            <tr>
+                                <th class="p-3 text-xs font-bold text-[#003B6A] w-20">EDT</th>
+                                <th class="p-3 text-xs font-bold text-[#003B6A]">Fase / Actividad</th>
+                                <th class="p-3 text-xs font-bold text-[#003B6A] w-28">Estado</th>
+                                <th class="p-3 text-xs font-bold text-[#003B6A] w-16 text-center">% Comp.</th>
+                                <th class="p-3 text-xs font-bold text-[#003B6A] w-16 text-center">% Esp.</th>
+                                <th class="p-3 text-xs font-bold text-[#003B6A] w-24 text-center">Inicio</th>
+                                <th class="p-3 text-xs font-bold text-[#003B6A] w-24 text-center">Fin</th>
+                                <th class="p-3 text-xs font-bold text-[#003B6A] w-32">Responsable</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody" class="text-sm divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let allData = [];
+        let expandedNodes = new Set(); 
+        let currentCategory = null; 
+
+        const SHEET_ID = "1CWZlW4Ij8KhhYqPJdMKozk_bAHXmRQlq";
+        const AUTO_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
+
+        const tableBody = document.getElementById('tableBody');
+        const emptyState = document.getElementById('emptyState');
+        const dashboard = document.getElementById('dashboard');
+        const syncStatusUI = document.getElementById('syncStatusUI');
+        const syncIcon = document.getElementById('syncIcon');
+        const syncText = document.getElementById('syncText');
+
+        function switchTab(tabName) {
+            const tabs = ['resumen', 'territorial', 'conflictos', 'ambiental', 'etnica'];
+            tabs.forEach(t => {
+                let btn = document.getElementById(`btn-${t}`);
+                if(btn) btn.className = 'tab-inactive px-5 py-3 transition-colors rounded-t-lg flex items-center gap-2 whitespace-nowrap text-sm';
+            });
+            let activeBtn = document.getElementById(`btn-${tabName}`);
+            if(activeBtn) activeBtn.className = 'tab-active px-5 py-3 transition-colors rounded-t-lg flex items-center gap-2 whitespace-nowrap text-sm';
+            
+            document.getElementById('filter-estado').value = 'all';
+            document.getElementById('filter-responsable').value = 'all';
+
+            if (tabName === 'resumen') {
+                document.getElementById('tab-resumen').classList.remove('hidden');
+                document.getElementById('tab-resumen').classList.add('flex', 'flex-col');
+                document.getElementById('tab-detalle').classList.add('hidden');
+                document.getElementById('tab-detalle').classList.remove('flex', 'flex-col');
+                currentCategory = null;
+            } else {
+                document.getElementById('tab-resumen').classList.add('hidden');
+                document.getElementById('tab-resumen').classList.remove('flex', 'flex-col');
+                document.getElementById('tab-detalle').classList.remove('hidden');
+                document.getElementById('tab-detalle').classList.add('flex', 'flex-col');
+                currentCategory = tabName;
+            }
+            renderTable();
+        }
+
+        function downloadExcel() {
+            let dataToExport = currentCategory ? allData.filter(r => r.category === currentCategory) : allData;
+            let stateFilter = document.getElementById('filter-estado').value;
+            let respFilter = document.getElementById('filter-responsable').value;
+            let visibleSet = new Set();
+            dataToExport.forEach(r => {
+                let matchState = stateFilter === 'all' || r.estado === stateFilter;
+                let matchResp = respFilter === 'all' || r.recurso === respFilter;
+                if (matchState && matchResp) {
+                    let parts = r.edt.split('.');
+                    let anc = "";
+                    for(let i=0; i<parts.length; i++){
+                        anc = anc === "" ? parts[i] : anc + "." + parts[i];
+                        visibleSet.add(anc);
+                    }
+                }
+            });
+            dataToExport = dataToExport.filter(r => visibleSet.has(r.edt));
+            
+            let reportTitle = currentCategory ? `Reporte de Gestión: ${currentCategory.toUpperCase()}` : "Reporte de Gestión: PROYECTO COMPLETO";
+            let excelData = [];
+            excelData.push([reportTitle]); 
+            excelData.push([""]); 
+            
+            let headers = ["EDT", "Nombre", "Duración", "Comienzo", "Fin", "Nombres_de_los_recursos", "% Completado", "% Planeado"];
+            excelData.push(headers);
+            dataToExport.forEach(row => {
+                let sangria = "  ".repeat(Math.max(0, row.nivel - (currentCategory ? 2 : 1)));
+                excelData.push([
+                    row.edt,
+                    sangria + row.nombre,
+                    row.duracion,
+                    row.comienzo,
+                    row.fin,
+                    row.recurso,
+                    (row.pctComp * 100).toFixed(0) + '%',
+                    (row.pctPlan * 100).toFixed(0) + '%'
+                ]);
+            });
+            let worksheet = XLSX.utils.aoa_to_sheet(excelData);
+            worksheet["!merges"] = [ { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } } ];
+            worksheet["!cols"] = [ { wch: 10 }, { wch: 55 }, { wch: 12 }, { wch: 13 }, { wch: 13 }, { wch: 35 }, { wch: 15 }, { wch: 15 } ];
+            
+            for (let R = 0; R < excelData.length; ++R) {
+                for (let C = 0; C < 8; ++C) {
+                    let cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+                    if (!worksheet[cellRef]) continue;
+                    if (R === 0) {
+                        worksheet[cellRef].s = { font: { name: "Arial", sz: 14, bold: true, color: { rgb: "003B6A" } }, alignment: { horizontal: "center", vertical: "center" } };
+                    } else if (R === 2) {
+                        worksheet[cellRef].s = { font: { name: "Arial", sz: 11, bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "003B6A" } }, alignment: { horizontal: "center", vertical: "center" }, border: { top: {style: "thin", color: {rgb: "999999"}}, bottom: {style: "thin", color: {rgb: "999999"}} } };
+                    } else if (R > 2) {
+                        let cellStyle = { font: { name: "Arial", sz: 10, color: { rgb: "333333" } }, alignment: { vertical: "center" }, border: { bottom: {style: "thin", color: {rgb: "E5E7EB"}} } };
+                        if (C === 0 || C === 2 || C === 3 || C === 4 || C === 6 || C === 7) cellStyle.alignment.horizontal = "center";
+                        worksheet[cellRef].s = cellStyle;
+                    }
+                }
+            }
+            let workbook = XLSX.utils.book_new();
+            let sheetName = currentCategory ? currentCategory.toUpperCase() : "GENERAL";
+            XLSX.utils.book_append_sheet(workbook, worksheet, sheetName.substring(0, 31));
+            XLSX.writeFile(workbook, currentCategory ? `Acta_Guajira_${currentCategory.toUpperCase()}.xlsx` : "Acta_Guajira_Completa.xlsx");
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            Papa.parse(AUTO_URL, {
+                download: true,
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    if(results.data && results.data.length > 0) {
+                        handleParsedData(results.data);
+                        syncIcon.classList.remove('fa-sync', 'fa-spin');
+                        syncIcon.classList.add('fa-check-circle');
+                        syncText.textContent = "Datos Actualizados";
+                    } else {
+                        syncStatusFailed("El documento está vacío.");
+                    }
+                },
+                error: function(err) {
+                    console.error(err);
+                    syncStatusFailed("Error de permisos en el archivo.");
+                }
+            });
+        });
+
+        function syncStatusFailed(reason) {
+            syncIcon.classList.remove('fa-sync', 'fa-spin');
+            syncIcon.classList.add('fa-times-circle', 'text-red-400');
+            syncText.textContent = "Error de conexión";
+            syncStatusUI.classList.replace('text-green-300', 'text-red-400');
+            syncStatusUI.classList.replace('border-blue-800', 'border-red-800');
+            document.getElementById('emptyStateTitle').textContent = "No pudimos conectar con el archivo";
+            document.getElementById('emptyStateDesc').innerHTML = `${reason} Asegúrate de que el enlace de Google Sheets sea público.`;
+        }
+
+        function handleParsedData(data) {
+            let recursosSet = new Set();
+            allData = data.map(row => {
+                let valComp = row['Porcentaje_completado'];
+                let pctComp = parseFloat(valComp) || 0;
+                if(typeof valComp === 'string' && valComp.includes('%')) pctComp = parseFloat(valComp.replace('%','')) / 100;
+                
+                let colPlaneado = row['Porcentaje_Planeado_Número_(Número2)_(Número2)'] || row['Porcentaje_Planeado_(Texto4)'] || "0";
+                let pctPlan = parseFloat(colPlaneado) || 0;
+                if(typeof colPlaneado === 'string' && colPlaneado.includes('%')) pctPlan = parseFloat(colPlaneado.replace('%','')) / 100;
+
+                let estado = (pctComp - pctPlan >= 0 || pctComp >= 1) ? "🟢 A Tiempo" : "🔴 Atrasado";
+                let estadoColor = (pctComp - pctPlan >= 0 || pctComp >= 1) ? "text-green-700 bg-green-100 border-green-300" : "text-red-700 bg-red-100 border-red-300";
+
+                let edt = row['EDT'] || '';
+                let nivelNum = parseInt(row['Nivel_de_esquema']);
+                if(isNaN(nivelNum)) nivelNum = edt ? edt.split('.').length : 1;
+
+                function extractDate(d) {
+                    if(!d || d === '-') return '-';
+                    let cleanStr = String(d).toLowerCase().trim();
+                    cleanStr = cleanStr.replace(/^(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo|lun|mar|mi[eé]|jue|vie|sab|s[aá]b|dom)[\s,]+/i, '');
+                    cleanStr = cleanStr.split(/ \d{1,2}:/)[0].trim();
+                    let m = cleanStr.match(/(\d{1,4})[\/\-](\d{1,2})[\/\-](\d{1,4})/);
+                    if(m) {
+                        if (m[1].length === 4) return `${m[3].padStart(2, '0')}/${m[2].padStart(2, '0')}/${m[1]}`;
+                        return `${m[1].padStart(2, '0')}/${m[2].padStart(2, '0')}/${m[3].length === 2 ? '20'+m[3] : m[3]}`;
+                    }
+                    const meses = {'enero': '01', 'ene': '01', 'febrero': '02', 'feb': '02', 'marzo': '03', 'mar': '03', 'abril': '04', 'abr': '04', 'mayo': '05', 'may': '05', 'junio': '06', 'jun': '06', 'julio': '07', 'jul': '07', 'agosto': '08', 'ago': '08', 'septiembre': '09', 'sep': '09', 'setiembre': '09', 'set': '09', 'octubre': '10', 'oct': '10', 'noviembre': '11', 'nov': '11', 'diciembre': '12', 'dic': '12'};
+                    for (let mes in meses) {
+                        let regex = new RegExp(`\\b${mes}\\b`, 'i');
+                        if (regex.test(cleanStr)) {
+                            let nums = cleanStr.match(/\d+/g);
+                            if (nums && nums.length >= 1) {
+                                let dia = nums[0];
+                                let anio = nums.length > 1 ? nums[nums.length - 1] : new Date().getFullYear().toString();
+                                if (anio.length === 2) anio = '20' + anio;
+                                return `${dia.padStart(2, '0')}/${meses[mes]}/${anio}`;
+                            }
+                        }
+                    }
+                    if (!isNaN(cleanStr) && cleanStr > 10000 && cleanStr < 99999) {
+                        let dateObj = new Date((cleanStr - 25569) * 86400 * 1000);
+                        dateObj = new Date(dateObj.getTime() + dateObj.getTimezoneOffset() * 60000);
+                        return `${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth()+1).padStart(2, '0')}/${dateObj.getFullYear()}`;
+                    }
+                    let dateObj = new Date(d);
+                    if(!isNaN(dateObj.getTime())) return `${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth()+1).padStart(2, '0')}/${dateObj.getFullYear()}`;
+                    return d.split(' ')[0];
+                }
+
+                let recursoLimpio = row['Nombres_de_los_recursos'] || 'Sin asignar';
+                if (recursoLimpio !== 'Sin asignar' && recursoLimpio.trim() !== '') recursosSet.add(recursoLimpio.trim());
+
+                return {
+                    edt: edt,
+                    nombre: row['Nombre'] || 'Sin nombre',
+                    duracion: row['Duración'] || '-',
+                    comienzo: extractDate(row['Comienzo']),
+                    fin: extractDate(row['Fin']),
+                    recurso: recursoLimpio,
+                    nivel: nivelNum,
+                    pctComp: pctComp,
+                    pctPlan: pctPlan,
+                    estado: estado,
+                    estadoColor: estadoColor,
+                    estadoPlano: (pctComp - pctPlan >= 0 || pctComp >= 1) ? 'atiempo' : 'atrasado',
+                    hasChildren: false,
+                    category: 'otro' 
+                };
+            });
+
+            let selectResponsable = document.getElementById('filter-responsable');
+            Array.from(recursosSet).sort().forEach(rec => {
+                let opt = document.createElement('option');
+                opt.value = rec;
+                opt.textContent = rec;
+                selectResponsable.appendChild(opt);
+            });
+
+            let categoryMap = {};
+            allData.forEach(row => {
+                if (row.nivel === 2) {
+                    let name = row.nombre.toLowerCase();
+                    if (name.includes('territorial') || name.includes('terrorial')) categoryMap[row.edt] = 'territorial';
+                    else if (name.includes('conflictos')) categoryMap[row.edt] = 'conflictos';
+                    else if (name.includes('ambiental')) categoryMap[row.edt] = 'ambiental';
+                    else if (name.includes('etnica') || name.includes('étnica')) categoryMap[row.edt] = 'etnica';
+                }
+            });
+
+            allData.forEach(row => {
+                if (row.nivel >= 2) {
+                    let parts = row.edt.split('.');
+                    row.category = categoryMap[parts[0] + '.' + parts[1]] || 'otro';
+                } else {
+                    row.category = 'general';
+                }
+                row.hasChildren = allData.some(child => child.edt !== row.edt && child.edt.startsWith(row.edt + '.'));
+            });
+
+            calcularKPIs();
+            expandedNodes = new Set(allData.filter(row => row.nivel <= 2 && row.hasChildren).map(row => row.edt));
+            emptyState.classList.add('hidden');
+            dashboard.classList.remove('hidden');
+            dashboard.classList.add('flex');
+            switchTab('resumen');
+        }
+
+        function calcularKPIs() {
+            let leafTasks = allData.filter(r => r.hasChildren === false);
+            document.getElementById('kpi-total').textContent = leafTasks.length;
+            document.getElementById('kpi-atiempo').textContent = leafTasks.filter(r => r.estadoPlano === 'atiempo').length;
+            document.getElementById('kpi-atrasadas').textContent = leafTasks.filter(r => r.estadoPlano === 'atrasado').length;
+            ['territorial', 'conflictos', 'ambiental', 'etnica'].forEach(cat => {
+                let catData = leafTasks.filter(r => r.category === cat);
+                document.getElementById(`kpi-total-${cat}`).textContent = catData.length;
+                document.getElementById(`kpi-atiempo-${cat}`).textContent = catData.filter(r => r.estadoPlano === 'atiempo').length;
+                document.getElementById(`kpi-atrasadas-${cat}`).textContent = catData.filter(r => r.estadoPlano === 'atrasado').length;
+            });
+            let oaasTask = allData.find(r => r.nombre && r.nombre.toUpperCase().includes('OFICINA DE ASUNTOS AMBIENTALES Y SOCIALES OAAS'));
+            document.getElementById('kpi-pct-completado').textContent = oaasTask ? (oaasTask.pctComp * 100).toFixed(1) + '%' : '0%';
+            document.getElementById('kpi-pct-planeado').textContent = oaasTask ? (oaasTask.pctPlan * 100).toFixed(1) + '%' : '0%';
+        }
+
+        window.toggleNode = function(edt) {
+            expandedNodes.has(edt) ? expandedNodes.delete(edt) : expandedNodes.add(edt);
+            renderTable();
+        };
+
+        function renderTable() {
+            let dataToRender = currentCategory ? allData.filter(r => r.category === currentCategory) : allData;
+            let stateFilter = document.getElementById('filter-estado').value;
+            let respFilter = document.getElementById('filter-responsable').value;
+            let visibleSet = new Set();
+            dataToRender.forEach(r => {
+                if ((stateFilter === 'all' || r.estado === stateFilter) && (respFilter === 'all' || r.recurso === respFilter)) {
+                    let parts = r.edt.split('.');
+                    let anc = "";
+                    for(let i=0; i<parts.length; i++){
+                        anc = anc === "" ? parts[i] : anc + "." + parts[i];
+                        visibleSet.add(anc);
+                    }
+                }
+            });
+            let titleContainer = document.getElementById('detalle-title');
+            let statsContainer = document.getElementById('detalle-stats');
+            if (currentCategory) {
+                let rootNode = dataToRender.find(r => r.nivel === 2);
+                if (rootNode) {
+                    let typeIcon = 'fa-sitemap text-[#F2C811]';
+                    if (currentCategory === 'territorial') typeIcon = 'fa-map-marked-alt text-emerald-600';
+                    else if (currentCategory === 'conflictos') typeIcon = 'fa-hands-helping text-orange-500';
+                    else if (currentCategory === 'ambiental') typeIcon = 'fa-leaf text-green-500';
+                    else if (currentCategory === 'etnica') typeIcon = 'fa-users text-purple-600';
+                    titleContainer.innerHTML = `<i class="fas ${typeIcon} mr-2"></i> <span class="text-gray-800">${rootNode.edt}</span> - ${rootNode.nombre}`;
+                    statsContainer.innerHTML = `<span class="text-gray-500">Inicio: <strong class="text-gray-700">${rootNode.comienzo}</strong></span> <span class="text-gray-500 hidden sm:inline">•</span> <span class="text-gray-500">Fin: <strong class="text-gray-700">${rootNode.fin}</strong></span> <span class="text-gray-500 hidden sm:inline">•</span> <span class="text-gray-500">Completado: <strong class="text-[#003B6A]">${(rootNode.pctComp * 100).toFixed(0)}%</strong></span> <span class="text-gray-500 hidden sm:inline">•</span> <span class="text-gray-500">Planeado: <strong class="text-gray-800">${(rootNode.pctPlan * 100).toFixed(0)}%</strong></span> <span class="px-2 py-0.5 ml-2 border rounded text-xs font-bold ${rootNode.estadoColor} uppercase">${rootNode.estado}</span>`;
+                    statsContainer.classList.replace('hidden', 'flex');
+                    dataToRender = dataToRender.filter(r => r.edt !== rootNode.edt);
+                }
+            } else {
+                titleContainer.innerHTML = `<i class="fas fa-sitemap mr-2 text-[#F2C811]"></i> Detalle de Gestión General`;
+                statsContainer.classList.replace('flex', 'hidden');
+            }
+            let html = '';
+            dataToRender.forEach(row => {
+                if (!visibleSet.has(row.edt)) return;
+                let startLevel = currentCategory ? 3 : 1;
+                if (row.nivel > startLevel) {
+                    let parts = row.edt.split('.');
+                    let ancestor = parts.slice(0, startLevel).join('.'); 
+                    let isVisible = true;
+                    for (let i = startLevel; i < parts.length; i++) {
+                        if (!expandedNodes.has(ancestor)) { isVisible = false; break; }
+                        ancestor += '.' + parts[i];
+                    }
+                    if (!isVisible) return; 
+                }
+                const isParent = row.hasChildren;
+                const indent = (currentCategory ? (row.nivel - 2) : row.nivel) > 1 ? ((currentCategory ? (row.nivel - 2) : row.nivel) - 1) * 20 : 0;
+                html += `<tr class="hover:bg-blue-50/50 transition-colors border-b border-gray-100">
+                    <td class="p-2 text-[13px] ${isParent ? 'font-bold text-[#003B6A] bg-gray-50/80' : 'text-gray-600'} whitespace-nowrap align-top border-r border-gray-100">${row.edt}</td>
+                    <td class="p-2 text-[13px] ${isParent ? 'font-bold text-[#003B6A] bg-gray-50/80' : 'text-gray-600'} align-middle" style="padding-left: ${indent + 16}px;">
+                        <div class="flex items-center">
+                            ${isParent ? `<button onclick="toggleNode('${row.edt}')" class="w-6 h-6 inline-flex items-center justify-center text-gray-500 hover:bg-blue-100 hover:text-[#003B6A] rounded transition-colors mr-2 cursor-pointer outline-none shadow-sm border border-transparent hover:border-blue-200"><i class="fas ${expandedNodes.has(row.edt) ? 'fa-chevron-down' : 'fa-chevron-right'} text-xs"></i></button>` : '<span class="w-6 inline-block mr-2"></span>'}
+                            <span class="${isParent ? 'text-[14px]' : 'text-[13px]'}">${row.nombre}</span>
+                        </div>
+                    </td>
+                    <td class="p-2 align-middle"><span class="px-2 py-0.5 border rounded text-[10px] font-bold ${row.estadoColor} whitespace-nowrap uppercase tracking-wider">${row.estado}</span></td>
+                    <td class="p-2 text-center text-[12px] align-middle font-medium">${(row.pctComp * 100).toFixed(0)}%</td>
+                    <td class="p-2 text-center text-[12px] align-middle font-medium">${(row.pctPlan * 100).toFixed(0)}%</td>
+                    <td class="p-2 text-center text-[12px] text-gray-500 align-middle whitespace-nowrap">${row.comienzo}</td>
+                    <td class="p-2 text-center text-[12px] text-gray-500 align-middle whitespace-nowrap">${row.fin}</td>
+                    <td class="p-2 text-[12px] text-gray-500 align-middle font-medium leading-tight">${row.recurso}</td>
+                </tr>`;
+            });
+            tableBody.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
