@@ -1,0 +1,133 @@
+import React from 'react';
+import { BarChart, Activity, Users, Leaf, ShieldAlert, MapPin, Quote } from 'lucide-react';
+
+const ProgressBar = ({ label, percentage, id }) => (
+  <div className="mb-4">
+    <div className="flex justify-between items-center mb-1">
+      <span className="text-xs font-bold text-slate-600">{id} {label}</span>
+      <span className="text-[10px] font-black text-[#003366] bg-blue-50 px-2 py-0.5 rounded">{percentage}%</span>
+    </div>
+    <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+      <div 
+        className="bg-[#003366] h-full rounded-full transition-all duration-1000 ease-out"
+        style={{ width: `${percentage}%` }}
+      />
+    </div>
+  </div>
+);
+
+const ProjectSection = ({ title, id, real, expected, components }) => (
+  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full">
+    <div className="bg-slate-50/80 p-4 border-b border-slate-100">
+      <h2 className="text-lg font-black text-[#003366] uppercase tracking-tight">{id}. {title}</h2>
+    </div>
+    <div className="p-6 flex-grow">
+      {/* Indicadores Principales */}
+      <div className="grid grid-cols-2 gap-4 mb-8 pb-6 border-b border-slate-50">
+        <div className="text-center p-4 bg-blue-50/50 rounded-xl border border-blue-100">
+          <span className="block text-[10px] font-bold text-blue-900/50 uppercase mb-1">Avance Real</span>
+          <span className="text-4xl font-black text-blue-900">{real}%</span>
+        </div>
+        <div className="text-center p-4 bg-slate-50 rounded-xl border border-slate-100">
+          <span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Esperado</span>
+          <span className="text-4xl font-black text-slate-500">{expected}%</span>
+        </div>
+      </div>
+
+      {/* Listado EDT */}
+      <div className="space-y-2">
+        <div className="flex items-center space-x-2 mb-4">
+          <div className="w-1 h-4 bg-[#FFD700] rounded-full" />
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Componentes de Seguimiento</span>
+        </div>
+        {components.map((comp, index) => (
+          <ProgressBar 
+            key={index} 
+            label={comp.label} 
+            percentage={comp.value} 
+            id={`${id}.${index + 1}`} 
+          />
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
+const App = () => {
+  const guajiraComponents = [
+    { label: "Seguimiento Territorial", value: 30 },
+    { label: "Seguimiento Ambiental", value: 42 },
+    { label: "Seguimiento Conflictos", value: 15 },
+    { label: "Seguimiento Étnica", value: 25 },
+  ];
+
+  const pactoComponents = [
+    { label: "Seguimiento Territorial", value: 35 },
+    { label: "Seguimiento Ambiental", value: 22 },
+    { label: "Seguimiento Conflictos", value: 18 },
+    { label: "Seguimiento Étnica", value: 40 },
+  ];
+
+  return (
+    <div className="min-h-screen bg-[#f8fafc] flex flex-col font-sans text-slate-800">
+      {/* Header Institucional */}
+      <header className="bg-[#003366] text-white p-6 shadow-md">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center">
+          <div className="flex items-center space-x-4">
+            <div className="bg-white p-1 rounded-lg">
+              <img 
+                src="https://www.minenergia.gov.co/documents/10181/OficinaAsuntosAmbientalesSociales.png" 
+                alt="Logo MinMinas" 
+                className="h-10"
+              />
+            </div>
+            <div>
+              <h1 className="text-xl font-extrabold tracking-tight">Oficina de Asuntos Ambientales y Sociales (OAAS)</h1>
+              <p className="text-[#FFD700] text-[9px] font-bold tracking-[0.25em] uppercase opacity-90">Gestión de Proyectos - La Guajira</p>
+            </div>
+          </div>
+          <div className="hidden lg:block text-right">
+            <span className="text-[10px] font-black uppercase tracking-widest text-white/60">Corte de información: Mayo 2024</span>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto p-6 w-full flex-grow">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+          <ProjectSection 
+            title="Gerencia Guajira" 
+            id={1} 
+            real={31.0} 
+            expected={37.0} 
+            components={guajiraComponents}
+          />
+          <ProjectSection 
+            title="Pacto por la Transición Energética" 
+            id={2} 
+            real={28.0} 
+            expected={82.0} 
+            components={pactoComponents}
+          />
+        </div>
+
+        {/* Cita Final */}
+        <div className="max-w-2xl mx-auto bg-white/40 border border-slate-200 p-4 rounded-2xl shadow-sm">
+          <div className="flex flex-col items-center text-center">
+            <Quote className="text-slate-200 mb-2" size={24} />
+            <p className="text-xs md:text-sm font-serif italic text-[#003366]/80 leading-snug px-4">
+              "La Guajira es el hogar de comunidades cuyo bienestar es el norte de nuestra gestión. Trabajamos por un progreso que respete su territorio y transforme su realidad."
+            </p>
+            <div className="mt-2 h-[1px] w-12 bg-[#FFD700]" />
+            <span className="text-[8px] font-bold text-slate-400 uppercase mt-1 tracking-widest">Compromiso Territorial • MinEnergía</span>
+          </div>
+        </div>
+      </main>
+
+      <footer className="bg-slate-900 py-3 text-center">
+        <p className="text-[8px] text-slate-500 font-bold tracking-[0.3em] uppercase">Ministerio de Minas y Energía - República de Colombia</p>
+      </footer>
+    </div>
+  );
+};
+
+export default App;
