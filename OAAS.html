@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tablero OAAS - Seguimiento de Gestión</title>
+    <title>Tablero OAAS - Seguimiento EDT</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -31,7 +31,7 @@
         .progress-bar-bg {
             background-color: #e2e8f0;
             border-radius: 999px;
-            height: 8px;
+            height: 10px;
             width: 100%;
             overflow: hidden;
         }
@@ -47,19 +47,19 @@
 <body class="min-h-screen flex flex-col">
 
     <!-- Encabezado Institucional -->
-    <header class="header-bg text-white py-4 px-8 shadow-md">
+    <header class="header-bg text-white py-5 px-8 shadow-md">
         <div class="max-w-[1600px] mx-auto flex flex-col md:flex-row justify-between items-center">
             <div class="flex items-center space-x-5">
                 <div class="bg-white p-1.5 rounded-lg shadow-sm">
                     <img src="https://www.minenergia.gov.co/documents/10181/OficinaAsuntosAmbientalesSociales.png" alt="Logo MinMinas" class="h-9" onerror="this.style.display='none'">
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold tracking-tight">Oficina de Asuntos Ambientales y Sociales (OAAS)</h1>
-                    <p class="text-yellow-400 text-[9px] font-bold tracking-[0.2em] uppercase opacity-90">Seguimiento EDT • Microsoft Project</p>
+                    <h1 class="text-xl font-bold tracking-tight text-white uppercase">Oficina de Asuntos Ambientales y Sociales (OAAS)</h1>
+                    <p class="text-yellow-400 text-[9px] font-bold tracking-[0.2em] uppercase opacity-90">Seguimiento de Gestión • Basado en EDT Project</p>
                 </div>
             </div>
             <div class="hidden lg:block text-right">
-                <span class="text-[10px] font-black uppercase tracking-widest text-white/50">Corte de información: Mayo 2024</span>
+                <span class="text-[10px] font-black uppercase tracking-widest text-white/50">Reporte de Avance • Mayo 2024</span>
             </div>
         </div>
     </header>
@@ -67,60 +67,60 @@
     <main class="max-w-[1600px] mx-auto p-6 w-full flex-grow">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             
-            <!-- SECCIÓN 1: GERENCIA GUAJIRA -->
+            <!-- SECCIÓN 1: GERENCIA GUAJIRA (EDT 1.0) -->
             <section class="card-project">
                 <div class="p-5 border-b bg-slate-50/50">
                     <h2 class="text-lg font-black text-mme-blue uppercase tracking-tight">1. Gerencia Guajira</h2>
                 </div>
                 
                 <div class="p-8">
-                    <!-- Avances Generales -->
+                    <!-- Resumen de Avance Nivel 1.0 -->
                     <div class="grid grid-cols-2 gap-4 mb-10 pb-8 border-b border-slate-100">
-                        <div class="text-center p-5 bg-blue-50/50 rounded-2xl border border-blue-100">
-                            <span class="block text-[10px] font-black text-blue-900/40 uppercase mb-2">Avance Real</span>
-                            <span class="text-5xl font-black text-blue-900">31.0%</span>
+                        <div class="text-center p-6 bg-blue-50/50 rounded-2xl border border-blue-100">
+                            <span class="block text-[11px] font-black text-blue-900/40 uppercase mb-2">Avance Real Total</span>
+                            <span class="text-5xl font-black text-blue-900 tracking-tighter">31.0%</span>
                         </div>
-                        <div class="text-center p-5 bg-slate-50 rounded-2xl border border-slate-100">
-                            <span class="block text-[10px] font-black text-slate-400 uppercase mb-2">Esperado</span>
-                            <span class="text-5xl font-black text-slate-500">37.0%</span>
+                        <div class="text-center p-6 bg-slate-50 rounded-2xl border border-slate-100">
+                            <span class="block text-[11px] font-black text-slate-400 uppercase mb-2">Esperado Programado</span>
+                            <span class="text-5xl font-black text-slate-500 tracking-tighter">37.0%</span>
                         </div>
                     </div>
 
-                    <!-- Componentes EDT Nivel 2 -->
-                    <div class="space-y-6">
+                    <!-- Desglose EDT Nivel 2 (Actividades Hijas 1.x) -->
+                    <div class="space-y-7">
                         <div class="flex items-center space-x-2 mb-4">
                             <div class="w-1.5 h-4 bg-yellow-400 rounded-full"></div>
-                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Gobernanza y Gestión (1.x)</span>
+                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Actividades Nivel 2 (EDT)</span>
                         </div>
                         
                         <div>
-                            <div class="flex justify-between text-xs font-bold text-slate-600 mb-1.5">
+                            <div class="flex justify-between text-xs font-bold text-slate-700 mb-2">
                                 <span>1.1 Gobernanza Territorial</span>
-                                <span class="text-mme-blue">30%</span>
+                                <span class="text-mme-blue font-black">30%</span>
                             </div>
                             <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 30%"></div></div>
                         </div>
 
                         <div>
-                            <div class="flex justify-between text-xs font-bold text-slate-600 mb-1.5">
+                            <div class="flex justify-between text-xs font-bold text-slate-700 mb-2">
                                 <span>1.2 Gobernanza Ambiental</span>
-                                <span class="text-mme-blue">42%</span>
+                                <span class="text-mme-blue font-black">42%</span>
                             </div>
                             <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 42%"></div></div>
                         </div>
 
                         <div>
-                            <div class="flex justify-between text-xs font-bold text-slate-600 mb-1.5">
+                            <div class="flex justify-between text-xs font-bold text-slate-700 mb-2">
                                 <span>1.3 Gestión de Conflictos</span>
-                                <span class="text-mme-blue">15%</span>
+                                <span class="text-mme-blue font-black">15%</span>
                             </div>
                             <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 15%"></div></div>
                         </div>
 
                         <div>
-                            <div class="flex justify-between text-xs font-bold text-slate-600 mb-1.5">
+                            <div class="flex justify-between text-xs font-bold text-slate-700 mb-2">
                                 <span>1.4 Gobernanza Étnica</span>
-                                <span class="text-mme-blue">25%</span>
+                                <span class="text-mme-blue font-black">25%</span>
                             </div>
                             <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 25%"></div></div>
                         </div>
@@ -128,60 +128,60 @@
                 </div>
             </section>
 
-            <!-- SECCIÓN 2: PACTO POR LA TRANSICIÓN ENERGÉTICA JUSTA -->
+            <!-- SECCIÓN 2: PACTO POR LA TRANSICIÓN ENERGÉTICA JUSTA (EDT 2.0) -->
             <section class="card-project">
                 <div class="p-5 border-b bg-slate-50/50">
                     <h2 class="text-lg font-black text-mme-blue uppercase tracking-tight">2. PACTO POR LA TRANSICIÓN ENERGÉTICA JUSTA</h2>
                 </div>
                 
                 <div class="p-8">
-                    <!-- Avances Generales -->
+                    <!-- Resumen de Avance Nivel 2.0 -->
                     <div class="grid grid-cols-2 gap-4 mb-10 pb-8 border-b border-slate-100">
-                        <div class="text-center p-5 bg-blue-50/50 rounded-2xl border border-blue-100">
-                            <span class="block text-[10px] font-black text-blue-900/40 uppercase mb-2">Avance Real</span>
-                            <span class="text-5xl font-black text-blue-900">28.0%</span>
+                        <div class="text-center p-6 bg-blue-50/50 rounded-2xl border border-blue-100">
+                            <span class="block text-[11px] font-black text-blue-900/40 uppercase mb-2">Avance Real Total</span>
+                            <span class="text-5xl font-black text-blue-900 tracking-tighter">28.0%</span>
                         </div>
-                        <div class="text-center p-5 bg-slate-50 rounded-2xl border border-slate-100">
-                            <span class="block text-[10px] font-black text-slate-400 uppercase mb-2">Esperado</span>
-                            <span class="text-5xl font-black text-slate-500">82.0%</span>
+                        <div class="text-center p-6 bg-slate-50 rounded-2xl border border-slate-100">
+                            <span class="block text-[11px] font-black text-slate-400 uppercase mb-2">Esperado Programado</span>
+                            <span class="text-5xl font-black text-slate-500 tracking-tighter">82.0%</span>
                         </div>
                     </div>
 
-                    <!-- Componentes EDT Nivel 2 (Mesas) -->
-                    <div class="space-y-6">
+                    <!-- Desglose EDT Nivel 2 (Actividades Hijas 2.x) -->
+                    <div class="space-y-7">
                         <div class="flex items-center space-x-2 mb-4">
                             <div class="w-1.5 h-4 bg-yellow-400 rounded-full"></div>
-                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Mesas de Seguimiento (2.x)</span>
+                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Mesas de Seguimiento Nivel 2</span>
                         </div>
                         
                         <div>
-                            <div class="flex justify-between text-xs font-bold text-slate-600 mb-1.5">
-                                <span>2.1 Mesa 1: Seguimiento Territorial</span>
-                                <span class="text-mme-blue">35%</span>
+                            <div class="flex justify-between text-xs font-bold text-slate-700 mb-2">
+                                <span>2.1 Mesa 1: Seguimiento Social y Diálogo</span>
+                                <span class="text-mme-blue font-black">35%</span>
                             </div>
                             <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 35%"></div></div>
                         </div>
 
                         <div>
-                            <div class="flex justify-between text-xs font-bold text-slate-600 mb-1.5">
-                                <span>2.2 Mesa 2: Seguimiento Ambiental</span>
-                                <span class="text-mme-blue">22%</span>
+                            <div class="flex justify-between text-xs font-bold text-slate-700 mb-2">
+                                <span>2.2 Mesa 2: Seguimiento Ambiental y Ordenamiento</span>
+                                <span class="text-mme-blue font-black">22%</span>
                             </div>
                             <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 22%"></div></div>
                         </div>
 
                         <div>
-                            <div class="flex justify-between text-xs font-bold text-slate-600 mb-1.5">
-                                <span>2.3 Mesa 3: Seguimiento Conflictos</span>
-                                <span class="text-mme-blue">18%</span>
+                            <div class="flex justify-between text-xs font-bold text-slate-700 mb-2">
+                                <span>2.3 Mesa 3: Seguimiento Técnico y Energético</span>
+                                <span class="text-mme-blue font-black">18%</span>
                             </div>
                             <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 18%"></div></div>
                         </div>
 
                         <div>
-                            <div class="flex justify-between text-xs font-bold text-slate-600 mb-1.5">
-                                <span>2.4 Mesa 4: Seguimiento Étnica</span>
-                                <span class="text-mme-blue">40%</span>
+                            <div class="flex justify-between text-xs font-bold text-slate-700 mb-2">
+                                <span>2.4 Mesa 4: Seguimiento Institucional</span>
+                                <span class="text-mme-blue font-black">40%</span>
                             </div>
                             <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 40%"></div></div>
                         </div>
@@ -193,8 +193,8 @@
         <!-- Cita Final Compacta -->
         <footer class="mt-8 mb-4 max-w-2xl mx-auto">
             <div class="bg-white/40 border border-slate-200 p-4 rounded-2xl text-center shadow-sm">
-                <p class="text-[10px] md:text-xs font-serif italic text-mme-blue/80 leading-relaxed">
-                    "La Guajira es el hogar de comunidades cuyo bienestar es el norte de nuestra gestión. Trabajamos por un progreso que respecte su territorio y transforme su realidad."
+                <p class="text-[10px] md:text-xs font-serif italic text-mme-blue/80 leading-relaxed px-4">
+                    "La Guajira es el hogar de comunidades cuyo bienestar es el norte de nuestra gestión. Trabajamos por un progreso que respete su territorio y transforme su realidad."
                 </p>
                 <div class="mt-2 flex items-center justify-center space-x-2">
                     <div class="h-[1px] w-8 bg-yellow-400/50"></div>
@@ -206,7 +206,7 @@
 
     </main>
 
-    <div class="bg-slate-900 py-2 text-center mt-auto">
+    <div class="bg-slate-900 py-3 text-center mt-auto">
         <p class="text-[8px] text-slate-500 font-bold tracking-[0.4em] uppercase">Ministerio de Minas y Energía - República de Colombia</p>
     </div>
 
