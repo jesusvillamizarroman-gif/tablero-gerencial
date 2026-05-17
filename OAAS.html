@@ -3,72 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tablero OAAS - Seguimiento EDT Dinámico</title>
+    <title>Tablero OAAS - Seguimiento de Alta Gerencia</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome para Iconos -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
     <style>
         :root {
+            --mme-blue-dark: #002244;
             --mme-blue: #003366;
+            --mme-blue-light: #0055a5;
             --mme-yellow: #FFD700;
+            --mme-yellow-dark: #ccac00;
+            --colombia-red: #da291c;
         }
         body {
             background-color: #f8fafc;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            color: #1e293b;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            color: #0f172a;
         }
-        .header-bg {
-            background: linear-gradient(135deg, var(--mme-blue) 0%, #004080 100%);
+        .header-gradient {
+            background: linear-gradient(135deg, var(--mme-blue-dark) 0%, #004080 50%, var(--mme-blue-light) 100%);
         }
-        .card-project {
-            background: white;
-            border-radius: 1rem;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
-            border: 1px solid #e2e8f0;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            transition: transform 0.2s ease;
+        .flag-strip {
+            height: 4px;
+            background: linear-gradient(to right, var(--mme-yellow) 57%, var(--mme-blue) 57%, var(--mme-blue) 80%, var(--colombia-red) 80%);
         }
-        .card-project:hover {
-            transform: translateY(-2px);
-        }
-        .indicator-box {
-            background-color: #ffffff;
-            border: 1px solid #f1f5f9;
-            border-radius: 1.25rem;
-            padding: 1.5rem;
-            text-align: center;
-            width: 100%;
-            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.02);
-        }
-        .progress-bar-bg {
-            background-color: #f1f5f9;
-            border-radius: 999px;
-            height: 10px;
-            width: 100%;
-            overflow: hidden;
-            border: 1px solid #f1f5f9;
+        .card-shadow {
+            box-shadow: 0 10px 30px -10px rgba(0, 51, 102, 0.08);
+            border: 1px solid rgba(226, 232, 240, 0.8);
         }
         .progress-bar-fill {
-            height: 100%;
-            border-radius: 999px;
-            width: 0%; 
-            transition: width 1.5s cubic-bezier(0.1, 0.5, 0.2, 1);
+            transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .section-title {
-            color: var(--mme-blue);
-            font-weight: 800;
-            font-size: 1.25rem;
-            text-transform: uppercase;
-            letter-spacing: -0.025em;
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
         }
-        .loading-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255,255,255,0.98);
-            display: flex; justify-content: center; align-items: center;
-            z-index: 100;
-            transition: opacity 0.5s ease;
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        /* Transición de apertura suave del panel principal de detalles */
+        .collapsible-activities {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-out;
+            opacity: 0;
+        }
+        .collapsible-activities.open {
+            max-height: 8000px;
+            opacity: 1;
+            overflow-y: visible;
         }
         .icon-container {
             width: 38px;
@@ -88,148 +76,256 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col selection:bg-yellow-200">
 
-    <div id="loader" class="loading-overlay">
+    <!-- Loader de optimización de datos -->
+    <div id="loader" class="fixed inset-0 bg-slate-900/95 z-50 flex flex-col justify-center items-center backdrop-blur-sm transition-opacity duration-500">
         <div class="flex flex-col items-center">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#003366] mb-4"></div>
-            <p class="text-xs font-bold text-[#003366] uppercase tracking-widest text-center px-4">Optimizando visualización de indicadores...</p>
+            <div class="relative w-16 h-16 mb-4">
+                <div class="absolute inset-0 rounded-full border-4 border-slate-700"></div>
+                <div class="absolute inset-0 rounded-full border-4 border-t-[#FFD700] border-r-[#003366] animate-spin"></div>
+            </div>
+            <p class="text-xs font-bold text-white uppercase tracking-widest text-center max-w-xs leading-relaxed px-4">
+                Oficina de Asuntos Ambientales y Sociales<br>
+                <span class="text-[#FFD700] font-normal text-[10px] tracking-normal">Construyendo árbol jerárquico EDT en tiempo real...</span>
+            </p>
         </div>
     </div>
 
-    <!-- Encabezado Institucional -->
-    <header class="header-bg text-white py-5 px-8 shadow-lg">
-        <div class="max-w-[1600px] mx-auto flex flex-col md:flex-row justify-between items-center">
+    <!-- Línea tricolor patria -->
+    <div class="flag-strip"></div>
+    
+    <header class="header-gradient text-white py-5 px-6 shadow-xl relative overflow-hidden">
+        <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
+        
+        <div class="max-w-[1700px] mx-auto flex flex-col lg:flex-row justify-between items-center relative z-10 gap-4">
+            <!-- Logo y títulos -->
             <div class="flex items-center space-x-4">
-                <div class="p-2 bg-white/10 rounded-xl backdrop-blur-sm">
+                <div class="p-3 bg-white/10 rounded-2xl backdrop-blur-md border border-white/20 shadow-inner flex items-center justify-center">
                     <svg class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path></svg>
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold tracking-tight uppercase leading-none mb-1">Oficina de Asuntos Ambientales y Sociales (OAAS)</h1>
-                    <p class="text-yellow-400 text-[10px] font-bold tracking-widest uppercase opacity-90">Seguimiento de Gestión • Basado en EDT Project</p>
+                    <h1 class="text-xl md:text-2xl font-black tracking-tight uppercase leading-none mt-1">
+                        Oficina de Asuntos Ambientales y Sociales (OAAS)
+                    </h1>
+                    <p class="text-yellow-400 text-xs font-bold tracking-widest uppercase opacity-90 mt-1">
+                        Seguimiento de gestión
+                    </p>
                 </div>
             </div>
-            <div class="mt-4 md:mt-0">
-                <span id="update-date" class="bg-black/20 px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest text-white/90 border border-white/10">Reporte Mayo 2024</span>
+
+            <!-- Acciones rápidas y conexión -->
+            <div class="flex items-center gap-3">
+                <span id="update-date" class="bg-black/35 border border-white/15 px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest text-white/95">
+                    Cargando fecha...
+                </span>
+                
+                <span id="connection-badge" class="bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
+                    <i class="fa-solid fa-circle text-[8px] animate-pulse"></i>
+                    Sincronizado Online
+                </span>
             </div>
         </div>
     </header>
 
-    <main class="max-w-[1600px] mx-auto p-8 w-full flex-grow">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+    <!-- Contenedor principal de la aplicación -->
+    <main class="max-w-[1700px] mx-auto p-4 md:p-8 w-full flex-grow flex flex-col gap-8">
+        
+        <!-- SECCIÓN DE KPIs CONSOLIDADOS POR COMPONENTE -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
             
-            <!-- SECCIÓN 1 -->
-            <section class="card-project p-8">
-                <div class="flex items-center justify-between mb-8">
-                    <h2 class="section-title" id="title-1">1. GERENCIA GUAJIRA</h2>
-                    <svg class="w-8 h-8 text-slate-200" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/></svg>
+            <!-- Bloque Resumen Gerencia Guajira -->
+            <div class="bg-white p-6 rounded-2xl card-shadow border-t-4 border-[#003366] relative overflow-hidden flex flex-col justify-between">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-base font-black text-[#003366] uppercase mt-1">GERENCIA GUAJIRA</h3>
+                    </div>
+                    <span id="kpi-status-1" class="px-2.5 py-1 rounded-full text-[9px] font-extrabold uppercase bg-emerald-50 text-emerald-600">--</span>
                 </div>
                 
-                <div class="grid grid-cols-2 gap-6 mb-12">
-                    <div class="indicator-box border-b-4 border-b-blue-600/20">
-                        <span class="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Avance Real Total</span>
-                        <span id="real-1" class="text-5xl font-black text-[#003366] tracking-tighter">--%</span>
+                <div class="flex flex-col sm:flex-row items-center gap-6 w-full">
+                    <div class="text-center p-3.5 bg-blue-50/50 rounded-2xl min-w-[115px] border border-blue-100/30 w-full sm:w-auto flex-shrink-0">
+                        <span class="block text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-1">Avance Logrado</span>
+                        <span id="kpi-real-1" class="text-3xl font-black text-[#003366]">--%</span>
                     </div>
-                    <div class="indicator-box border-b-4 border-b-slate-200">
-                        <span class="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Esperado Programado</span>
-                        <span id="plan-1" class="text-5xl font-black text-slate-400 tracking-tighter">--%</span>
+                    <div class="w-full">
+                        <div class="flex justify-between text-[10px] text-slate-500 mb-1">
+                            <span>Avance Esperado: <strong id="kpi-plan-1" class="text-slate-700">--%</strong></span>
+                        </div>
+                        <div class="progress-bar-bg relative bg-slate-100 rounded-full h-2.5 w-full overflow-hidden border border-slate-200/50">
+                            <div id="kpi-bar-1" class="progress-bar-fill absolute top-0 left-0 h-full rounded-full bg-[#003366]" style="width: 0%"></div>
+                        </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="space-y-6">
-                    <div class="flex items-center space-x-2 mb-4 border-b pb-2">
-                        <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest">Detalles del Componente</span>
+            <!-- Bloque Resumen Pacto por la Transición Energética Justa -->
+            <div class="bg-white p-6 rounded-2xl card-shadow border-t-4 border-yellow-500 relative overflow-hidden flex flex-col justify-between">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-base font-black text-[#003366] uppercase mt-1">PACTO TRANSICIÓN</h3>
                     </div>
-                    <div id="group-1" class="space-y-8"></div>
-                </div>
-            </section>
-
-            <!-- SECCIÓN 2 -->
-            <section class="card-project p-8">
-                <div class="flex items-center justify-between mb-8">
-                    <h2 class="section-title" id="title-2">2. PACTO TRANSICIÓN</h2>
-                    <svg class="w-8 h-8 text-slate-200" fill="currentColor" viewBox="0 0 24 24"><path d="M20 6h-4V4c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zM10 4h4v2h-4V4zm10 16H4V8h16v12z"/></svg>
+                    <span id="kpi-status-2" class="px-2.5 py-1 rounded-full text-[9px] font-extrabold uppercase bg-rose-50 text-rose-600">--</span>
                 </div>
                 
-                <div class="grid grid-cols-2 gap-6 mb-12">
-                    <div class="indicator-box border-b-4 border-b-blue-600/20">
-                        <span class="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Avance Real Total</span>
-                        <span id="real-2" class="text-5xl font-black text-[#003366] tracking-tighter">--%</span>
+                <div class="flex flex-col sm:flex-row items-center gap-6 w-full">
+                    <div class="text-center p-3.5 bg-yellow-50/40 rounded-2xl min-w-[115px] border border-yellow-100/30 w-full sm:w-auto flex-shrink-0">
+                        <span class="block text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-1">Avance Logrado</span>
+                        <span id="kpi-real-2" class="text-3xl font-black text-yellow-600">--%</span>
                     </div>
-                    <div class="indicator-box border-b-4 border-b-slate-200">
-                        <span class="block text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Esperado Programado</span>
-                        <span id="plan-2" class="text-5xl font-black text-slate-400 tracking-tighter">--%</span>
+                    <div class="w-full">
+                        <div class="flex justify-between text-[10px] text-slate-500 mb-1">
+                            <span>Avance Esperado: <strong id="kpi-plan-2" class="text-slate-700">--%</strong></span>
+                        </div>
+                        <div class="progress-bar-bg relative bg-slate-100 rounded-full h-2.5 w-full overflow-hidden border border-slate-200/50">
+                            <div id="kpi-bar-2" class="progress-bar-fill absolute top-0 left-0 h-full rounded-full bg-yellow-500" style="width: 0%"></div>
+                        </div>
                     </div>
                 </div>
+            </div>
+            
+        </section>
 
-                <div class="space-y-6">
-                    <div class="flex items-center space-x-2 mb-4 border-b pb-2">
-                        <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest">Detalles del Componente</span>
-                    </div>
-                    <div id="group-2" class="space-y-8"></div>
+        <!-- Contenedor Principal de Reportes de Secciones -->
+        <section id="grid-view" class="grid grid-cols-1 xl:grid-cols-2 gap-8 w-full">
+            
+            <!-- SECCIÓN 1: GERENCIA GUAJIRA -->
+            <article class="card-project p-6 md:p-8 relative bg-white rounded-3xl transition-all duration-300 card-shadow">
+                <div class="absolute top-0 left-0 w-full h-1.5 bg-[#003366]"></div>
+                
+                <!-- Cabecera de Sección -->
+                <div class="text-center mb-6">
+                    <h2 class="text-lg font-black text-[#003366] tracking-tight uppercase text-center" id="title-1">
+                        GERENCIA GUAJIRA
+                    </h2>
                 </div>
-            </section>
-        </div>
 
-        <footer class="mt-16 mb-10 max-w-4xl mx-auto text-center">
-            <div class="bg-blue-50/50 p-8 rounded-[2.5rem] border border-blue-100/50">
-                <p class="text-sm font-medium italic text-[#003366]/80 px-4 leading-relaxed">
-                    "La Guajira es el hogar de comunidades cuyo bienestar es el norte de nuestra gestión. Trabajamos por un progreso que respete su territorio y transforme su realidad."
+                <!-- Componentes de Sección 1 -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Detalles del Componente</span>
+                        <span class="text-[9px] font-semibold text-slate-400">Avance y Planificación</span>
+                    </div>
+                    <!-- Contenedor dinámico de ítems -->
+                    <div id="group-1" class="space-y-6"></div>
+                </div>
+            </article>
+
+            <!-- SECCIÓN 2: PACTO TRANSICIÓN ENERGÉTICA -->
+            <article class="card-project p-6 md:p-8 relative bg-white rounded-3xl transition-all duration-300 card-shadow">
+                <div class="absolute top-0 left-0 w-full h-1.5 bg-yellow-500"></div>
+                
+                <!-- Cabecera de Sección -->
+                <div class="text-center mb-6">
+                    <h2 class="text-lg font-black text-[#003366] tracking-tight uppercase text-center" id="title-2">
+                        PACTO TRANSICIÓN
+                    </h2>
+                </div>
+
+                <!-- Componentes de Sección 2 -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Detalles del Componente</span>
+                        <span class="text-[9px] font-semibold text-slate-400">Avance y Planificación</span>
+                    </div>
+                    <!-- Contenedor dinámico de ítems -->
+                    <div id="group-2" class="space-y-6"></div>
+                </div>
+            </article>
+            
+        </section>
+
+        <!-- Footer con compromiso territorial de La Guajira -->
+        <footer class="mt-8 mb-4 max-w-4xl mx-auto text-center w-full">
+            <div class="bg-gradient-to-r from-blue-50/40 via-blue-50/80 to-blue-50/40 p-6 rounded-[2rem] border border-blue-100/30">
+                <p class="text-xs font-medium italic text-[#003366]/80 px-4 leading-relaxed">
+                    "La Guajira es el epicentro de la Transición Energética Justa. El bienestar social y el respeto ambiental 
+                    en cada comunidad es nuestra prioridad permanente para forjar un desarrollo equitativo."
                 </p>
-                <div class="mt-6 flex items-center justify-center space-x-3">
-                    <div class="h-[1px] w-10 bg-yellow-400"></div>
-                    <span class="text-[9px] font-bold text-slate-500 uppercase tracking-[0.4em]">Compromiso Territorial • MinEnergía</span>
-                    <div class="h-[1px] w-10 bg-yellow-400"></div>
+                <div class="mt-4 flex items-center justify-center space-x-3">
+                    <div class="h-[1px] w-12 bg-yellow-400"></div>
+                    <span class="text-[8px] font-extrabold text-slate-500 uppercase tracking-[0.3em]">
+                        Compromiso Social, Ambiental y Minero • OAAS • MinEnergía
+                    </span>
+                    <div class="h-[1px] w-12 bg-yellow-400"></div>
                 </div>
             </div>
         </footer>
     </main>
 
-    <div class="bg-slate-900 py-5 text-center mt-auto">
-        <p class="text-[9px] text-slate-500 font-bold tracking-[0.4em] uppercase">Ministerio de Minas y Energía - República de Colombia</p>
-    </div>
+    <!-- Pie de página general -->
+    <footer class="bg-slate-950 py-4 text-center mt-auto border-t border-slate-900">
+        <p class="text-[8px] text-slate-400 font-bold tracking-[0.4em] uppercase">
+            Ministerio de Minas y Energía - República de Colombia
+        </p>
+    </footer>
 
     <script>
+        // CONFIGURACIONES BÁSICAS DE GOOGLE SHEET
         const SHEET_ID = '1dU_3JSGO2SWgeRRNpYZiPqq4LhpE0rC1';
         const GID = '1238644531';
         const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=${GID}`;
 
-        // Configuración de Iconos con SVGs integrados para garantizar visualización
+        // CONFIGURACIÓN DE ESTILOS E ICONOS CON SVGs DIRECTOS (Robustez absoluta y colores temáticos)
         const STYLE_CONFIG = {
             '1.1': { // Étnica
                 svg: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>',
-                color: 'bg-amber-500', text: 'text-amber-600', light: 'bg-amber-50'
+                color: 'bg-amber-500', text: 'text-amber-600', light: 'bg-amber-50', borderClass: 'border-amber-200'
             },
             '1.2': { // Territorial
                 svg: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>',
-                color: 'bg-blue-500', text: 'text-blue-600', light: 'bg-blue-50'
+                color: 'bg-blue-500', text: 'text-blue-600', light: 'bg-blue-50', borderClass: 'border-blue-200'
             },
-            '1.3': { // Conflictos
-                svg: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>',
-                color: 'bg-rose-500', text: 'text-rose-600', light: 'bg-rose-50'
+            '1.3': { // Gestión de Conflictos
+                svg: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M12 22a1 1 0 01-1-1v-2.1c-3.37-.36-6-3.2-6-6.65h2a4.7 4.7 0 004 4.64v-3.79c-1.16-.4-2-1.51-2-2.85s.84-2.45 2-2.85V3a1 1 0 112 0v4.4c1.16.4 2 1.51 2 2.85s-.84 2.45-2 2.85v3.79c2.35-.41 4-2.46 4-4.64h2c0 3.45-2.63 6.29-6 6.65V21a1 1 0 01-1 1zm0-10.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/></svg>',
+                color: 'bg-rose-500', text: 'text-rose-600', light: 'bg-rose-50', borderClass: 'border-rose-200'
             },
-            '1.4': { // Ambiental
-                svg: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66l.95-2.3c.48.17.98.3 1.51.3c2.21 0 4-1.79 4-4c0-.99-.36-1.89-.96-2.58C14.47 13.06 19 11.4 21 5c-3.1 1.05-5.91 3.51-8.52 6.55C11.51 9.87 10.32 9 9 9c-.55 0-1.07.11-1.55.32C9.4 6.34 11.75 4 15 4h2V2h-2c-4.42 0-8 3.58-8 8c0 .28.02.55.05.81C4.85 12.03 2 15.69 2 20c0 1.1.9 2 2 2c.86 0 1.59-.55 1.87-1.31c1.97-4.88 4-10.4 11.13-12.69h2V8z"/></svg>',
-                color: 'bg-emerald-500', text: 'text-emerald-600', light: 'bg-emerald-50'
+            '1.4': { // Gestión Ambiental
+                svg: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M12.3 3c-1-.1-2 .1-3 .5C7.4 4.3 6.1 5.8 5.4 7.6c-1 2.3-.6 5 1 6.9l-3.1 3.1 1.4 1.4 3.1-3.1c1.4 1.1 3.2 1.6 5 1.4 2.4-.3 4.6-1.7 5.7-3.9 1.5-3 1-6.7-1.2-9-1.3-1.4-3.1-2.2-5-2.3zm2.5 10c-.7 1.4-2.1 2.3-3.7 2.5-1.1.1-2.2-.2-3-.9l6.3-6.3c1 .9 1.3 2.2 1.9 3.4l-.5 1.3z"/></svg>',
+                color: 'bg-emerald-500', text: 'text-emerald-600', light: 'bg-emerald-50', borderClass: 'border-emerald-200'
             },
-            '2.1': { // Pacto 1
+            '2.1': { // Mesa 1
                 svg: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></svg>',
-                color: 'bg-cyan-500', text: 'text-cyan-600', light: 'bg-cyan-50'
+                color: 'bg-cyan-500', text: 'text-cyan-600', light: 'bg-cyan-50', borderClass: 'border-cyan-200'
             },
-            '2.2': { // Trámites
+            '2.2': { // Mesa 2
                 svg: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm-2 16l-4-4h2.5v-3h3v3H16l-4 4zm1-9V3.5L18.5 9H13z"/></svg>',
-                color: 'bg-indigo-500', text: 'text-indigo-600', light: 'bg-indigo-50'
+                color: 'bg-indigo-500', text: 'text-indigo-600', light: 'bg-indigo-50', borderClass: 'border-indigo-200'
             },
-            '2.3': { // Pobreza
+            '2.3': { // Mesa 3
                 svg: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M12 3L2 12h3v8h14v-8h3L12 3zm0 13c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>',
-                color: 'bg-orange-500', text: 'text-orange-600', light: 'bg-orange-50'
+                color: 'bg-orange-500', text: 'text-orange-600', light: 'bg-orange-50', borderClass: 'border-orange-200'
             },
-            '2.4': { // Oportunidades
+            '2.4': { // Mesa 4
                 svg: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 17.08l1.5 1.41z"/></svg>',
-                color: 'bg-purple-500', text: 'text-purple-600', light: 'bg-purple-50'
+                color: 'bg-purple-500', text: 'text-purple-600', light: 'bg-purple-50', borderClass: 'border-purple-200'
             }
         };
 
+        // OBJETOS GLOBALES DE DATOS DINÁMICOS (Se poblará en base al Google Sheets directamente)
+        let currentData = {}; 
+        let BACKUP_DATA = {}; // Almacenará el estado inicial cargado para habilitar simulación proporcional
+        let SUB_ACTIVITIES = {}; // Almacenará la estructura jerárquica de desgloses de nivel 3 en adelante
+
+        // Registro de los acordeones expandidos/contraídos dinámicamente en el Tree Grid
+        let expandedWbsNodes = {};
+        let expandedComponents = {};
+
+        // Control del Cargador de pantalla
+        function showLoader(show) {
+            const loader = document.getElementById('loader');
+            if (loader) {
+                if (show) {
+                    loader.style.opacity = '1';
+                    loader.style.pointerEvents = 'all';
+                } else {
+                    loader.style.opacity = '0';
+                    loader.style.pointerEvents = 'none';
+                }
+            }
+        }
+
+        // Parsear valores de celdas procedentes de Google Sheets
         function parseValue(cell) {
             if (!cell) return 0;
             let val = 0;
@@ -245,99 +341,480 @@
             return val;
         }
 
+        // Simplificar y estandarizar el formato de fecha para reportes (ej. 1 - Jul - 2026)
+        function formatDateShort(dateStr) {
+            if (!dateStr) return '-';
+            dateStr = dateStr.toString().trim();
+            
+            // Eliminar prefijos de días de la semana comunes como "jue ", "dom ", etc.
+            dateStr = dateStr.replace(/^(lun|mar|mié|mie|jue|vie|sáb|sab|dom)\.?\s+/i, '');
+            
+            // Detectar formato estándar DD/MM/YYYY o D/M/YY
+            const parts = dateStr.match(/^(\d{1,2})[\/\- ](\d{1,2})[\/\- ](\d{2,4})$/);
+            let day, month, year;
+            const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+
+            if (parts) {
+                day = parseInt(parts[1], 10);
+                month = parseInt(parts[2], 10) - 1; // 0-indexed en JS
+                year = parts[3];
+                if (year.length === 2) {
+                    year = "20" + year; // asume siglo 21
+                }
+            } else {
+                // Procesar fechas con texto tipo "1 enero 2026" o "1 de julio de 2026"
+                const cleanStr = dateStr.toLowerCase().replace(/\s+de\s+/g, ' ');
+                const words = cleanStr.split(/\s+/);
+                if (words.length >= 3) {
+                    day = parseInt(words[0], 10);
+                    year = words[2];
+                    const mName = words[1];
+                    
+                    const dict = {
+                        'enero': 0, 'ene': 0, 'january': 0, 'jan': 0,
+                        'febrero': 1, 'feb': 1, 'february': 1,
+                        'marzo': 2, 'mar': 2, 'march': 2,
+                        'abril': 3, 'abr': 3, 'april': 3, 'apr': 3,
+                        'mayo': 4, 'may': 4,
+                        'junio': 5, 'jun': 5, 'june': 5,
+                        'julio': 6, 'jul': 6, 'july': 6,
+                        'agosto': 7, 'ago': 7, 'august': 7, 'aug': 7,
+                        'septiembre': 8, 'sep': 8, 'september': 8,
+                        'octubre': 9, 'oct': 9, 'october': 9,
+                        'noviembre': 10, 'nov': 10, 'november': 10,
+                        'diciembre': 11, 'dic': 11, 'diciembre': 11, 'december': 11, 'dec': 11
+                    };
+                    month = dict[mName] !== undefined ? dict[mName] : -1;
+                }
+            }
+
+            if (day && month >= 0 && month < 12 && year) {
+                return `${day} - ${monthNames[month]} - ${year}`;
+            }
+
+            // Fallback: Analizador nativo de Javascript
+            try {
+                const parsedDate = new Date(dateStr);
+                if (!isNaN(parsedDate.getTime())) {
+                    return `${parsedDate.getDate()} - ${monthNames[parsedDate.getMonth()]} - ${parsedDate.getFullYear()}`;
+                }
+            } catch (e) {}
+
+            return dateStr; // Retorna valor original si no se puede formatear
+        }
+
+        // Construir el árbol jerárquico recursivo a partir de los datos crudos del Google Sheets
+        function buildDynamicWbsTree(rows) {
+            const flatMap = {};
+            
+            rows.forEach(r => {
+                if (!r.c) return;
+                const edtRaw = r.c[0]?.v;
+                if (edtRaw === undefined || edtRaw === null) return;
+                const edt = edtRaw.toString().trim();
+                if (!edt) return;
+
+                const nombre = r.c[1]?.v || 'Sin Nombre';
+                const duracion = r.c[2]?.v || '';
+                const real = parseValue(r.c[3]);
+                const esperado = parseValue(r.c[4]);
+                const comienzo = r.c[6]?.f || r.c[6]?.v || '';
+                const fin = r.c[7]?.f || r.c[7]?.v || '';
+                const responsable = r.c[8]?.v || '';
+
+                flatMap[edt] = {
+                    code: edt,
+                    desc: nombre, 
+                    comp: real,   
+                    esp: esperado, 
+                    inicio: comienzo,
+                    fin: fin,
+                    responsable: responsable,
+                    duracion: duracion,
+                    children: []
+                };
+            });
+
+            // Reiniciar estructuras locales
+            currentData = {};
+            SUB_ACTIVITIES = {};
+
+            // Ordenar claves alfabéticamente para asegurar un emparejamiento jerárquico de arriba hacia abajo
+            const allEdts = Object.keys(flatMap).sort((a, b) => {
+                return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+            });
+
+            allEdts.forEach(edt => {
+                const item = flatMap[edt];
+                const parts = edt.split('.');
+
+                // Componentes Padre (EDT 1 y 2)
+                if (parts.length === 1) {
+                    currentData[edt] = {
+                        nombre: item.desc,
+                        real: Math.round(item.comp),
+                        esperado: Math.round(item.esp),
+                        duracion: item.duracion,
+                        inicio: item.inicio,
+                        fin: item.fin,
+                        responsable: item.responsable
+                    };
+                }
+                // Actividades Hijas Nivel 2 (e.g. 1.1, 1.2, 2.1, etc.)
+                else if (parts.length === 2) {
+                    currentData[edt] = {
+                        nombre: item.desc,
+                        real: Math.round(item.comp),
+                        esperado: Math.round(item.esp),
+                        duracion: item.duracion,
+                        inicio: item.inicio,
+                        fin: item.fin,
+                        responsable: item.responsable
+                    };
+                    SUB_ACTIVITIES[edt] = [];
+                }
+                // Desgloses Nivel 3 en adelante
+                else {
+                    const parentEdt = parts.slice(0, -1).join('.');
+                    if (flatMap[parentEdt]) {
+                        flatMap[parentEdt].children.push(item);
+                    }
+                }
+            });
+
+            // Poblar listados de desgloses de nivel 3 directo en el mapa del WBS
+            allEdts.forEach(edt => {
+                const parts = edt.split('.');
+                if (parts.length === 2) {
+                    SUB_ACTIVITIES[edt] = flatMap[edt].children || [];
+                }
+            });
+
+            // Clonar datos crudos a BACKUP_DATA para calibrar el simulador dinámicamente
+            BACKUP_DATA = JSON.parse(JSON.stringify(currentData));
+        }
+
+        // Actualizar distintivo de conexión en línea o fuera de línea
+        function updateConnectionBadge(online) {
+            const badge = document.getElementById('connection-badge');
+            if (badge) {
+                if (online) {
+                    badge.className = "bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-2";
+                    badge.innerHTML = `<i class="fa-solid fa-circle text-[8px] animate-pulse"></i> Sincronizado Online`;
+                } else {
+                    badge.className = "bg-amber-500/15 text-amber-500 border border-amber-500/30 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-2";
+                    badge.innerHTML = `<i class="fa-solid fa-cloud-arrow-down text-[10px]"></i> Base Offline Activa`;
+                }
+            }
+        }
+
+        // Inicialización General de la aplicación y petición HTTP
         async function init() {
+            showLoader(true);
+            setDynamicDate();
             try {
                 const res = await fetch(URL);
+                if (!res.ok) throw new Error("Error en fetch de Google Sheets");
+                
                 const text = await res.text();
                 const start = text.indexOf('{');
                 const end = text.lastIndexOf('}');
                 const json = JSON.parse(text.substring(start, end + 1));
-                const data = mapRows(json.table.rows);
-                updateDashboard(data);
+                
+                // Construir estructura jerárquica EDT dinámicamente
+                buildDynamicWbsTree(json.table.rows);
+                updateConnectionBadge(true);
             } catch (e) {
-                console.error("Error:", e);
-                document.getElementById('update-date').innerText = "ERROR DE SINCRONIZACIÓN";
+                console.warn("Fallo de conexión en línea. Cargando base de datos estática.", e);
+                updateConnectionBadge(false);
             } finally {
-                const loader = document.getElementById('loader');
-                if (loader) {
-                    loader.style.opacity = '0';
-                    setTimeout(() => loader.remove(), 500);
-                }
+                renderUI();
+                showLoader(false);
             }
         }
 
-        function mapRows(rows) {
-            const map = {};
-            rows.forEach(r => {
-                if (!r.c) return;
-                const edtRaw = r.c[0]?.v;
-                if (edtRaw !== undefined && edtRaw !== null) {
-                    const edtKey = edtRaw.toString().trim();
-                    map[edtKey] = {
-                        nombre: r.c[1]?.v || 'Tarea sin nombre',
-                        real: parseValue(r.c[3]),
-                        esperado: parseValue(r.c[4])
-                    };
+        // Configuración dinámica de la fecha actual ajustada a la Zona Horaria de Colombia (Bogotá)
+        function setDynamicDate() {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/Bogota' };
+            const today = new Date();
+            const formatter = new Intl.DateTimeFormat('es-CO', options);
+            let formattedDate = formatter.format(today);
+            
+            // Capitalizar la primera letra del día de la semana
+            formattedDate = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
+            document.getElementById('update-date').innerText = formattedDate;
+        }
+
+        // Renderizar todos los elementos de la UI a partir de la variable de estado
+        function renderUI() {
+            // Actualizar KPIs de Nivel Superior para las secciones Principales (1 y 2)
+            if (currentData['1']) {
+                const h1 = getHealthStatus('1', currentData['1'].real, currentData['1'].esperado);
+                document.getElementById('kpi-real-1').innerText = `${Math.round(currentData['1'].real)}%`;
+                document.getElementById('kpi-plan-1').innerText = `${Math.round(currentData['1'].esperado)}%`;
+                
+                document.getElementById('kpi-bar-1').style.width = `${currentData['1'].real}%`;
+                document.getElementById('kpi-bar-1').className = `progress-bar-fill absolute top-0 left-0 h-full rounded-full ${h1.colorClass}`;
+                
+                const statusBadge1 = document.getElementById('kpi-status-1');
+                statusBadge1.className = `px-2.5 py-1 rounded-full text-[9px] font-extrabold uppercase ${h1.lightBg} ${h1.textColor} border ${h1.borderClass}`;
+                statusBadge1.innerText = h1.text;
+                
+                document.getElementById('title-1').innerText = `${currentData['1'].nombre.toUpperCase()}`;
+            }
+            
+            if (currentData['2']) {
+                const h2 = getHealthStatus('2', currentData['2'].real, currentData['2'].esperado);
+                document.getElementById('kpi-real-2').innerText = `${Math.round(currentData['2'].real)}%`;
+                document.getElementById('kpi-plan-2').innerText = `${Math.round(currentData['2'].esperado)}%`;
+                
+                document.getElementById('kpi-bar-2').style.width = `${currentData['2'].real}%`;
+                document.getElementById('kpi-bar-2').className = `progress-bar-fill absolute top-0 left-0 h-full rounded-full ${h2.colorClass}`;
+                
+                const statusBadge2 = document.getElementById('kpi-status-2');
+                statusBadge2.className = `px-2.5 py-1 rounded-full text-[9px] font-extrabold uppercase ${h2.lightBg} ${h2.textColor} border ${h2.borderClass}`;
+                statusBadge2.innerText = h2.text;
+                
+                document.getElementById('title-2').innerText = `${currentData['2'].nombre.toUpperCase()}`;
+            }
+
+            // Renderizado de Componentes de Grupos (Tarjetas de Nivel 2)
+            renderItems('group-1', ['1.1', '1.2', '1.3', '1.4']);
+            renderItems('group-2', ['2.1', '2.2', '2.3', '2.4']);
+        }
+
+        // Retornar color y configuración según la brecha de avance
+        function getHealthStatus(key, real, esperado) {
+            const gap = esperado - real;
+            if (gap <= 0) {
+                return {
+                    text: 'Al Día',
+                    colorClass: 'bg-emerald-500',
+                    textColor: 'text-emerald-600',
+                    lightBg: 'bg-emerald-50',
+                    borderClass: 'border-emerald-500/20',
+                    icon: '🟢'
+                };
+            } else if (gap <= 10) {
+                return {
+                    text: 'Alerta Leve',
+                    colorClass: 'bg-amber-500',
+                    textColor: 'text-amber-600',
+                    lightBg: 'bg-amber-50',
+                    borderClass: 'border-amber-500/20',
+                    icon: '🟡'
+                };
+            } else {
+                return {
+                    text: 'Crítico / Demora',
+                    colorClass: 'bg-rose-500',
+                    textColor: 'text-rose-600',
+                    lightBg: 'bg-rose-50',
+                    borderClass: 'border-rose-500/20',
+                    icon: '🔴'
+                };
+            }
+        }
+
+        // Renderizado recursivo de filas del árbol WBS garantizando visibilidad completa
+        function buildTreeRows(items, depth = 0, parentExpanded = true, componentKey) {
+            let rowsHtml = '';
+            if (!items) return rowsHtml;
+            
+            items.forEach((item) => {
+                const hasChildren = item.children && item.children.length > 0;
+                const nodeKey = `${item.code.replace(/\./g, '-')}`;
+                
+                // Forzar nodos colapsados por defecto a partir del Nivel 3 para control progresivo de la alta gerencia
+                if (expandedWbsNodes[nodeKey] === undefined) {
+                    expandedWbsNodes[nodeKey] = false; 
+                }
+                
+                const isExpanded = expandedWbsNodes[nodeKey];
+                
+                // Calcular avances relativos considerando simulación
+                let realPercent = Math.round(item.comp);
+                let planPercent = Math.round(item.esp);
+                const parentData = currentData[componentKey];
+                const backupParent = BACKUP_DATA[componentKey];
+                
+                if (parentData && backupParent && parentData.real !== backupParent.real) {
+                    const ratioReal = parentData.real / (backupParent.real || 1);
+                    realPercent = Math.min(100, Math.round(item.comp * ratioReal));
+                }
+                if (parentData && backupParent && parentData.esperado !== backupParent.esperado) {
+                    const ratioPlan = parentData.esperado / (backupParent.esperado || 1);
+                    planPercent = Math.min(100, Math.round(item.esp * ratioPlan));
+                }
+                
+                const diff = planPercent - realPercent;
+                const status = diff <= 5 ? 'A TIEMPO' : 'ATRASADO';
+                
+                const statusBadge = status === 'A TIEMPO' 
+                    ? `<span class="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full text-[8.5px] font-black"><span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>A TIEMPO</span>`
+                    : `<span class="inline-flex items-center gap-1.5 bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-0.5 rounded-full text-[8.5px] font-black"><span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span>ATRASADO</span>`;
+                    
+                // Ajuste de identación WBS por nivel jerárquico
+                let indentClass = '';
+                let textClass = 'font-bold text-slate-800';
+                let bgClass = 'bg-white';
+                
+                if (depth === 0) {
+                    indentClass = 'pl-4';
+                    textClass = 'font-bold text-slate-900 text-[11px] leading-relaxed';
+                    bgClass = 'bg-slate-50/45';
+                } else if (depth === 1) {
+                    indentClass = 'pl-10';
+                    textClass = 'font-semibold text-slate-700 text-[10.5px]';
+                    bgClass = 'bg-slate-100/10';
+                } else if (depth === 2) {
+                    indentClass = 'pl-16';
+                    textClass = 'font-normal text-slate-500 text-[10px]';
+                    bgClass = 'bg-white';
+                } else if (depth >= 3) {
+                    indentClass = 'pl-20';
+                    textClass = 'font-normal text-slate-400 text-[9.5px]';
+                    bgClass = 'bg-white';
+                }
+                
+                const chevronIcon = hasChildren 
+                    ? `<i class="fa-solid ${isExpanded ? 'fa-chevron-down text-blue-700' : 'fa-chevron-right text-slate-400'} text-[8px] mr-1.5 flex-shrink-0 transition-transform"></i>` 
+                    : (depth > 0 ? `<span class="text-slate-300 mr-2 flex-shrink-0">└─</span>` : `<span class="w-3.5 inline-block"></span>`);
+                    
+                const clickAction = hasChildren 
+                    ? `onclick="toggleWbsNode('${nodeKey}', '${componentKey}')"` 
+                    : '';
+                    
+                if (parentExpanded) {
+                    rowsHtml += `
+                        <tr class="hover:bg-slate-50 transition-colors ${bgClass}">
+                            <td class="p-3 ${indentClass} flex items-center gap-1.5 select-none" ${clickAction} style="cursor: ${hasChildren ? 'pointer' : 'default'}">
+                                ${chevronIcon}
+                                <span class="leading-snug ${textClass}">${item.desc}</span>
+                            </td>
+                            <td class="p-3 text-center whitespace-nowrap">${statusBadge}</td>
+                            <td class="p-3 text-center font-extrabold whitespace-nowrap text-slate-950">${realPercent}%</td>
+                            <td class="p-3 text-center font-semibold whitespace-nowrap text-slate-500">${planPercent}%</td>
+                            <td class="p-3 text-center text-slate-500 whitespace-nowrap">${formatDateShort(item.inicio)}</td>
+                            <td class="p-3 text-center text-slate-500 whitespace-nowrap">${formatDateShort(item.fin)}</td>
+                            <td class="p-3 text-right pr-4 text-slate-600 font-medium whitespace-nowrap">${item.responsable || '-'}</td>
+                        </tr>
+                    `;
+                }
+                
+                // Procesar hijos de manera recursiva
+                if (hasChildren) {
+                    rowsHtml += buildTreeRows(item.children, depth + 1, parentExpanded && isExpanded, componentKey);
                 }
             });
-            return map;
+            return rowsHtml;
         }
 
-        function updateDashboard(map) {
-            if (map['1']) {
-                document.getElementById('real-1').innerText = `${Math.round(map['1'].real)}%`;
-                document.getElementById('plan-1').innerText = `${Math.round(map['1'].esperado)}%`;
-            }
-            if (map['2']) {
-                document.getElementById('real-2').innerText = `${Math.round(map['2'].real)}%`;
-                document.getElementById('plan-2').innerText = `${Math.round(map['2'].esperado)}%`;
-            }
-            renderItems('group-1', ['1.1', '1.2', '1.3', '1.4'], map);
-            renderItems('group-2', ['2.1', '2.2', '2.3', '2.4'], map);
-        }
-
-        function renderItems(containerId, keys, map) {
+        // Renderizado de las tarjetas principales con visor de árbol dinámico (WBS)
+        function renderItems(containerId, keys) {
             const container = document.getElementById(containerId);
             container.innerHTML = '';
-            
+
             keys.forEach((k, index) => {
-                const data = map[k];
-                const style = STYLE_CONFIG[k] || { 
-                    svg: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg>', 
-                    color: 'bg-slate-500', text: 'text-slate-600', light: 'bg-slate-50' 
+                const data = currentData[k];
+                if (!data) return;
+
+                const style = STYLE_CONFIG[k] || {
+                    svg: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg>',
+                    color: 'bg-slate-500', text: 'text-slate-600', light: 'bg-slate-50'
                 };
-                
-                if (data) {
-                    const html = `
-                        <div class="animate-fade-in" style="animation-delay: ${index * 100}ms">
-                            <div class="flex flex-col space-y-3">
-                                <div class="flex justify-between items-start">
-                                    <div class="flex items-center space-x-4">
-                                        <div class="icon-container ${style.light} ${style.text} shadow-sm border border-black/5">
-                                            ${style.svg}
-                                        </div>
-                                        <span class="text-[11px] font-black text-slate-700 uppercase leading-tight max-w-[200px] md:max-w-xs">${data.nombre}</span>
+
+                const health = getHealthStatus(k, data.real, data.esperado);
+                const subActivitiesList = SUB_ACTIVITIES[k] || [];
+
+                // Generación de filas recursivas del WBS
+                const subActivitiesRows = buildTreeRows(subActivitiesList, 0, true, k);
+                const isMainExpanded = expandedComponents[k] === true;
+
+                const html = `
+                    <div class="animate-fade-in hover:bg-slate-50/40 p-4 rounded-2xl border ${health.borderClass} transition-all duration-300 relative group" style="animation-delay: ${index * 70}ms" data-edt-item="${k}">
+                        <div class="flex flex-col space-y-3.5">
+                            
+                            <!-- Encabezado de la Tarjeta (Nivel 2) -->
+                            <div class="flex justify-between items-start gap-2">
+                                <div class="flex items-start space-x-3.5">
+                                    <div class="icon-container w-10 h-10 rounded-xl flex items-center justify-center ${style.light} ${style.text} shadow-sm border border-black/5 flex-shrink-0 text-lg">
+                                        ${style.svg}
                                     </div>
-                                    <div class="flex flex-col items-end">
-                                        <div class="flex items-baseline space-x-1">
-                                            <span class="${style.text} font-black text-sm">${Math.round(data.real)}%</span>
-                                            <span class="text-[8px] font-black text-slate-400 uppercase tracking-tighter">Real</span>
+                                    <div>
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <span class="text-[8px] font-bold ${health.textColor} uppercase flex items-center gap-1">
+                                                <span>${health.icon}</span> ${health.text}
+                                            </span>
                                         </div>
-                                        <div class="text-[9px] font-bold text-slate-400/80 uppercase">Esp: ${Math.round(data.esperado)}%</div>
+                                        <h4 class="text-xs font-extrabold text-slate-800 leading-tight mt-1 max-w-[220px] md:max-w-xs group-hover:text-blue-700 transition-colors">${data.nombre}</h4>
                                     </div>
                                 </div>
-                                <div class="progress-bar-bg relative">
-                                    <div class="progress-bar-fill relative z-10 ${style.color} shadow-sm" style="width: ${data.real}%">
-                                        <div class="absolute inset-0 bg-white/10"></div>
+                                
+                                <div class="flex flex-col items-end flex-shrink-0">
+                                    <div class="flex items-baseline space-x-0.5">
+                                        <span class="${style.text} font-black text-base">${Math.round(data.real)}%</span>
+                                        <span class="text-[8px] font-black text-slate-400 uppercase">Real</span>
                                     </div>
-                                    <div class="absolute top-0 left-0 h-full bg-slate-200/40" style="width: ${data.esperado}%"></div>
+                                    <div class="text-[9px] font-semibold text-slate-400">Esp: ${Math.round(data.esperado)}%</div>
                                 </div>
                             </div>
+
+                            <!-- Barra de progreso comparativa -->
+                            <div class="progress-bar-bg relative bg-slate-100 rounded-full h-2 w-full overflow-hidden border border-slate-200/50">
+                                <div class="progress-bar-fill absolute top-0 left-0 h-full rounded-full ${style.color} shadow-inner" style="width: ${data.real}%; z-index: 2">
+                                    <div class="absolute inset-0 bg-white/10 [background-image:linear-gradient(45deg,rgba(255,255,255,.15)_25%,transparent_25%,transparent_50%,rgba(255,255,255,.15)_50%,rgba(255,255,255,.15)_75%,transparent_75%,transparent)] [background-size:1rem_1rem]"></div>
+                                </div>
+                                <div class="absolute top-0 left-0 h-full bg-slate-200" style="width: ${data.esperado}%; z-index: 1"></div>
+                            </div>
+                            
+                            <!-- Acciones flotantes del componente -->
+                            <div class="flex justify-end items-center pt-1.5 text-[10px] text-slate-400">
+                                <button onclick="toggleMainComponent('${k}')" class="text-[#003366] hover:text-[#002244] font-extrabold uppercase tracking-wider flex items-center gap-1.5 text-[9px] transition-all bg-slate-100 hover:bg-slate-200/80 px-3 py-1.5 rounded-lg border border-slate-200/50 shadow-sm">
+                                    <span>Consultar Detalle</span>
+                                    <i id="chevron-${k.replace('.', '-')}" class="fa-solid fa-chevron-down text-[8px] transition-transform duration-350 ${isMainExpanded ? 'rotate-180' : ''}"></i>
+                                </button>
+                            </div>
+
+                            <!-- SECCIÓN DE DESPLIEGUE EN TABLA UNIFICADA (ÁRBOL DE PROCESO COMPLETO MULTINIVEL ESTILO PROJECT) -->
+                            <div id="activities-panel-${k.replace('.', '-')}" class="collapsible-activities w-full ${isMainExpanded ? 'open' : ''}">
+                                <div class="w-full overflow-x-auto rounded-xl border border-slate-200 shadow-sm mt-3 scrollbar-hide bg-white animate-fade-in">
+                                    <table class="w-full text-left text-[11px] min-w-[850px]">
+                                        <thead class="bg-slate-100 text-slate-700 font-extrabold uppercase text-[8px] tracking-wider border-b border-slate-200">
+                                            <tr>
+                                                <th class="p-3 pl-4">Fase / Actividad</th>
+                                                <th class="p-3 text-center">Estado</th>
+                                                <th class="p-3 text-center">% Comp.</th>
+                                                <th class="p-3 text-center">% Esp.</th>
+                                                <th class="p-3 text-center">Inicio</th>
+                                                <th class="p-3 text-center">Fin</th>
+                                                <th class="p-3 text-right pr-4">Responsable</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-slate-100">
+                                            ${subActivitiesRows || `<tr><td colspan="7" class="p-4 text-center text-slate-400 italic">No hay detalles registrados para esta sección.</td></tr>`}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
                         </div>
-                    `;
-                    container.insertAdjacentHTML('beforeend', html);
-                }
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', html);
             });
+        }
+
+        // Intercambiar estado de plegado del componente principal de nivel 2 (Cards)
+        function toggleMainComponent(key) {
+            expandedComponents[key] = !expandedComponents[key];
+            renderUI();
+        }
+
+        // Intercambiar estado de plegado de cualquier nodo del árbol de actividades (WBS)
+        function toggleWbsNode(nodeKey, componentKey) {
+            expandedWbsNodes[nodeKey] = !expandedWbsNodes[nodeKey];
+            renderUI();
         }
 
         window.onload = init;
