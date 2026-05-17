@@ -3,570 +3,835 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tablero Gerencial de Proyecto - Guajira</title>
+    <title>Tablero OAAS - Seguimiento de Alta Gerencia</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- FontAwesome para Iconos -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
     <style>
-        /* ESTILOS BASE */
-        body { 
-            background-color: #f3f4f6;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            position: relative;
-            z-index: 0;
+        :root {
+            --mme-blue-dark: #002244;
+            --mme-blue: #003366;
+            --mme-blue-light: #0055a5;
+            --mme-yellow: #FFD700;
+            --mme-yellow-dark: #ccac00;
+            --colombia-red: #da291c;
         }
-        
-        /* MARCA DE AGUA SUTIL */
-        body::before {
-            content: "";
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 70vw;
-            height: 80vh;
-            background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Colombia_-_La_Guajira_-_Relief_Map.svg/800px-Colombia_-_La_Guajira_-_Relief_Map.svg.png');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-            opacity: 0.06;
-            z-index: -1; 
-            pointer-events: none; 
+        body {
+            background-color: #f8fafc;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            color: #0f172a;
         }
-        
-        .table-container { max-height: 60vh; overflow-y: auto; }
-        thead th { position: sticky; top: 0; background-color: #f8f9fa; z-index: 10; border-bottom: 2px solid #dee2e6; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .progress-bg { background-color: #e9ecef; border-radius: 4px; height: 8px; width: 100%; overflow: hidden; }
-        .progress-bar { background-color: #003B6A; height: 100%; }
-        
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px;}
-        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
-        
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        .tab-active { border-bottom-width: 3px; border-color: #F2C811; color: #003B6A; font-weight: bold; background-color: rgba(242, 200, 17, 0.1); }
-        .tab-inactive { border-bottom-width: 3px; border-color: transparent; color: #6b7280; font-weight: 500; }
-        .tab-inactive:hover { color: #003B6A; background-color: rgba(0, 59, 106, 0.05); }
+        .header-gradient {
+            background: linear-gradient(135deg, var(--mme-blue-dark) 0%, #004080 50%, var(--mme-blue-light) 100%);
+        }
+        .flag-strip {
+            height: 4px;
+            background: linear-gradient(to right, var(--mme-yellow) 57%, var(--mme-blue) 57%, var(--mme-blue) 80%, var(--colombia-red) 80%);
+        }
+        .card-shadow {
+            box-shadow: 0 10px 30px -10px rgba(0, 51, 102, 0.08);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+        .progress-bar-fill {
+            transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        /* Transición de apertura suave del panel principal de detalles */
+        .collapsible-activities {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-out;
+            opacity: 0;
+        }
+        .collapsible-activities.open {
+            max-height: 8000px;
+            opacity: 1;
+            overflow-y: visible;
+        }
+        .icon-container {
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            flex-shrink: 0;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
     </style>
 </head>
-<body class="text-gray-800 flex flex-col h-screen">
+<body class="min-h-screen flex flex-col selection:bg-yellow-200">
 
-    <header class="bg-[#003B6A] text-white p-4 shadow-lg flex flex-col md:flex-row justify-between items-center shrink-0 gap-4 border-b-4 border-[#F2C811] z-20 relative">
-        <div class="flex items-center gap-4">
-            <div class="bg-white p-2 rounded-full h-12 w-12 flex items-center justify-center shadow-inner">
-                <i class="fas fa-bolt text-[#F2C811] text-2xl"></i>
+    <!-- Loader de optimización de datos -->
+    <div id="loader" class="fixed inset-0 bg-slate-900/95 z-50 flex flex-col justify-center items-center backdrop-blur-sm transition-opacity duration-500">
+        <div class="flex flex-col items-center">
+            <div class="relative w-16 h-16 mb-4">
+                <div class="absolute inset-0 rounded-full border-4 border-slate-700"></div>
+                <div class="absolute inset-0 rounded-full border-4 border-t-[#FFD700] border-r-[#003366] animate-spin"></div>
             </div>
-            <div>
-                <h1 class="text-2xl font-bold">Gerencia Guajira</h1>
-                <p class="text-xs text-blue-200 mt-1 uppercase tracking-wide font-semibold">Ministerio de Minas y Energía</p>
-            </div>
+            <p class="text-xs font-bold text-white uppercase tracking-widest text-center max-w-xs leading-relaxed px-4">
+                Oficina de Asuntos Ambientales y Sociales<br>
+                <span class="text-[#FFD700] font-normal text-[10px] tracking-normal">Construyendo árbol jerárquico EDT en tiempo real...</span>
+            </p>
         </div>
+    </div>
+
+    <!-- Línea tricolor patria -->
+    <div class="flag-strip"></div>
+    
+    <header class="header-gradient text-white py-5 px-6 shadow-xl relative overflow-hidden">
+        <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
         
-        <div class="flex items-center gap-4">
-            <div class="flex items-center bg-[#00264A] p-2 rounded-md text-sm text-green-300 font-semibold shadow-inner border border-blue-800" id="syncStatusUI">
-                <i class="fas fa-sync fa-spin mr-2" id="syncIcon"></i> <span id="syncText">Sincronizando datos...</span>
+        <div class="max-w-[1700px] mx-auto flex flex-col lg:flex-row justify-between items-center relative z-10 gap-4">
+            <!-- Logo y títulos -->
+            <div class="flex items-center space-x-4">
+                <div class="p-3 bg-white/10 rounded-2xl backdrop-blur-md border border-white/20 shadow-inner flex items-center justify-center">
+                    <svg class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path></svg>
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-black tracking-tight uppercase leading-none mt-1">
+                        Oficina de Asuntos Ambientales y Sociales (OAAS)
+                    </h1>
+                    <p class="text-yellow-400 text-xs font-bold tracking-widest uppercase opacity-90 mt-1">
+                        Seguimiento de gestión
+                    </p>
+                </div>
+            </div>
+
+            <!-- Acciones rápidas y conexión -->
+            <div class="flex items-center gap-3">
+                <span id="update-date" class="bg-black/35 border border-white/15 px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest text-white/95">
+                    Cargando fecha...
+                </span>
+                
+                <span id="connection-badge" class="bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
+                    <i class="fa-solid fa-circle text-[8px] animate-pulse"></i>
+                    Sincronizado Online
+                </span>
             </div>
         </div>
     </header>
 
-    <main class="flex-1 p-4 md:p-6 overflow-hidden flex flex-col max-w-[95%] mx-auto w-full relative">
-        <div id="emptyState" class="flex-1 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-8 border border-gray-200">
-            <i class="fas fa-cloud-download-alt text-6xl mb-4 text-blue-500 animate-bounce"></i>
-            <h2 class="text-xl font-semibold text-gray-700 text-center" id="emptyStateTitle">Conectando con la base de datos...</h2>
-            <p class="text-sm mt-4 max-w-lg text-center leading-relaxed text-gray-500" id="emptyStateDesc">Estamos descargando la información más reciente del proyecto.</p>
-        </div>
-
-        <div id="dashboard" class="hidden flex-1 flex flex-col min-h-0 bg-white/90 backdrop-blur-md rounded-xl shadow-2xl border border-gray-200 overflow-hidden">
-            <div class="flex border-b border-gray-200 bg-gray-50/80 pt-2 px-4 overflow-x-auto no-scrollbar">
-                <button onclick="switchTab('resumen')" id="btn-resumen" class="tab-active px-5 py-3 transition-colors rounded-t-lg flex items-center gap-2 whitespace-nowrap text-sm">
-                    <i class="fas fa-chart-pie"></i> Resumen
-                </button>
-                <button onclick="switchTab('territorial')" id="btn-territorial" class="tab-inactive px-5 py-3 transition-colors rounded-t-lg flex items-center gap-2 whitespace-nowrap text-sm">
-                    <i class="fas fa-map-marked-alt"></i> Territorial
-                </button>
-                <button onclick="switchTab('conflictos')" id="btn-conflictos" class="tab-inactive px-5 py-3 transition-colors rounded-t-lg flex items-center gap-2 whitespace-nowrap text-sm">
-                    <i class="fas fa-hands-helping"></i> Conflictos
-                </button>
-                <button onclick="switchTab('ambiental')" id="btn-ambiental" class="tab-inactive px-5 py-3 transition-colors rounded-t-lg flex items-center gap-2 whitespace-nowrap text-sm">
-                    <i class="fas fa-leaf"></i> Ambiental
-                </button>
-                <button onclick="switchTab('etnica')" id="btn-etnica" class="tab-inactive px-5 py-3 transition-colors rounded-t-lg flex items-center gap-2 whitespace-nowrap text-sm">
-                    <i class="fas fa-users"></i> Étnica
-                </button>
-            </div>
-
-            <div id="tab-resumen" class="flex-1 overflow-auto p-6 bg-gray-50/50">
-                <h3 class="text-lg font-bold text-[#003B6A] mb-4 border-b border-gray-200 pb-2"><i class="fas fa-globe-americas mr-2 text-[#F2C811]"></i>Avance General: Oficina de Asuntos Ambientales y Sociales (OAAS)</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                    <div class="bg-white/95 p-6 rounded-xl shadow-sm border border-gray-200 flex items-center gap-4 border-l-4 border-l-[#003B6A]">
-                        <div class="bg-blue-50 p-4 rounded-full text-[#003B6A]"><i class="fas fa-chart-line text-3xl"></i></div>
-                        <div>
-                            <p class="text-sm text-gray-500 font-bold uppercase tracking-wide">% Completado</p>
-                            <div class="flex items-baseline gap-2">
-                                <h4 class="text-4xl font-black text-[#003B6A]" id="kpi-pct-completado">0%</h4>
-                                <span class="text-xs font-semibold text-gray-400">Avance Real</span>
-                            </div>
-                        </div>
+    <!-- Contenedor principal de la aplicación -->
+    <main class="max-w-[1700px] mx-auto p-4 md:p-8 w-full flex-grow flex flex-col gap-8">
+        
+        <!-- SECCIÓN DE KPIs CONSOLIDADOS POR COMPONENTE -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
+            
+            <!-- Bloque Resumen Gerencia Guajira -->
+            <div class="bg-white p-6 rounded-2xl card-shadow border-t-4 border-[#003366] relative overflow-hidden flex flex-col justify-between">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-base font-black text-[#003366] uppercase mt-1">GERENCIA GUAJIRA</h3>
                     </div>
-                    <div class="bg-white/95 p-6 rounded-xl shadow-sm border border-gray-200 flex items-center gap-4 border-l-4 border-l-purple-500">
-                        <div class="bg-purple-50 p-4 rounded-full text-purple-600"><i class="fas fa-bullseye text-3xl"></i></div>
-                        <div>
-                            <p class="text-sm text-gray-500 font-bold uppercase tracking-wide">% Planeado</p>
-                            <div class="flex items-baseline gap-2">
-                                <h4 class="text-4xl font-black text-purple-600" id="kpi-pct-planeado">0%</h4>
-                                <span class="text-xs font-semibold text-gray-400">Meta Esperada</span>
-                            </div>
-                        </div>
-                    </div>
+                    <span id="kpi-status-1" class="px-2.5 py-1 rounded-full text-[9px] font-extrabold uppercase bg-emerald-50 text-emerald-600">--</span>
                 </div>
-
-                <h3 class="text-lg font-bold text-[#003B6A] mb-4 border-b border-gray-200 pb-2"><i class="fas fa-list-ul mr-2 text-[#F2C811]"></i>Distribución de Tareas del Proyecto</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-white/95 p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col border-l-4 border-l-blue-400">
-                        <div class="flex items-center gap-4">
-                            <div class="bg-blue-100 p-3 rounded-full text-blue-600"><i class="fas fa-tasks text-xl"></i></div>
-                            <div>
-                                <p class="text-xs text-gray-500 font-semibold uppercase">Total de Tareas</p>
-                                <h4 class="text-2xl font-bold text-gray-800" id="kpi-total">0</h4>
-                            </div>
-                        </div>
-                        <div class="mt-4 pt-3 border-t border-gray-100 grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-gray-600">
-                            <div class="flex justify-between"><span>Territorial:</span> <span id="kpi-total-territorial" class="font-bold">0</span></div>
-                            <div class="flex justify-between"><span>Conflictos:</span> <span id="kpi-total-conflictos" class="font-bold">0</span></div>
-                            <div class="flex justify-between"><span>Ambiental:</span> <span id="kpi-total-ambiental" class="font-bold">0</span></div>
-                            <div class="flex justify-between"><span>Étnica:</span> <span id="kpi-total-etnica" class="font-bold">0</span></div>
-                        </div>
+                
+                <div class="flex flex-col sm:flex-row items-center gap-6 w-full">
+                    <div class="text-center p-3.5 bg-blue-50/50 rounded-2xl min-w-[115px] border border-blue-100/30 w-full sm:w-auto flex-shrink-0">
+                        <span class="block text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-1">Avance Logrado</span>
+                        <span id="kpi-real-1" class="text-3xl font-black text-[#003366]">--%</span>
                     </div>
-                    <div class="bg-white/95 p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col border-l-4 border-l-green-500">
-                        <div class="flex items-center gap-4">
-                            <div class="bg-green-100 p-3 rounded-full text-green-600"><i class="fas fa-check-circle text-xl"></i></div>
-                            <div>
-                                <p class="text-xs text-gray-500 font-semibold uppercase">En Cronograma</p>
-                                <h4 class="text-2xl font-bold text-green-600" id="kpi-atiempo">0</h4>
-                            </div>
+                    <div class="w-full">
+                        <div class="flex justify-between text-[10px] text-slate-500 mb-1">
+                            <span>Avance Esperado: <strong id="kpi-plan-1" class="text-slate-700">--%</strong></span>
                         </div>
-                        <div class="mt-4 pt-3 border-t border-gray-100 grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-gray-600">
-                            <div class="flex justify-between"><span>Territorial:</span> <span id="kpi-atiempo-territorial" class="font-bold text-green-600">0</span></div>
-                            <div class="flex justify-between"><span>Conflictos:</span> <span id="kpi-atiempo-conflictos" class="font-bold text-green-600">0</span></div>
-                            <div class="flex justify-between"><span>Ambiental:</span> <span id="kpi-atiempo-ambiental" class="font-bold text-green-600">0</span></div>
-                            <div class="flex justify-between"><span>Étnica:</span> <span id="kpi-atiempo-etnica" class="font-bold text-green-600">0</span></div>
-                        </div>
-                    </div>
-                    <div class="bg-white/95 p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col border-l-4 border-l-red-500">
-                        <div class="flex items-center gap-4">
-                            <div class="bg-red-100 p-3 rounded-full text-red-600"><i class="fas fa-exclamation-triangle text-xl"></i></div>
-                            <div>
-                                <p class="text-xs text-gray-500 font-semibold uppercase">Actividades Atrasadas</p>
-                                <h4 class="text-2xl font-bold text-red-600" id="kpi-atrasadas">0</h4>
-                            </div>
-                        </div>
-                        <div class="mt-4 pt-3 border-t border-gray-100 grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-gray-600">
-                            <div class="flex justify-between"><span>Territorial:</span> <span id="kpi-atrasadas-territorial" class="font-bold text-red-600">0</span></div>
-                            <div class="flex justify-between"><span>Conflictos:</span> <span id="kpi-atrasadas-conflictos" class="font-bold text-red-600">0</span></div>
-                            <div class="flex justify-between"><span>Ambiental:</span> <span id="kpi-atrasadas-ambiental" class="font-bold text-red-600">0</span></div>
-                            <div class="flex justify-between"><span>Étnica:</span> <span id="kpi-atrasadas-etnica" class="font-bold text-red-600">0</span></div>
+                        <div class="progress-bar-bg relative bg-slate-100 rounded-full h-2.5 w-full overflow-hidden border border-slate-200/50">
+                            <div id="kpi-bar-1" class="progress-bar-fill absolute top-0 left-0 h-full rounded-full bg-[#003366]" style="width: 0%"></div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div id="tab-detalle" class="hidden flex-1 flex-col min-h-0">
-                <div class="p-3 bg-white/95 border-b border-gray-200 flex flex-col xl:flex-row justify-between items-start xl:items-center shrink-0 gap-4">
-                    <div class="flex-1 w-full xl:w-auto">
-                        <div class="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-4">
-                            <h3 class="font-bold text-[#003B6A] text-lg lg:text-xl leading-tight shrink-0" id="detalle-title">
-                                <i class="fas fa-sitemap mr-2 text-[#F2C811]"></i> Detalle de Gestión
-                            </h3>
-                            <div id="detalle-stats" class="hidden flex-wrap items-center gap-x-3 gap-y-1 text-sm border-t border-gray-200 pt-2 lg:border-t-0 lg:pt-0 lg:border-l lg:border-gray-300 lg:pl-3"></div>
-                        </div>
+            <!-- Bloque Resumen Pacto por la Transición Energética Justa -->
+            <div class="bg-white p-6 rounded-2xl card-shadow border-t-4 border-yellow-500 relative overflow-hidden flex flex-col justify-between">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-base font-black text-[#003366] uppercase mt-1">PACTO TRANSICIÓN</h3>
                     </div>
-                    
-                    <div class="flex flex-wrap items-center gap-3 shrink-0 w-full xl:w-auto justify-start xl:justify-end">
-                        <div class="flex items-center gap-2 bg-gray-50 p-1.5 rounded border border-gray-200 shadow-inner">
-                            <div class="flex items-center gap-1.5">
-                                <label class="text-[11px] font-bold text-[#003B6A]"><i class="fas fa-filter mr-1 text-gray-400"></i>Estado:</label>
-                                <select id="filter-estado" onchange="renderTable()" class="text-[11px] border border-gray-300 rounded p-1 bg-white outline-none focus:border-blue-500 cursor-pointer">
-                                    <option value="all">Todos</option>
-                                    <option value="🟢 A Tiempo">A Tiempo</option>
-                                    <option value="🔴 Atrasado">Atrasado</option>
-                                </select>
-                            </div>
-                            <div class="flex items-center gap-1.5 border-l border-gray-300 pl-2">
-                                <label class="text-[11px] font-bold text-[#003B6A]"><i class="fas fa-user mr-1 text-gray-400"></i>Responsable:</label>
-                                <select id="filter-responsable" onchange="renderTable()" class="text-[11px] border border-gray-300 rounded p-1 bg-white outline-none focus:border-blue-500 cursor-pointer max-w-[130px]">
-                                    <option value="all">Todos</option>
-                                </select>
-                            </div>
-                        </div>
-                        <button onclick="downloadExcel()" class="bg-[#F2C811] hover:bg-yellow-500 text-[#003B6A] px-3 py-1.5 rounded shadow-sm text-xs font-bold transition-colors flex items-center gap-2 whitespace-nowrap h-full border border-yellow-400">
-                            <i class="fas fa-download"></i> Descargar data
-                        </button>
-                    </div>
+                    <span id="kpi-status-2" class="px-2.5 py-1 rounded-full text-[9px] font-extrabold uppercase bg-rose-50 text-rose-600">--</span>
                 </div>
-
-                <div class="flex-1 overflow-auto table-container bg-white/80">
-                    <table class="w-full text-left border-collapse" style="min-width: 1000px;">
-                        <thead>
-                            <tr>
-                                <th class="p-3 text-xs font-bold text-[#003B6A] w-20">EDT</th>
-                                <th class="p-3 text-xs font-bold text-[#003B6A]">Fase / Actividad</th>
-                                <th class="p-3 text-xs font-bold text-[#003B6A] w-28">Estado</th>
-                                <th class="p-3 text-xs font-bold text-[#003B6A] w-16 text-center">% Comp.</th>
-                                <th class="p-3 text-xs font-bold text-[#003B6A] w-16 text-center">% Esp.</th>
-                                <th class="p-3 text-xs font-bold text-[#003B6A] w-24 text-center">Inicio</th>
-                                <th class="p-3 text-xs font-bold text-[#003B6A] w-24 text-center">Fin</th>
-                                <th class="p-3 text-xs font-bold text-[#003B6A] w-32">Responsable</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tableBody" class="text-sm divide-y divide-gray-100"></tbody>
-                    </table>
+                
+                <div class="flex flex-col sm:flex-row items-center gap-6 w-full">
+                    <div class="text-center p-3.5 bg-yellow-50/40 rounded-2xl min-w-[115px] border border-yellow-100/30 w-full sm:w-auto flex-shrink-0">
+                        <span class="block text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-1">Avance Logrado</span>
+                        <span id="kpi-real-2" class="text-3xl font-black text-yellow-600">--%</span>
+                    </div>
+                    <div class="w-full">
+                        <div class="flex justify-between text-[10px] text-slate-500 mb-1">
+                            <span>Avance Esperado: <strong id="kpi-plan-2" class="text-slate-700">--%</strong></span>
+                        </div>
+                        <div class="progress-bar-bg relative bg-slate-100 rounded-full h-2.5 w-full overflow-hidden border border-slate-200/50">
+                            <div id="kpi-bar-2" class="progress-bar-fill absolute top-0 left-0 h-full rounded-full bg-yellow-500" style="width: 0%"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+            
+        </section>
+
+        <!-- Contenedor Principal de Reportes de Secciones -->
+        <section id="grid-view" class="grid grid-cols-1 xl:grid-cols-2 gap-8 w-full">
+            
+            <!-- SECCIÓN 1: GERENCIA GUAJIRA -->
+            <article class="card-project p-6 md:p-8 relative bg-white rounded-3xl transition-all duration-300 card-shadow">
+                <div class="absolute top-0 left-0 w-full h-1.5 bg-[#003366]"></div>
+                
+                <!-- Cabecera de Sección -->
+                <div class="text-center mb-6">
+                    <h2 class="text-lg font-black text-[#003366] tracking-tight uppercase text-center" id="title-1">
+                        GERENCIA GUAJIRA
+                    </h2>
+                </div>
+
+                <!-- Componentes de Sección 1 -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Detalles del Componente</span>
+                        <span class="text-[9px] font-semibold text-slate-400">Avance y Planificación</span>
+                    </div>
+                    <!-- Contenedor dinámico de ítems -->
+                    <div id="group-1" class="space-y-6"></div>
+                </div>
+            </article>
+
+            <!-- SECCIÓN 2: PACTO TRANSICIÓN ENERGÉTICA -->
+            <article class="card-project p-6 md:p-8 relative bg-white rounded-3xl transition-all duration-300 card-shadow">
+                <div class="absolute top-0 left-0 w-full h-1.5 bg-yellow-500"></div>
+                
+                <!-- Cabecera de Sección -->
+                <div class="text-center mb-6">
+                    <h2 class="text-lg font-black text-[#003366] tracking-tight uppercase text-center" id="title-2">
+                        PACTO TRANSICIÓN
+                    </h2>
+                </div>
+
+                <!-- Componentes de Sección 2 -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Detalles del Componente</span>
+                        <span class="text-[9px] font-semibold text-slate-400">Avance y Planificación</span>
+                    </div>
+                    <!-- Contenedor dinámico de ítems -->
+                    <div id="group-2" class="space-y-6"></div>
+                </div>
+            </article>
+            
+        </section>
+
+        <!-- Footer con compromiso territorial de La Guajira -->
+        <footer class="mt-8 mb-4 max-w-4xl mx-auto text-center w-full">
+            <div class="bg-gradient-to-r from-blue-50/40 via-blue-50/80 to-blue-50/40 p-6 rounded-[2rem] border border-blue-100/30">
+                <p class="text-xs font-medium italic text-[#003366]/80 px-4 leading-relaxed">
+                    "La Guajira es el epicentro de la Transición Energética Justa. El bienestar social y el respeto ambiental 
+                    en cada comunidad es nuestra prioridad permanente para forjar un desarrollo equitativo."
+                </p>
+                <div class="mt-4 flex items-center justify-center space-x-3">
+                    <div class="h-[1px] w-12 bg-yellow-400"></div>
+                    <span class="text-[8px] font-extrabold text-slate-500 uppercase tracking-[0.3em]">
+                        Compromiso Social, Ambiental y Minero • OAAS • MinEnergía
+                    </span>
+                    <div class="h-[1px] w-12 bg-yellow-400"></div>
+                </div>
+            </div>
+        </footer>
     </main>
 
+    <!-- Pie de página general -->
+    <footer class="bg-slate-950 py-4 text-center mt-auto border-t border-slate-900">
+        <p class="text-[8px] text-slate-400 font-bold tracking-[0.4em] uppercase">
+            Ministerio de Minas y Energía - República de Colombia
+        </p>
+    </footer>
+
     <script>
-        let allData = [];
-        let expandedNodes = new Set(); 
-        let currentCategory = null; 
+        // CONFIGURACIONES BÁSICAS DE GOOGLE SHEET
+        const SHEET_ID = '1CWZlW4Ij8KhhYqPJdMKozk_bAHXmRQlq';
+        const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
 
-        const SHEET_ID = "1CWZlW4Ij8KhhYqPJdMKozk_bAHXmRQlq";
-        const AUTO_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
+        // CONFIGURACIÓN DE ESTILOS E ICONOS CON SVGs DIRECTOS (Robustez absoluta y colores temáticos)
+        const STYLE_CONFIG = {
+            '1.1': { // Étnica
+                svg: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>',
+                color: 'bg-amber-500', text: 'text-amber-600', light: 'bg-amber-50', borderClass: 'border-amber-200'
+            },
+            '1.2': { // Territorial
+                svg: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>',
+                color: 'bg-blue-500', text: 'text-blue-600', light: 'bg-blue-50', borderClass: 'border-blue-200'
+            },
+            '1.3': { // Gestión de Conflictos - Globos de conversación y mediación de consensos exitosos
+                svg: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M18 11c.7 0 1.37.1 2 .29V8c0-2.2-1.8-4-4-4H4C1.8 4 0 5.8 0 8v8c0 2.2 1.8 4 4 4h4v3l4.3-3H16c.3 0 .6-.04.9-.11-.56-.84-.9-1.85-.9-2.93s.34-2.09.9-2.93c-.9-.03-1.9-.03-2.9-.03zm1-3H5V6h11V8zm-5 3H5V9h6V11zm9 3.5l-3.5 3.5-1.5-1.5-1.4 1.4 2.9 2.9 4.9-4.9-1.4-1.4z"/></svg>',
+                color: 'bg-rose-500', text: 'text-rose-600', light: 'bg-rose-50', borderClass: 'border-rose-200'
+            },
+            '1.4': { // Gestión Ambiental
+                svg: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M12.3 3c-1-.1-2 .1-3 .5C7.4 4.3 6.1 5.8 5.4 7.6c-1 2.3-.6 5 1 6.9l-3.1 3.1 1.4 1.4 3.1-3.1c1.4 1.1 3.2 1.6 5 1.4 2.4-.3 4.6-1.7 5.7-3.9 1.5-3 1-6.7-1.2-9-1.3-1.4-3.1-2.2-5-2.3zm2.5 10c-.7 1.4-2.1 2.3-3.7 2.5-1.1.1-2.2-.2-3-.9l6.3-6.3c1 .9 1.3 2.2 1.9 3.4l-.5 1.3z"/></svg>',
+                color: 'bg-emerald-500', text: 'text-emerald-600', light: 'bg-emerald-50', borderClass: 'border-emerald-200'
+            },
+            '2.1': { // Mesa 1 - Símbolo de Alianza, Unión y Transición Sostenible
+                svg: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5.06 11.53l-3.34 3.34a2 2 0 01-2.83 0l-3.34-3.34a2 2 0 010-2.83c.78-.78 2.05-.78 2.83 0l1.1 1.1 1.1-1.1c.78-.78 2.05-.78 2.83 0a2 2 0 010 2.83z" /></svg>',
+                color: 'bg-cyan-500', text: 'text-cyan-600', light: 'bg-cyan-50', borderClass: 'border-cyan-200'
+            },
+            '2.2': { // Mesa 2
+                svg: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm-2 16l-4-4h2.5v-3h3v3H16l-4 4zm1-9V3.5L18.5 9H13z"/></svg>',
+                color: 'bg-indigo-500', text: 'text-indigo-600', light: 'bg-indigo-50', borderClass: 'border-indigo-200'
+            },
+            '2.3': { // Mesa 3
+                svg: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M12 3L2 12h3v8h14v-8h3L12 3zm0 13c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>',
+                color: 'bg-orange-500', text: 'text-orange-600', light: 'bg-orange-50', borderClass: 'border-orange-200'
+            },
+            '2.4': { // Mesa 4
+                svg: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 17.08l1.5 1.41z"/></svg>',
+                color: 'bg-purple-500', text: 'text-purple-600', light: 'bg-purple-50', borderClass: 'border-purple-200'
+            }
+        };
 
-        const tableBody = document.getElementById('tableBody');
-        const emptyState = document.getElementById('emptyState');
-        const dashboard = document.getElementById('dashboard');
-        const syncStatusUI = document.getElementById('syncStatusUI');
-        const syncIcon = document.getElementById('syncIcon');
-        const syncText = document.getElementById('syncText');
+        // OBJETOS GLOBALES DE DATOS DINÁMICOS (Se poblará en base al Google Sheets directamente)
+        let currentData = {}; 
+        let BACKUP_DATA = {}; // Almacenará el estado inicial cargado para habilitar simulación proporcional
+        let SUB_ACTIVITIES = {}; // Almacenará la estructura jerárquica de desgloses de nivel 3 en adelante
 
-        function switchTab(tabName) {
-            const tabs = ['resumen', 'territorial', 'conflictos', 'ambiental', 'etnica'];
-            tabs.forEach(t => {
-                let btn = document.getElementById(`btn-${t}`);
-                if(btn) btn.className = 'tab-inactive px-5 py-3 transition-colors rounded-t-lg flex items-center gap-2 whitespace-nowrap text-sm';
-            });
-            let activeBtn = document.getElementById(`btn-${tabName}`);
-            if(activeBtn) activeBtn.className = 'tab-active px-5 py-3 transition-colors rounded-t-lg flex items-center gap-2 whitespace-nowrap text-sm';
+        // Registro de los acordeones expandidos/contraídos dinámicamente en el Tree Grid
+        let expandedWbsNodes = {};
+        let expandedComponents = {};
+
+        // Control del Cargador de pantalla
+        function showLoader(show) {
+            const loader = document.getElementById('loader');
+            if (loader) {
+                if (show) {
+                    loader.style.opacity = '1';
+                    loader.style.pointerEvents = 'all';
+                } else {
+                    loader.style.opacity = '0';
+                    loader.style.pointerEvents = 'none';
+                }
+            }
+        }
+
+        // Parsear valores de celdas procedentes de Google Sheets
+        function parseValue(cell) {
+            if (!cell) return 0;
+            let val = 0;
+            if (typeof cell.v === 'number') {
+                val = cell.v;
+            } else if (cell.f || typeof cell.v === 'string') {
+                const text = (cell.f || cell.v).toString();
+                const clean = text.replace('%', '').replace(',', '.').trim();
+                val = parseFloat(clean);
+            }
+            if (isNaN(val)) return 0;
+            if (val > 0 && val <= 1.1) return val * 100;
+            return val;
+        }
+
+        // Simplificar y estandarizar el formato de fecha para reportes ultra compactos (ej. 1-Jul-26)
+        function formatDateShort(dateStr) {
+            if (!dateStr) return '-';
+            dateStr = dateStr.toString().trim();
             
-            document.getElementById('filter-estado').value = 'all';
-            document.getElementById('filter-responsable').value = 'all';
+            // Eliminar prefijos de días de la semana comunes como "jue ", "dom ", etc.
+            dateStr = dateStr.replace(/^(lun|mar|mié|mie|jue|vie|sáb|sab|dom)\.?\s+/i, '');
+            
+            // Detectar formato estándar DD/MM/YYYY o D/M/YY
+            const parts = dateStr.match(/^(\d{1,2})[\/\- ](\d{1,2})[\/\- ](\d{2,4})$/);
+            let day, month, year;
+            const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
 
-            if (tabName === 'resumen') {
-                document.getElementById('tab-resumen').classList.remove('hidden');
-                document.getElementById('tab-resumen').classList.add('flex', 'flex-col');
-                document.getElementById('tab-detalle').classList.add('hidden');
-                document.getElementById('tab-detalle').classList.remove('flex', 'flex-col');
-                currentCategory = null;
+            if (parts) {
+                day = parseInt(parts[1], 10);
+                month = parseInt(parts[2], 10) - 1; // 0-indexed en JS
+                year = parts[3];
+                if (year.length === 2) {
+                    year = "20" + year; // asume siglo 21
+                }
             } else {
-                document.getElementById('tab-resumen').classList.add('hidden');
-                document.getElementById('tab-resumen').classList.remove('flex', 'flex-col');
-                document.getElementById('tab-detalle').classList.remove('hidden');
-                document.getElementById('tab-detalle').classList.add('flex', 'flex-col');
-                currentCategory = tabName;
-            }
-            renderTable();
-        }
-
-        function downloadExcel() {
-            let dataToExport = currentCategory ? allData.filter(r => r.category === currentCategory) : allData;
-            let stateFilter = document.getElementById('filter-estado').value;
-            let respFilter = document.getElementById('filter-responsable').value;
-            let visibleSet = new Set();
-            dataToExport.forEach(r => {
-                let matchState = stateFilter === 'all' || r.estado === stateFilter;
-                let matchResp = respFilter === 'all' || r.recurso === respFilter;
-                if (matchState && matchResp) {
-                    let parts = r.edt.split('.');
-                    let anc = "";
-                    for(let i=0; i<parts.length; i++){
-                        anc = anc === "" ? parts[i] : anc + "." + parts[i];
-                        visibleSet.add(anc);
-                    }
-                }
-            });
-            dataToExport = dataToExport.filter(r => visibleSet.has(r.edt));
-            
-            let reportTitle = currentCategory ? `Reporte de Gestión: ${currentCategory.toUpperCase()}` : "Reporte de Gestión: PROYECTO COMPLETO";
-            let excelData = [];
-            excelData.push([reportTitle]); 
-            excelData.push([""]); 
-            
-            let headers = ["EDT", "Nombre", "Duración", "Comienzo", "Fin", "Nombres_de_los_recursos", "% Completado", "% Planeado"];
-            excelData.push(headers);
-            dataToExport.forEach(row => {
-                let sangria = "  ".repeat(Math.max(0, row.nivel - (currentCategory ? 2 : 1)));
-                excelData.push([
-                    row.edt,
-                    sangria + row.nombre,
-                    row.duracion,
-                    row.comienzo,
-                    row.fin,
-                    row.recurso,
-                    (row.pctComp * 100).toFixed(0) + '%',
-                    (row.pctPlan * 100).toFixed(0) + '%'
-                ]);
-            });
-            let worksheet = XLSX.utils.aoa_to_sheet(excelData);
-            worksheet["!merges"] = [ { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } } ];
-            worksheet["!cols"] = [ { wch: 10 }, { wch: 55 }, { wch: 12 }, { wch: 13 }, { wch: 13 }, { wch: 35 }, { wch: 15 }, { wch: 15 } ];
-            
-            for (let R = 0; R < excelData.length; ++R) {
-                for (let C = 0; C < 8; ++C) {
-                    let cellRef = XLSX.utils.encode_cell({ r: R, c: C });
-                    if (!worksheet[cellRef]) continue;
-                    if (R === 0) {
-                        worksheet[cellRef].s = { font: { name: "Arial", sz: 14, bold: true, color: { rgb: "003B6A" } }, alignment: { horizontal: "center", vertical: "center" } };
-                    } else if (R === 2) {
-                        worksheet[cellRef].s = { font: { name: "Arial", sz: 11, bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "003B6A" } }, alignment: { horizontal: "center", vertical: "center" }, border: { top: {style: "thin", color: {rgb: "999999"}}, bottom: {style: "thin", color: {rgb: "999999"}} } };
-                    } else if (R > 2) {
-                        let cellStyle = { font: { name: "Arial", sz: 10, color: { rgb: "333333" } }, alignment: { vertical: "center" }, border: { bottom: {style: "thin", color: {rgb: "E5E7EB"}} } };
-                        if (C === 0 || C === 2 || C === 3 || C === 4 || C === 6 || C === 7) cellStyle.alignment.horizontal = "center";
-                        worksheet[cellRef].s = cellStyle;
-                    }
+                // Procesar fechas con texto tipo "1 enero 2026" o "1 de julio de 2026"
+                const cleanStr = dateStr.toLowerCase().replace(/\s+de\s+/g, ' ');
+                const words = cleanStr.split(/\s+/);
+                if (words.length >= 3) {
+                    day = parseInt(words[0], 10);
+                    year = words[2];
+                    if (year.length === 2) year = "20" + year;
+                    const mName = words[1];
+                    
+                    const dict = {
+                        'enero': 0, 'ene': 0, 'january': 0, 'jan': 0,
+                        'febrero': 1, 'feb': 1, 'february': 1,
+                        'marzo': 2, 'mar': 2, 'march': 2,
+                        'abril': 3, 'abr': 3, 'april': 3, 'apr': 3,
+                        'mayo': 4, 'may': 4,
+                        'junio': 5, 'jun': 5, 'june': 5,
+                        'julio': 6, 'jul': 6, 'july': 6,
+                        'agosto': 7, 'ago': 7, 'august': 7, 'aug': 7,
+                        'septiembre': 8, 'sep': 8, 'september': 8,
+                        'octubre': 9, 'oct': 9, 'october': 9,
+                        'noviembre': 10, 'nov': 10, 'november': 10,
+                        'diciembre': 11, 'dic': 11, 'december': 11, 'dec': 11
+                    };
+                    month = dict[mName] !== undefined ? dict[mName] : -1;
                 }
             }
-            let workbook = XLSX.utils.book_new();
-            let sheetName = currentCategory ? currentCategory.toUpperCase() : "GENERAL";
-            XLSX.utils.book_append_sheet(workbook, worksheet, sheetName.substring(0, 31));
-            XLSX.writeFile(workbook, currentCategory ? `Acta_Guajira_${currentCategory.toUpperCase()}.xlsx` : "Acta_Guajira_Completa.xlsx");
+
+            if (day && month >= 0 && month < 12 && year) {
+                const shortYear = year.toString().slice(-2);
+                return `${day}-${monthNames[month]}-${shortYear}`;
+            }
+
+            // Fallback: Analizador nativo de Javascript
+            try {
+                const parsedDate = new Date(dateStr);
+                if (!isNaN(parsedDate.getTime())) {
+                    const shortYear = parsedDate.getFullYear().toString().slice(-2);
+                    return `${parsedDate.getDate()}-${monthNames[parsedDate.getMonth()]}-${shortYear}`;
+                }
+            } catch (e) {}
+
+            return dateStr; // Retorna valor original si no se puede formatear
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            Papa.parse(AUTO_URL, {
-                download: true,
-                header: true,
-                skipEmptyLines: true,
-                complete: function(results) {
-                    if(results.data && results.data.length > 0) {
-                        handleParsedData(results.data);
-                        syncIcon.classList.remove('fa-sync', 'fa-spin');
-                        syncIcon.classList.add('fa-check-circle');
-                        syncText.textContent = "Datos Actualizados";
-                    } else {
-                        syncStatusFailed("El documento está vacío.");
-                    }
-                },
-                error: function(err) {
-                    console.error(err);
-                    syncStatusFailed("Error de permisos en el archivo.");
-                }
-            });
-        });
+        // Construir el árbol jerárquico recursivo a partir de los datos crudos del Google Sheets
+        function buildDynamicWbsTree(rows) {
+            const flatMap = {};
+            
+            rows.forEach(r => {
+                if (!r.c) return;
+                const edtRaw = r.c[0]?.v;
+                if (edtRaw === undefined || edtRaw === null) return;
+                const edt = edtRaw.toString().trim();
+                if (!edt) return;
 
-        function syncStatusFailed(reason) {
-            syncIcon.classList.remove('fa-sync', 'fa-spin');
-            syncIcon.classList.add('fa-times-circle', 'text-red-400');
-            syncText.textContent = "Error de conexión";
-            syncStatusUI.classList.replace('text-green-300', 'text-red-400');
-            syncStatusUI.classList.replace('border-blue-800', 'border-red-800');
-            document.getElementById('emptyStateTitle').textContent = "No pudimos conectar con el archivo";
-            document.getElementById('emptyStateDesc').innerHTML = `${reason} Asegúrate de que el enlace de Google Sheets sea público.`;
-        }
+                const nombre = r.c[1]?.v || 'Sin Nombre';
+                const duracion = r.c[2]?.v || '';
+                const real = parseValue(r.c[3]);
+                const esperado = parseValue(r.c[4]);
+                const comienzo = r.c[6]?.f || r.c[6]?.v || '';
+                const fin = r.c[7]?.f || r.c[7]?.v || '';
+                const responsable = r.c[8]?.v || '';
 
-        function handleParsedData(data) {
-            let recursosSet = new Set();
-            allData = data.map(row => {
-                let valComp = row['Porcentaje_completado'];
-                let pctComp = parseFloat(valComp) || 0;
-                if(typeof valComp === 'string' && valComp.includes('%')) pctComp = parseFloat(valComp.replace('%','')) / 100;
-                
-                let colPlaneado = row['Porcentaje_Planeado_Número_(Número2)_(Número2)'] || row['Porcentaje_Planeado_(Texto4)'] || "0";
-                let pctPlan = parseFloat(colPlaneado) || 0;
-                if(typeof colPlaneado === 'string' && colPlaneado.includes('%')) pctPlan = parseFloat(colPlaneado.replace('%','')) / 100;
-
-                let estado = (pctComp - pctPlan >= 0 || pctComp >= 1) ? "🟢 A Tiempo" : "🔴 Atrasado";
-                let estadoColor = (pctComp - pctPlan >= 0 || pctComp >= 1) ? "text-green-700 bg-green-100 border-green-300" : "text-red-700 bg-red-100 border-red-300";
-
-                let edt = row['EDT'] || '';
-                let nivelNum = parseInt(row['Nivel_de_esquema']);
-                if(isNaN(nivelNum)) nivelNum = edt ? edt.split('.').length : 1;
-
-                function extractDate(d) {
-                    if(!d || d === '-') return '-';
-                    let cleanStr = String(d).toLowerCase().trim();
-                    cleanStr = cleanStr.replace(/^(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo|lun|mar|mi[eé]|jue|vie|sab|s[aá]b|dom)[\s,]+/i, '');
-                    cleanStr = cleanStr.split(/ \d{1,2}:/)[0].trim();
-                    let m = cleanStr.match(/(\d{1,4})[\/\-](\d{1,2})[\/\-](\d{1,4})/);
-                    if(m) {
-                        if (m[1].length === 4) return `${m[3].padStart(2, '0')}/${m[2].padStart(2, '0')}/${m[1]}`;
-                        return `${m[1].padStart(2, '0')}/${m[2].padStart(2, '0')}/${m[3].length === 2 ? '20'+m[3] : m[3]}`;
-                    }
-                    const meses = {'enero': '01', 'ene': '01', 'febrero': '02', 'feb': '02', 'marzo': '03', 'mar': '03', 'abril': '04', 'abr': '04', 'mayo': '05', 'may': '05', 'junio': '06', 'jun': '06', 'julio': '07', 'jul': '07', 'agosto': '08', 'ago': '08', 'septiembre': '09', 'sep': '09', 'setiembre': '09', 'set': '09', 'octubre': '10', 'oct': '10', 'noviembre': '11', 'nov': '11', 'diciembre': '12', 'dic': '12'};
-                    for (let mes in meses) {
-                        let regex = new RegExp(`\\b${mes}\\b`, 'i');
-                        if (regex.test(cleanStr)) {
-                            let nums = cleanStr.match(/\d+/g);
-                            if (nums && nums.length >= 1) {
-                                let dia = nums[0];
-                                let anio = nums.length > 1 ? nums[nums.length - 1] : new Date().getFullYear().toString();
-                                if (anio.length === 2) anio = '20' + anio;
-                                return `${dia.padStart(2, '0')}/${meses[mes]}/${anio}`;
-                            }
-                        }
-                    }
-                    if (!isNaN(cleanStr) && cleanStr > 10000 && cleanStr < 99999) {
-                        let dateObj = new Date((cleanStr - 25569) * 86400 * 1000);
-                        dateObj = new Date(dateObj.getTime() + dateObj.getTimezoneOffset() * 60000);
-                        return `${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth()+1).padStart(2, '0')}/${dateObj.getFullYear()}`;
-                    }
-                    let dateObj = new Date(d);
-                    if(!isNaN(dateObj.getTime())) return `${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth()+1).padStart(2, '0')}/${dateObj.getFullYear()}`;
-                    return d.split(' ')[0];
-                }
-
-                let recursoLimpio = row['Nombres_de_los_recursos'] || 'Sin asignar';
-                if (recursoLimpio !== 'Sin asignar' && recursoLimpio.trim() !== '') recursosSet.add(recursoLimpio.trim());
-
-                return {
-                    edt: edt,
-                    nombre: row['Nombre'] || 'Sin nombre',
-                    duracion: row['Duración'] || '-',
-                    comienzo: extractDate(row['Comienzo']),
-                    fin: extractDate(row['Fin']),
-                    recurso: recursoLimpio,
-                    nivel: nivelNum,
-                    pctComp: pctComp,
-                    pctPlan: pctPlan,
-                    estado: estado,
-                    estadoColor: estadoColor,
-                    estadoPlano: (pctComp - pctPlan >= 0 || pctComp >= 1) ? 'atiempo' : 'atrasado',
-                    hasChildren: false,
-                    category: 'otro' 
+                flatMap[edt] = {
+                    code: edt,
+                    desc: nombre, 
+                    comp: real,   
+                    esp: esperado, 
+                    inicio: comienzo,
+                    fin: fin,
+                    responsable: responsable,
+                    duracion: duracion,
+                    children: []
                 };
             });
 
-            let selectResponsable = document.getElementById('filter-responsable');
-            Array.from(recursosSet).sort().forEach(rec => {
-                let opt = document.createElement('option');
-                opt.value = rec;
-                opt.textContent = rec;
-                selectResponsable.appendChild(opt);
+            // Reiniciar estructuras locales
+            currentData = {};
+            SUB_ACTIVITIES = {};
+
+            // Ordenar claves alfabéticamente para asegurar un emparejamiento jerárquico de arriba hacia abajo
+            const allEdts = Object.keys(flatMap).sort((a, b) => {
+                return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
             });
 
-            let categoryMap = {};
-            allData.forEach(row => {
-                if (row.nivel === 2) {
-                    let name = row.nombre.toLowerCase();
-                    if (name.includes('territorial') || name.includes('terrorial')) categoryMap[row.edt] = 'territorial';
-                    else if (name.includes('conflictos')) categoryMap[row.edt] = 'conflictos';
-                    else if (name.includes('ambiental')) categoryMap[row.edt] = 'ambiental';
-                    else if (name.includes('etnica') || name.includes('étnica')) categoryMap[row.edt] = 'etnica';
+            allEdts.forEach(edt => {
+                const item = flatMap[edt];
+                const parts = edt.split('.');
+
+                // Componentes Padre (EDT 1 y 2)
+                if (parts.length === 1) {
+                    currentData[edt] = {
+                        nombre: item.desc,
+                        real: Math.round(item.comp),
+                        esperado: Math.round(item.esp),
+                        duracion: item.duracion,
+                        inicio: item.inicio,
+                        fin: item.fin,
+                        responsable: item.responsable
+                    };
+                }
+                // Actividades Hijas Nivel 2 (e.g. 1.1, 1.2, 2.1, etc.)
+                else if (parts.length === 2) {
+                    currentData[edt] = {
+                        nombre: item.desc,
+                        real: Math.round(item.comp),
+                        esperado: Math.round(item.esp),
+                        duracion: item.duracion,
+                        inicio: item.inicio,
+                        fin: item.fin,
+                        responsable: item.responsable
+                    };
+                    SUB_ACTIVITIES[edt] = [];
+                }
+                // Desgloses Nivel 3 en adelante
+                else {
+                    const parentEdt = parts.slice(0, -1).join('.');
+                    if (flatMap[parentEdt]) {
+                        flatMap[parentEdt].children.push(item);
+                    }
                 }
             });
 
-            allData.forEach(row => {
-                if (row.nivel >= 2) {
-                    let parts = row.edt.split('.');
-                    row.category = categoryMap[parts[0] + '.' + parts[1]] || 'otro';
+            // Poblar listados de desgloses de nivel 3 directo en el mapa del WBS
+            allEdts.forEach(edt => {
+                const parts = edt.split('.');
+                if (parts.length === 2) {
+                    SUB_ACTIVITIES[edt] = flatMap[edt].children || [];
+                }
+            });
+
+            // Clonar datos crudos a BACKUP_DATA para calibrar el simulador dinámicamente
+            BACKUP_DATA = JSON.parse(JSON.stringify(currentData));
+        }
+
+        // Actualizar distintivo de conexión en línea o fuera de línea
+        function updateConnectionBadge(online) {
+            const badge = document.getElementById('connection-badge');
+            if (badge) {
+                if (online) {
+                    badge.className = "bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-2";
+                    badge.innerHTML = `<i class="fa-solid fa-circle text-[8px] animate-pulse"></i> Sincronizado Online`;
                 } else {
-                    row.category = 'general';
+                    badge.className = "bg-amber-500/15 text-amber-500 border border-amber-500/30 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-2";
+                    badge.innerHTML = `<i class="fa-solid fa-cloud-arrow-down text-[10px]"></i> Base Offline Activa`;
                 }
-                row.hasChildren = allData.some(child => child.edt !== row.edt && child.edt.startsWith(row.edt + '.'));
-            });
-
-            calcularKPIs();
-            expandedNodes = new Set(allData.filter(row => row.nivel <= 2 && row.hasChildren).map(row => row.edt));
-            emptyState.classList.add('hidden');
-            dashboard.classList.remove('hidden');
-            dashboard.classList.add('flex');
-            switchTab('resumen');
-        }
-
-        function calcularKPIs() {
-            let leafTasks = allData.filter(r => r.hasChildren === false);
-            document.getElementById('kpi-total').textContent = leafTasks.length;
-            document.getElementById('kpi-atiempo').textContent = leafTasks.filter(r => r.estadoPlano === 'atiempo').length;
-            document.getElementById('kpi-atrasadas').textContent = leafTasks.filter(r => r.estadoPlano === 'atrasado').length;
-            ['territorial', 'conflictos', 'ambiental', 'etnica'].forEach(cat => {
-                let catData = leafTasks.filter(r => r.category === cat);
-                document.getElementById(`kpi-total-${cat}`).textContent = catData.length;
-                document.getElementById(`kpi-atiempo-${cat}`).textContent = catData.filter(r => r.estadoPlano === 'atiempo').length;
-                document.getElementById(`kpi-atrasadas-${cat}`).textContent = catData.filter(r => r.estadoPlano === 'atrasado').length;
-            });
-            let oaasTask = allData.find(r => r.nombre && r.nombre.toUpperCase().includes('OFICINA DE ASUNTOS AMBIENTALES Y SOCIALES OAAS'));
-            document.getElementById('kpi-pct-completado').textContent = oaasTask ? (oaasTask.pctComp * 100).toFixed(1) + '%' : '0%';
-            document.getElementById('kpi-pct-planeado').textContent = oaasTask ? (oaasTask.pctPlan * 100).toFixed(1) + '%' : '0%';
-        }
-
-        window.toggleNode = function(edt) {
-            expandedNodes.has(edt) ? expandedNodes.delete(edt) : expandedNodes.add(edt);
-            renderTable();
-        };
-
-        function renderTable() {
-            let dataToRender = currentCategory ? allData.filter(r => r.category === currentCategory) : allData;
-            let stateFilter = document.getElementById('filter-estado').value;
-            let respFilter = document.getElementById('filter-responsable').value;
-            let visibleSet = new Set();
-            dataToRender.forEach(r => {
-                if ((stateFilter === 'all' || r.estado === stateFilter) && (respFilter === 'all' || r.recurso === respFilter)) {
-                    let parts = r.edt.split('.');
-                    let anc = "";
-                    for(let i=0; i<parts.length; i++){
-                        anc = anc === "" ? parts[i] : anc + "." + parts[i];
-                        visibleSet.add(anc);
-                    }
-                }
-            });
-            let titleContainer = document.getElementById('detalle-title');
-            let statsContainer = document.getElementById('detalle-stats');
-            if (currentCategory) {
-                let rootNode = dataToRender.find(r => r.nivel === 2);
-                if (rootNode) {
-                    let typeIcon = 'fa-sitemap text-[#F2C811]';
-                    if (currentCategory === 'territorial') typeIcon = 'fa-map-marked-alt text-emerald-600';
-                    else if (currentCategory === 'conflictos') typeIcon = 'fa-hands-helping text-orange-500';
-                    else if (currentCategory === 'ambiental') typeIcon = 'fa-leaf text-green-500';
-                    else if (currentCategory === 'etnica') typeIcon = 'fa-users text-purple-600';
-                    titleContainer.innerHTML = `<i class="fas ${typeIcon} mr-2"></i> <span class="text-gray-800">${rootNode.edt}</span> - ${rootNode.nombre}`;
-                    statsContainer.innerHTML = `<span class="text-gray-500">Inicio: <strong class="text-gray-700">${rootNode.comienzo}</strong></span> <span class="text-gray-500 hidden sm:inline">•</span> <span class="text-gray-500">Fin: <strong class="text-gray-700">${rootNode.fin}</strong></span> <span class="text-gray-500 hidden sm:inline">•</span> <span class="text-gray-500">Completado: <strong class="text-[#003B6A]">${(rootNode.pctComp * 100).toFixed(0)}%</strong></span> <span class="text-gray-500 hidden sm:inline">•</span> <span class="text-gray-500">Planeado: <strong class="text-gray-800">${(rootNode.pctPlan * 100).toFixed(0)}%</strong></span> <span class="px-2 py-0.5 ml-2 border rounded text-xs font-bold ${rootNode.estadoColor} uppercase">${rootNode.estado}</span>`;
-                    statsContainer.classList.replace('hidden', 'flex');
-                    dataToRender = dataToRender.filter(r => r.edt !== rootNode.edt);
-                }
-            } else {
-                titleContainer.innerHTML = `<i class="fas fa-sitemap mr-2 text-[#F2C811]"></i> Detalle de Gestión General`;
-                statsContainer.classList.replace('flex', 'hidden');
             }
-            let html = '';
-            dataToRender.forEach(row => {
-                if (!visibleSet.has(row.edt)) return;
-                let startLevel = currentCategory ? 3 : 1;
-                if (row.nivel > startLevel) {
-                    let parts = row.edt.split('.');
-                    let ancestor = parts.slice(0, startLevel).join('.'); 
-                    let isVisible = true;
-                    for (let i = startLevel; i < parts.length; i++) {
-                        if (!expandedNodes.has(ancestor)) { isVisible = false; break; }
-                        ancestor += '.' + parts[i];
-                    }
-                    if (!isVisible) return; 
-                }
-                const isParent = row.hasChildren;
-                const indent = (currentCategory ? (row.nivel - 2) : row.nivel) > 1 ? ((currentCategory ? (row.nivel - 2) : row.nivel) - 1) * 20 : 0;
-                html += `<tr class="hover:bg-blue-50/50 transition-colors border-b border-gray-100">
-                    <td class="p-2 text-[13px] ${isParent ? 'font-bold text-[#003B6A] bg-gray-50/80' : 'text-gray-600'} whitespace-nowrap align-top border-r border-gray-100">${row.edt}</td>
-                    <td class="p-2 text-[13px] ${isParent ? 'font-bold text-[#003B6A] bg-gray-50/80' : 'text-gray-600'} align-middle" style="padding-left: ${indent + 16}px;">
-                        <div class="flex items-center">
-                            ${isParent ? `<button onclick="toggleNode('${row.edt}')" class="w-6 h-6 inline-flex items-center justify-center text-gray-500 hover:bg-blue-100 hover:text-[#003B6A] rounded transition-colors mr-2 cursor-pointer outline-none shadow-sm border border-transparent hover:border-blue-200"><i class="fas ${expandedNodes.has(row.edt) ? 'fa-chevron-down' : 'fa-chevron-right'} text-xs"></i></button>` : '<span class="w-6 inline-block mr-2"></span>'}
-                            <span class="${isParent ? 'text-[14px]' : 'text-[13px]'}">${row.nombre}</span>
-                        </div>
-                    </td>
-                    <td class="p-2 align-middle"><span class="px-2 py-0.5 border rounded text-[10px] font-bold ${row.estadoColor} whitespace-nowrap uppercase tracking-wider">${row.estado}</span></td>
-                    <td class="p-2 text-center text-[12px] align-middle font-medium">${(row.pctComp * 100).toFixed(0)}%</td>
-                    <td class="p-2 text-center text-[12px] align-middle font-medium">${(row.pctPlan * 100).toFixed(0)}%</td>
-                    <td class="p-2 text-center text-[12px] text-gray-500 align-middle whitespace-nowrap">${row.comienzo}</td>
-                    <td class="p-2 text-center text-[12px] text-gray-500 align-middle whitespace-nowrap">${row.fin}</td>
-                    <td class="p-2 text-[12px] text-gray-500 align-middle font-medium leading-tight">${row.recurso}</td>
-                </tr>`;
-            });
-            tableBody.innerHTML = html;
         }
+
+        // Inicialización General de la aplicación y petición HTTP
+        async function init() {
+            showLoader(true);
+            setDynamicDate();
+            try {
+                const res = await fetch(URL);
+                if (!res.ok) throw new Error("Error en fetch de Google Sheets");
+                
+                const text = await res.text();
+                const start = text.indexOf('{');
+                const end = text.lastIndexOf('}');
+                const json = JSON.parse(text.substring(start, end + 1));
+                
+                // Construir estructura jerárquica EDT dinámicamente
+                buildDynamicWbsTree(json.table.rows);
+                updateConnectionBadge(true);
+            } catch (e) {
+                console.warn("Fallo de conexión en línea. Cargando base de datos estática.", e);
+                updateConnectionBadge(false);
+            } finally {
+                renderUI();
+                showLoader(false);
+            }
+        }
+
+        // Configuración dinámica de la fecha actual ajustada a la Zona Horaria de Colombia (Bogotá)
+        function setDynamicDate() {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/Bogota' };
+            const today = new Date();
+            const formatter = new Intl.DateTimeFormat('es-CO', options);
+            let formattedDate = formatter.format(today);
+            
+            // Capitalizar la primera letra del día de la semana
+            formattedDate = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
+            document.getElementById('update-date').innerText = formattedDate;
+        }
+
+        // Renderizar todos los elementos de la UI a partir de la variable de estado
+        function renderUI() {
+            // Actualizar KPIs de Nivel Superior para las secciones Principales (1 y 2)
+            if (currentData['1']) {
+                const h1 = getHealthStatus(currentData['1'].real, currentData['1'].esperado);
+                document.getElementById('kpi-real-1').innerText = `${Math.round(currentData['1'].real)}%`;
+                document.getElementById('kpi-plan-1').innerText = `${Math.round(currentData['1'].esperado)}%`;
+                
+                document.getElementById('kpi-bar-1').style.width = `${currentData['1'].real}%`;
+                document.getElementById('kpi-bar-1').className = `progress-bar-fill absolute top-0 left-0 h-full rounded-full ${h1.colorClass}`;
+                
+                const statusBadge1 = document.getElementById('kpi-status-1');
+                statusBadge1.className = `px-2.5 py-1 rounded-full text-[9px] font-extrabold uppercase ${h1.lightBg} ${h1.textColor} border ${h1.borderClass}`;
+                statusBadge1.innerText = h1.text;
+                
+                document.getElementById('title-1').innerText = `${currentData['1'].nombre.toUpperCase()}`;
+            }
+            
+            if (currentData['2']) {
+                const h2 = getHealthStatus(currentData['2'].real, currentData['2'].esperado);
+                document.getElementById('kpi-real-2').innerText = `${Math.round(currentData['2'].real)}%`;
+                document.getElementById('kpi-plan-2').innerText = `${Math.round(currentData['2'].esperado)}%`;
+                
+                document.getElementById('kpi-bar-2').style.width = `${currentData['2'].real}%`;
+                document.getElementById('kpi-bar-2').className = `progress-bar-fill absolute top-0 left-0 h-full rounded-full ${h2.colorClass}`;
+                
+                const statusBadge2 = document.getElementById('kpi-status-2');
+                statusBadge2.className = `px-2.5 py-1 rounded-full text-[9px] font-extrabold uppercase ${h2.lightBg} ${h2.textColor} border ${h2.borderClass}`;
+                statusBadge2.innerText = h2.text;
+                
+                document.getElementById('title-2').innerText = `${currentData['2'].nombre.toUpperCase()}`;
+            }
+
+            // Renderizado de Componentes de Grupos (Tarjetas de Nivel 2)
+            renderItems('group-1', ['1.1', '1.2', '1.3', '1.4']);
+            renderItems('group-2', ['2.1', '2.2', '2.3', '2.4']);
+        }
+
+        // Retornar color y configuración según la brecha de avance unificada (3 alertas)
+        function getHealthStatus(real, esperado) {
+            const gap = esperado - real;
+            if (gap <= 0) {
+                return {
+                    text: 'AL DÍA',
+                    colorClass: 'bg-emerald-500',
+                    textColor: 'text-emerald-600',
+                    lightBg: 'bg-emerald-50',
+                    borderClass: 'border-emerald-500/20',
+                    icon: '🟢'
+                };
+            } else if (gap <= 10) {
+                return {
+                    text: 'ALERTA LEVE',
+                    colorClass: 'bg-amber-500',
+                    textColor: 'text-amber-600',
+                    lightBg: 'bg-amber-50',
+                    borderClass: 'border-amber-500/20',
+                    icon: '🟡'
+                };
+            } else {
+                return {
+                    text: 'CRÍTICO / DEMORA',
+                    colorClass: 'bg-rose-500',
+                    textColor: 'text-rose-600',
+                    lightBg: 'bg-rose-50',
+                    borderClass: 'border-rose-500/20',
+                    icon: '🔴'
+                };
+            }
+        }
+
+        // Retornar badge unificado para las tablas WBS de nivel 3
+        function getWbsStatusBadge(real, esperado) {
+            const gap = esperado - real;
+            if (gap <= 0) {
+                return `<span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full text-[8.5px] font-black"><span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>AL DÍA</span>`;
+            } else if (gap <= 10) {
+                return `<span class="inline-flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-0.5 rounded-full text-[8.5px] font-black"><span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>ALERTA LEVE</span>`;
+            } else {
+                return `<span class="inline-flex items-center gap-1 bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-0.5 rounded-full text-[8.5px] font-black"><span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span>CRÍTICO</span>`;
+            }
+        }
+
+        // Renderizado recursivo de filas del árbol WBS garantizando visibilidad completa y limpia de códigos EDT
+        function buildTreeRows(items, depth = 0, parentExpanded = true, componentKey) {
+            let rowsHtml = '';
+            if (!items) return rowsHtml;
+            
+            items.forEach((item) => {
+                const hasChildren = item.children && item.children.length > 0;
+                const nodeKey = `${item.code.replace(/\./g, '-')}`;
+                
+                // Forzar nodos colapsados por defecto a partir del Nivel 3 para control progresivo de la alta gerencia
+                if (expandedWbsNodes[nodeKey] === undefined) {
+                    expandedWbsNodes[nodeKey] = false; 
+                }
+                
+                const isExpanded = expandedWbsNodes[nodeKey];
+                
+                // Calcular avances relativos considerando simulación
+                let realPercent = Math.round(item.comp);
+                let planPercent = Math.round(item.esp);
+                const parentData = currentData[componentKey];
+                const backupParent = BACKUP_DATA[componentKey];
+                
+                if (parentData && backupParent && parentData.real !== backupParent.real) {
+                    const ratioReal = parentData.real / (backupParent.real || 1);
+                    realPercent = Math.min(100, Math.round(item.comp * ratioReal));
+                }
+                if (parentData && backupParent && parentData.esperado !== backupParent.esperado) {
+                    const ratioPlan = parentData.esperado / (backupParent.esperado || 1);
+                    planPercent = Math.min(100, Math.round(item.esp * ratioPlan));
+                }
+                
+                const statusBadge = getWbsStatusBadge(realPercent, planPercent);
+                    
+                // Ajuste de identación WBS por nivel jerárquico
+                let indentClass = '';
+                let textClass = 'font-bold text-slate-800';
+                let bgClass = 'bg-white';
+                
+                if (depth === 0) {
+                    indentClass = 'pl-4';
+                    textClass = 'font-bold text-slate-900 text-[11px] leading-relaxed';
+                    bgClass = 'bg-slate-50/45';
+                } else if (depth === 1) {
+                    indentClass = 'pl-10';
+                    textClass = 'font-semibold text-slate-700 text-[10.5px]';
+                    bgClass = 'bg-slate-100/10';
+                } else if (depth === 2) {
+                    indentClass = 'pl-16';
+                    textClass = 'font-normal text-slate-500 text-[10px]';
+                    bgClass = 'bg-white';
+                } else if (depth >= 3) {
+                    indentClass = 'pl-20';
+                    textClass = 'font-normal text-slate-400 text-[9.5px]';
+                    bgClass = 'bg-white';
+                }
+                
+                const chevronIcon = hasChildren 
+                    ? `<i class="fa-solid ${isExpanded ? 'fa-chevron-down text-blue-700' : 'fa-chevron-right text-slate-400'} text-[8px] mr-1.5 flex-shrink-0 transition-transform"></i>` 
+                    : (depth > 0 ? `<span class="text-slate-300 mr-2 flex-shrink-0">└─</span>` : `<span class="w-3.5 inline-block"></span>`);
+                    
+                const clickAction = hasChildren 
+                    ? `onclick="toggleWbsNode('${nodeKey}', '${componentKey}')"` 
+                    : '';
+                    
+                if (parentExpanded) {
+                    rowsHtml += `
+                        <tr class="hover:bg-slate-50 transition-colors ${bgClass}">
+                            <td class="p-3 ${indentClass} flex items-center gap-1.5 select-none" ${clickAction} style="cursor: ${hasChildren ? 'pointer' : 'default'}">
+                                ${chevronIcon}
+                                <span class="leading-snug ${textClass}">${item.desc}</span>
+                            </td>
+                            <td class="p-3 text-center whitespace-nowrap">${statusBadge}</td>
+                            <td class="p-3 text-center font-extrabold whitespace-nowrap text-slate-950">${realPercent}%</td>
+                            <td class="p-3 text-center font-semibold whitespace-nowrap text-slate-500">${planPercent}%</td>
+                            <td class="p-3 text-center text-slate-500 whitespace-nowrap">${formatDateShort(item.inicio)}</td>
+                            <td class="p-3 text-center text-slate-500 whitespace-nowrap">${formatDateShort(item.fin)}</td>
+                            <td class="p-3 text-right pr-4 text-slate-600 font-medium whitespace-nowrap">${item.responsable || '-'}</td>
+                        </tr>
+                    `;
+                }
+                
+                // Procesar hijos de manera recursiva
+                if (hasChildren) {
+                    rowsHtml += buildTreeRows(item.children, depth + 1, parentExpanded && isExpanded, componentKey);
+                }
+            });
+            return rowsHtml;
+        }
+
+        // Renderizado de las tarjetas principales con visor de árbol dinámico (WBS)
+        function renderItems(containerId, keys) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+
+            keys.forEach((k, index) => {
+                const data = currentData[k];
+                if (!data) return;
+
+                const style = STYLE_CONFIG[k] || {
+                    svg: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg>',
+                    color: 'bg-slate-500', text: 'text-slate-600', light: 'bg-slate-50'
+                };
+
+                const health = getHealthStatus(data.real, data.esperado);
+                const subActivitiesList = SUB_ACTIVITIES[k] || [];
+
+                // Generación de filas recursivas del WBS
+                const subActivitiesRows = buildTreeRows(subActivitiesList, 0, true, k);
+                const isMainExpanded = expandedComponents[k] === true;
+
+                const html = `
+                    <div class="animate-fade-in hover:bg-slate-50/40 p-4 rounded-2xl border ${health.borderClass} transition-all duration-300 relative group" style="animation-delay: ${index * 70}ms" data-edt-item="${k}">
+                        <div class="flex flex-col space-y-3.5">
+                            
+                            <!-- Encabezado de la Tarjeta (Nivel 2) -->
+                            <div class="flex justify-between items-center gap-2">
+                                <div class="flex items-start space-x-3.5">
+                                    <div class="icon-container w-10 h-10 rounded-xl flex items-center justify-center ${style.light} ${style.text} shadow-sm border border-black/5 flex-shrink-0 text-lg">
+                                        ${style.svg}
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <span class="text-[8px] font-bold ${health.textColor} uppercase flex items-center gap-1">
+                                                <span>${health.icon}</span> ${health.text}
+                                            </span>
+                                        </div>
+                                        <h4 class="text-xs font-extrabold text-slate-800 leading-tight mt-1 max-w-[220px] md:max-w-xs group-hover:text-blue-700 transition-colors uppercase">${data.nombre}</h4>
+                                    </div>
+                                </div>
+                                
+                                <!-- Unificación en una única línea, más grande y prominente -->
+                                <div class="flex items-center space-x-2.5 flex-shrink-0 bg-slate-50/80 border border-slate-100/80 px-3 py-1.5 rounded-xl">
+                                    <div class="text-right">
+                                        <span class="${style.text} font-black text-base md:text-lg">${Math.round(data.real)}%</span>
+                                        <span class="text-[8px] font-extrabold text-slate-400 block -mt-1 uppercase">REAL</span>
+                                    </div>
+                                    <div class="h-6 w-[1px] bg-slate-200"></div>
+                                    <div class="text-right">
+                                        <span class="text-slate-600 font-bold text-sm md:text-base">${Math.round(data.esperado)}%</span>
+                                        <span class="text-[8px] font-extrabold text-slate-400 block -mt-1 uppercase">ESP</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Barra de progreso comparativa -->
+                            <div class="progress-bar-bg relative bg-slate-100 rounded-full h-2 w-full overflow-hidden border border-slate-200/50">
+                                <div class="progress-bar-fill absolute top-0 left-0 h-full rounded-full ${style.color} shadow-inner" style="width: ${data.real}%; z-index: 2">
+                                    <div class="absolute inset-0 bg-white/10 [background-image:linear-gradient(45deg,rgba(255,255,255,.15)_25%,transparent_25%,transparent_50%,rgba(255,255,255,.15)_50%,rgba(255,255,255,.15)_75%,transparent_75%,transparent)] [background-size:1rem_1rem]"></div>
+                                </div>
+                                <div class="absolute top-0 left-0 h-full bg-slate-200" style="width: ${data.esperado}%; z-index: 1"></div>
+                            </div>
+                            
+                            <!-- Acciones flotantes del componente -->
+                            <div class="flex justify-end items-center pt-1.5 text-[10px] text-slate-400">
+                                <button onclick="toggleMainComponent('${k}')" class="text-[#003366] hover:text-[#002244] font-extrabold uppercase tracking-wider flex items-center gap-1.5 text-[9px] transition-all bg-slate-100 hover:bg-slate-200/80 px-3 py-1.5 rounded-lg border border-slate-200/50 shadow-sm">
+                                    <span>Consultar Detalle</span>
+                                    <i id="chevron-${k.replace('.', '-')}" class="fa-solid fa-chevron-down text-[8px] transition-transform duration-350 ${isMainExpanded ? 'rotate-180' : ''}"></i>
+                                </button>
+                            </div>
+
+                            <!-- SECCIÓN DE DESPLIEGUE EN TABLA UNIFICADA (ÁRBOL DE PROCESO COMPLETO MULTINIVEL ESTILO PROJECT) -->
+                            <div id="activities-panel-${k.replace('.', '-')}" class="collapsible-activities w-full ${isMainExpanded ? 'open' : ''}">
+                                <div class="w-full overflow-x-auto rounded-xl border border-slate-200 shadow-sm mt-3 scrollbar-hide bg-white animate-fade-in">
+                                    <table class="w-full text-left text-[11px] min-w-[850px]">
+                                        <thead class="bg-slate-100 text-slate-700 font-extrabold uppercase text-[8px] tracking-wider border-b border-slate-200">
+                                            <tr>
+                                                <th class="p-3 pl-4">Fase / Actividad</th>
+                                                <th class="p-3 text-center">Estado</th>
+                                                <th class="p-3 text-center">% Comp.</th>
+                                                <th class="p-3 text-center">% Esp.</th>
+                                                <th class="p-3 text-center">Inicio</th>
+                                                <th class="p-3 text-center">Fin</th>
+                                                <th class="p-3 text-right pr-4">Responsable</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-slate-100">
+                                            ${subActivitiesRows || `<tr><td colspan="7" class="p-4 text-center text-slate-400 italic">No hay detalles registrados para esta sección.</td></tr>`}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        // Intercambiar estado de plegado del componente principal de nivel 2 (Cards)
+        function toggleMainComponent(key) {
+            expandedComponents[key] = !expandedComponents[key];
+            renderUI();
+        }
+
+        // Intercambiar estado de plegado de cualquier nodo del árbol de actividades (WBS)
+        function toggleWbsNode(nodeKey, componentKey) {
+            expandedWbsNodes[nodeKey] = !expandedWbsNodes[nodeKey];
+            renderUI();
+        }
+
+        window.onload = init;
     </script>
 </body>
 </html>
