@@ -105,9 +105,11 @@
                     <svg class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path></svg>
                 </div>
                 <div>
-                    <h1 class="text-xl md:text-2xl font-black tracking-tight uppercase leading-none mt-1">
-                        Oficina de Asuntos Ambientales y Sociales (OAAS)
-                    </h1>
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <h1 class="text-xl md:text-2xl font-black tracking-tight uppercase leading-none mt-1">
+                            Oficina de Asuntos Ambientales y Sociales (OAAS)
+                        </h1>
+                    </div>
                     <p class="text-yellow-400 text-xs font-bold tracking-widest uppercase opacity-90 mt-1">
                         Seguimiento de gestión
                     </p>
@@ -163,7 +165,13 @@
             <div class="bg-white p-6 rounded-2xl card-shadow border-t-4 border-yellow-500 relative overflow-hidden flex flex-col justify-between">
                 <div class="flex justify-between items-start mb-4">
                     <div>
-                        <h3 class="text-base font-black text-[#003366] uppercase mt-1">PACTO TRANSICIÓN</h3>
+                        <div class="flex items-center gap-3 flex-wrap">
+                            <h3 class="text-base font-black text-[#003366] uppercase mt-1">PACTO TRANSICIÓN</h3>
+                            <button onclick="openPdfModal()" class="mt-1 flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 text-[9px] font-extrabold px-3 py-1 rounded-md border border-rose-200 transition-colors shadow-sm" title="Ver documento anexo">
+                                <i class="fa-solid fa-file-pdf text-rose-500"></i>
+                                VER ANEXO
+                            </button>
+                        </div>
                     </div>
                     <span id="kpi-status-2" class="px-2.5 py-1 rounded-full text-[9px] font-extrabold uppercase bg-rose-50 text-rose-600">--</span>
                 </div>
@@ -259,6 +267,27 @@
             Ministerio de Minas y Energía - República de Colombia
         </p>
     </footer>
+
+    <!-- Modal Visor de PDF -->
+    <div id="pdf-modal" class="fixed inset-0 z-[100] hidden flex-col items-center justify-center">
+        <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity" onclick="closePdfModal()"></div>
+        <div class="relative w-[95%] md:w-[85%] lg:w-[75%] h-[90vh] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-fade-in">
+            <!-- Encabezado del Modal -->
+            <div class="bg-[#003366] px-6 py-4 flex justify-between items-center text-white border-b border-[#002244]">
+                <h3 class="font-black uppercase tracking-wider text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-file-pdf text-rose-400 text-lg"></i>
+                    Documento Anexo - Seguimiento
+                </h3>
+                <button onclick="closePdfModal()" class="text-white/70 hover:text-white transition-colors bg-white/10 hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <!-- Cuerpo del Modal (Iframe con el PDF de Drive) -->
+            <div class="flex-grow w-full bg-slate-100 relative">
+                <iframe src="https://drive.google.com/file/d/1Y6EOoPG8AF6iX4lsRDTp3LMLTsXbxYIx/preview" class="absolute inset-0 w-full h-full border-0"></iframe>
+            </div>
+        </div>
+    </div>
 
     <script>
         // CONFIGURACIONES BÁSICAS DE GOOGLE SHEET
@@ -830,6 +859,26 @@
             expandedWbsNodes[nodeKey] = !expandedWbsNodes[nodeKey];
             renderUI();
         }
+
+        // Funciones para controlar la apertura y cierre del Visor PDF
+        function openPdfModal() {
+            const modal = document.getElementById('pdf-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden'; // Bloquea el scroll del fondo
+        }
+
+        function closePdfModal() {
+            const modal = document.getElementById('pdf-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.body.style.overflow = ''; // Restaura el scroll del fondo
+        }
+
+        // Permitir cerrar el modal fácilmente con la tecla Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closePdfModal();
+        });
 
         window.onload = init;
     </script>
