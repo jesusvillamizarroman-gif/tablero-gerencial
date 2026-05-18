@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte de Avances OAAS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+        .mme-blue { background-color: #003366; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white rounded-3xl shadow-xl w-full max-w-lg overflow-hidden border border-slate-200">
+        <div class="mme-blue p-6 text-center">
+            <h1 class="text-xl font-black text-white uppercase tracking-wider">Reporte Rápido de Avance</h1>
+            <p class="text-yellow-400 text-xs font-bold mt-1 uppercase tracking-widest">Oficina de Asuntos Ambientales y Sociales</p>
+        </div>
+
+        <form id="avanceForm" class="p-8 space-y-6">
+            
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Tu Nombre / Área</label>
+                <input type="text" id="responsable" required class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-[#003366] focus:border-[#003366] block p-3 outline-none transition-all" placeholder="Ej. Líder Mesa 1">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Selecciona el Componente a actualizar</label>
+                <select id="componente" required class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-[#003366] focus:border-[#003366] block p-3 outline-none cursor-pointer">
+                    <option value="" disabled selected>Despliega para elegir...</option>
+                    <option value="1. GERENCIA GUAJIRA">1. GERENCIA GUAJIRA</option>
+                    <option value="2.1 MESA 1 - Gobernanza Étnica y Territorial">2.1 MESA 1 - Gobernanza Étnica y Territorial</option>
+                    <option value="2.2 MESA 2 - Trámites Ambientales">2.2 MESA 2 - Trámites Ambientales</option>
+                    <option value="2.3 MESA 3 - Pobreza Energética">2.3 MESA 3 - Pobreza Energética</option>
+                    <option value="2.4 MESA 4 - Oportunidades de Desarrollo">2.4 MESA 4 - Oportunidades de Desarrollo</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="flex justify-between items-center text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                    <span>% de Avance Logrado</span>
+                    <span id="valorRango" class="text-xl font-black text-[#003366]">0%</span>
+                </label>
+                <input type="range" id="avance" min="0" max="100" value="0" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#003366]" oninput="document.getElementById('valorRango').innerText = this.value + '%'">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Comentarios o Cuellos de Botella (Opcional)</label>
+                <textarea id="comentarios" rows="3" class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-[#003366] focus:border-[#003366] block p-3 outline-none resize-none transition-all" placeholder="Escribe aquí si hay bloqueos o necesidades..."></textarea>
+            </div>
+
+            <button type="submit" id="btnSubmit" class="w-full text-white mme-blue hover:bg-[#002244] focus:ring-4 focus:outline-none focus:ring-blue-300 font-black rounded-xl text-sm px-5 py-4 text-center uppercase tracking-widest transition-all shadow-md flex items-center justify-center gap-2">
+                <i class="fa-solid fa-paper-plane"></i> Enviar Actualización
+            </button>
+
+            <div id="msgExito" class="hidden text-center bg-emerald-50 text-emerald-600 border border-emerald-200 p-4 rounded-xl">
+                <i class="fa-solid fa-circle-check text-2xl mb-2"></i>
+                <p class="font-bold text-sm uppercase tracking-wider">¡Avance enviado correctamente!</p>
+                <p class="text-xs mt-1">El equipo de seguimiento ya fue notificado.</p>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // PEGA AQUÍ LA URL DE TU APLICACIÓN WEB DE GOOGLE APPS SCRIPT
+        const URL_GAS = "AQUI_TU_URL_DE_APPS_SCRIPT";
+
+        document.getElementById('avanceForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const btn = document.getElementById('btnSubmit');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Procesando...';
+            btn.disabled = true;
+
+            const datos = {
+                responsable: document.getElementById('responsable').value,
+                componente: document.getElementById('componente').value,
+                avance: document.getElementById('avance').value,
+                comentarios: document.getElementById('comentarios').value
+            };
+
+            try {
+                await fetch(URL_GAS, {
+                    method: 'POST',
+                    mode: 'no-cors', // Fundamental para enviar desde un HTML local sin problemas de seguridad de navegadores
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(datos)
+                });
+
+                // Éxito
+                document.getElementById('avanceForm').reset();
+                document.getElementById('valorRango').innerText = '0%';
+                btn.classList.add('hidden');
+                document.getElementById('msgExito').classList.remove('hidden');
+
+            } catch (error) {
+                alert('Hubo un error de conexión. Intenta de nuevo.');
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Enviar Actualización';
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
