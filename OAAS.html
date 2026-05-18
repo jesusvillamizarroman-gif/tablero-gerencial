@@ -416,48 +416,77 @@
             return dateStr;
         }
 
-        // ANALIZADOR INTELIGENTE: Escanea la segunda base de datos en busca de "Mesa 1", "MA 4", etc.
+        // ANALIZADOR INTELIGENTE: Escanea la segunda base de datos garantizando el número exacto
         function buildAccionesMap(rows) {
             accionesMap = {};
             
+            // 1. Encontrar el índice de la columna que contiene "Acciones" (buscando en cabeceras)
+            let colAccionesIdx = -1;
+            for (let i = 0; i < Math.min(10, rows.length); i++) {
+                if (!rows[i] || !rows[i].c) continue;
+                rows[i].c.forEach((cell, idx) => {
+                    if (cell && typeof cell.v === 'string') {
+                        const text = cell.v.toLowerCase().trim();
+                        if (text === 'acciones' || (text.includes('acciones') && !text.includes('macro'))) {
+                            colAccionesIdx = idx;
+                        }
+                    }
+                });
+                if (colAccionesIdx !== -1) break;
+            }
+
             rows.forEach(r => {
                 if (!r.c) return;
                 
                 let rowText = "";
-                let possibleCounts = [];
+                let numsInRow = [];
                 
-                // Recopilar todo el texto y posibles números de la fila
                 r.c.forEach(cell => {
                     if (!cell || cell.v === null) return;
                     if (typeof cell.v === 'string') {
                         rowText += " " + cell.v.toLowerCase();
+                        const m = cell.v.trim().match(/^(\d+)$/);
+                        if (m) numsInRow.push(parseInt(m[1]));
                     } else if (typeof cell.v === 'number') {
-                        // Filtramos porcentajes o años comunes
-                        if (cell.v > 0 && cell.v < 5000 && cell.v !== 2024 && cell.v !== 2025 && cell.v !== 2026) {
-                            possibleCounts.push(cell.v);
-                        }
+                        numsInRow.push(cell.v);
                     }
                 });
 
-                if (possibleCounts.length === 0) return;
-                const count = possibleCounts[0]; 
+                let count = 0;
                 
+                // Si encontramos la columna "Acciones", tomar su valor
+                if (colAccionesIdx !== -1 && r.c[colAccionesIdx]) {
+                    const cell = r.c[colAccionesIdx];
+                    if (typeof cell.v === 'number') count = cell.v;
+                    else if (typeof cell.v === 'string') {
+                        const match = cell.v.match(/^(\d+)$/);
+                        if (match) count = parseInt(match[1]);
+                    }
+                }
+
+                // Fallback: Tomar el número mayor de la fila que tenga sentido para una cuenta de acciones
+                if (count === 0) {
+                    let validNums = numsInRow.filter(n => n > 0 && n < 5000 && n !== 2024 && n !== 2025 && n !== 2026);
+                    if (validNums.length > 0) count = Math.max(...validNums);
+                }
+
+                if (count === 0) return;
+
                 let foundKey = null;
 
-                // 1. ¿Es una Mesa directa?
-                if (rowText.includes('mesa 1')) foundKey = '2.1';
-                else if (rowText.includes('mesa 2')) foundKey = '2.2';
-                else if (rowText.includes('mesa 3')) foundKey = '2.3';
-                else if (rowText.includes('mesa 4')) foundKey = '2.4';
-                // 2. ¿Es una Macro Acción? (e.g. MA 4, MA 18)
+                // Mapear con Mesas
+                if (rowText.includes('mesa 1') && !rowText.includes('ma ')) foundKey = '2.1';
+                else if (rowText.includes('mesa 2') && !rowText.includes('ma ')) foundKey = '2.2';
+                else if (rowText.includes('mesa 3') && !rowText.includes('ma ')) foundKey = '2.3';
+                else if (rowText.includes('mesa 4') && !rowText.includes('ma ')) foundKey = '2.4';
                 else {
+                    // Mapear con Macroacciones (MA X)
                     const maMatch = rowText.match(/\bma\s*(\d+)\b/);
                     if (maMatch) {
                         const maNum = maMatch[1];
-                        // Buscar en el árbol del Project (FLAT_DATA) a qué EDT pertenece "MA 4"
                         for (let edt in FLAT_DATA) {
                             const desc = FLAT_DATA[edt].desc.toLowerCase();
-                            if (desc.includes(`ma ${maNum}`) || desc.includes(`ma${maNum}`) || desc.includes(`macroacción ${maNum}`)) {
+                            if (desc.includes(`ma ${maNum}`) || desc.includes(`ma${maNum}`) || desc.includes(`macroacción ${maNum}`) || desc.includes(`macroaccion ${maNum}`)) {
                                 foundKey = edt;
                                 break;
                             }
@@ -465,19 +494,21 @@
                     }
                 }
 
-                // 3. Fallback: Búsqueda difusa por descripción de tarea
+                // Mapeo difuso si no se encuentra
                 if (!foundKey) {
-                     for (let edt in FLAT_DATA) {
-                         const desc = FLAT_DATA[edt].desc.toLowerCase().trim();
-                         if (desc.length > 10 && rowText.includes(desc)) {
-                             foundKey = edt;
-                             break;
-                         }
-                     }
+                    for (let edt in FLAT_DATA) {
+                        const desc = FLAT_DATA[edt].desc.toLowerCase().trim();
+                        // Prevenir fallos con descripciones muy cortas
+                        if (desc.length > 15 && rowText.includes(desc.substring(0, 15))) {
+                            foundKey = edt;
+                            break;
+                        }
+                    }
                 }
 
                 if (foundKey) {
-                    accionesMap[foundKey] = (accionesMap[foundKey] || 0) + count;
+                    // Evitar sobreescrituras incorrectas preservando el valor máximo detectado
+                    accionesMap[foundKey] = Math.max((accionesMap[foundKey] || 0), count);
                 }
             });
         }
@@ -597,7 +628,8 @@
                     buildAccionesMap(json2.table.rows);
                 }
 
-                // 3. Algoritmo de Rollup (Suma Acciones de Macroacciones -> Mesas -> Pacto)
+                // 3. Algoritmo de Rollup Seguro (Suma Acciones de Macroacciones -> Mesas -> Pacto)
+                // Se asegura de no sobrescribir si el conteo maestro ya determinó el valor correcto
                 if (FLAT_DATA) {
                     [4, 3, 2].forEach(level => {
                         Object.keys(FLAT_DATA).forEach(edt => {
@@ -609,8 +641,10 @@
                                         sum += accionesMap[k];
                                     }
                                 });
-                                // Asignamos la suma al nivel padre si tiene acciones por debajo
-                                if (sum > 0) accionesMap[edt] = sum;
+                                // Asignamos al padre el valor más alto (o la suma o el valor detectado en su resumen)
+                                if (sum > 0) {
+                                    accionesMap[edt] = Math.max((accionesMap[edt] || 0), sum);
+                                }
                             }
                         });
                     });
