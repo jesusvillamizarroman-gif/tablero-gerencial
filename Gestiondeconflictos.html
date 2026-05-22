@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tablero de Gestión - Conflictividades</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+
+    <header class="p-6 max-w-7xl mx-auto">
+        <h1 class="text-2xl font-bold text-slate-800">Sistema de Gestión de Proyectos</h1>
+        <p class="text-slate-500">Módulo de Visualización: Conflictividades Gerencia Guajira</p>
+    </header>
+
+    <div class="max-w-7xl mx-auto mb-8 border-b border-slate-200 px-6">
+        <nav class="flex space-x-8">
+            <button onclick="showTab('dashboard')" id="btn-dashboard" class="pb-4 px-1 flex items-center text-sm font-medium border-b-2 border-blue-600 text-blue-600 transition-colors">
+                Vista Previa del Tablero
+            </button>
+            <button onclick="showTab('proposal')" id="btn-proposal" class="pb-4 px-1 flex items-center text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 transition-colors">
+                Documento de Propuesta
+            </button>
+        </nav>
+    </div>
+
+    <main class="max-w-7xl mx-auto px-6 pb-12">
+        <!-- Dashboard Tab -->
+        <div id="content-dashboard" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100"><p class="text-sm text-slate-500">Total Activos</p><h3 class="text-2xl font-bold text-slate-800">256</h3></div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100"><p class="text-sm text-slate-500">Prioridad Corto Plazo</p><h3 class="text-2xl font-bold text-slate-800">84</h3></div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100"><p class="text-sm text-slate-500">Casos Reincidentes</p><h3 class="text-2xl font-bold text-slate-800">142</h3></div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100"><p class="text-sm text-slate-500">Consulta Previa</p><h3 class="text-2xl font-bold text-slate-800">115</h3></div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                    <h3 class="text-lg font-semibold text-slate-800 mb-4">Conflictividades por Municipio</h3>
+                    <canvas id="barChart" height="200"></canvas>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                    <h3 class="text-lg font-semibold text-slate-800 mb-4">Tipología del Conflicto</h3>
+                    <canvas id="pieChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Proposal Tab -->
+        <div id="content-proposal" class="hidden bg-white p-8 rounded-xl shadow-sm border border-slate-100 max-w-4xl mx-auto">
+            <h2 class="text-2xl font-bold mb-4">Propuesta de Arquitectura BI</h2>
+            <p class="mb-4">Este dashboard en HTML es el primer paso para democratizar el acceso a la información de la Gerencia Guajira.</p>
+            <ul class="list-decimal pl-6 space-y-2">
+                <li><strong>Estandarización:</strong> Normalizar la base de datos es obligatorio.</li>
+                <li><strong>Geolocalización:</strong> Integrar las coordenadas en un visualizador de mapas (Mapbox o Leaflet).</li>
+                <li><strong>Escalabilidad:</strong> Este HTML puede alimentarse de un JSON generado desde Excel mediante un script de Python.</li>
+            </ul>
+        </div>
+    </main>
+
+    <script>
+        function showTab(tab) {
+            document.getElementById('content-dashboard').classList.toggle('hidden', tab !== 'dashboard');
+            document.getElementById('content-proposal').classList.toggle('hidden', tab !== 'proposal');
+            document.getElementById('btn-dashboard').className = tab === 'dashboard' ? 'pb-4 px-1 flex items-center text-sm font-medium border-b-2 border-blue-600 text-blue-600' : 'pb-4 px-1 flex items-center text-sm font-medium border-b-2 border-transparent text-slate-500';
+            document.getElementById('btn-proposal').className = tab === 'proposal' ? 'pb-4 px-1 flex items-center text-sm font-medium border-b-2 border-blue-600 text-blue-600' : 'pb-4 px-1 flex items-center text-sm font-medium border-b-2 border-transparent text-slate-500';
+        }
+
+        // Initialize Charts
+        const barCtx = document.getElementById('barChart').getContext('2d');
+        new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Uribia', 'Maicao', 'Manaure', 'Albania'],
+                datasets: [{ label: 'Casos', data: [145, 56, 38, 17], backgroundColor: '#3B82F6' }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } } }
+        });
+
+        const pieCtx = document.getElementById('pieChart').getContext('2d');
+        new Chart(pieCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Ancestralidad', 'Inversión', 'Vías', 'Empleo'],
+                datasets: [{ data: [85, 60, 42, 38], backgroundColor: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444'] }]
+            },
+            options: { responsive: true }
+        });
+    </script>
+</body>
+</html>
