@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tablero OAAS - Seguimiento de Alta Gerencia</title>
+    <title>Tablero OAAS - Gerencia Guajira</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome para Iconos -->
@@ -33,7 +33,7 @@
             background: linear-gradient(to right, var(--mme-yellow) 57%, var(--mme-blue) 57%, var(--mme-blue) 80%, var(--colombia-red) 80%);
         }
         .card-shadow {
-            box-shadow: 0 10px 30px -10px rgba(0, 51, 102, 0.08);
+            box-shadow: 0 10px 30px -10px rgba(0, 51, 102, 0.05);
             border: 1px solid rgba(226, 232, 240, 0.8);
         }
         .progress-bar-fill {
@@ -76,7 +76,7 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col selection:bg-yellow-200">
+<body class="min-h-screen flex flex-col selection:bg-blue-100">
 
     <!-- Loader de optimización de datos -->
     <div id="loader" class="fixed inset-0 bg-slate-900/95 z-50 flex flex-col justify-center items-center backdrop-blur-sm transition-opacity duration-500">
@@ -87,7 +87,7 @@
             </div>
             <p class="text-xs font-bold text-white uppercase tracking-widest text-center max-w-xs leading-relaxed px-4">
                 Oficina de Asuntos Ambientales y Sociales<br>
-                <span class="text-[#FFD700] font-normal text-[10px] tracking-normal">Conectando fuentes y cruzando acciones...</span>
+                <span class="text-[#FFD700] font-normal text-[10px] tracking-normal">Sincronizando cronograma...</span>
             </p>
         </div>
     </div>
@@ -98,156 +98,72 @@
     <header class="header-gradient text-white py-5 px-6 shadow-xl relative overflow-hidden">
         <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
         
-        <div class="max-w-[1700px] mx-auto flex flex-col lg:flex-row justify-between items-center relative z-10 gap-4">
-            <!-- Logo y títulos -->
-            <div class="flex items-center space-x-4">
-                <div class="p-3 bg-white/10 rounded-2xl backdrop-blur-md border border-white/20 shadow-inner flex items-center justify-center">
-                    <svg class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path></svg>
-                </div>
-                <div>
-                    <div class="flex items-center gap-3 flex-wrap">
+        <div class="max-w-[1700px] mx-auto flex flex-col relative z-10 gap-5">
+            <!-- Fila Superior: Logo, Títulos y Badges -->
+            <div class="flex flex-col lg:flex-row justify-between items-center gap-4">
+                <!-- Logo y títulos -->
+                <div class="flex items-center space-x-4">
+                    <div class="p-3 bg-white/10 rounded-2xl backdrop-blur-md border border-white/20 shadow-inner flex items-center justify-center">
+                        <svg class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path></svg>
+                    </div>
+                    <div>
                         <h1 class="text-xl md:text-2xl font-black tracking-tight uppercase leading-none mt-1">
                             Oficina de Asuntos Ambientales y Sociales (OAAS)
                         </h1>
+                        <p class="text-yellow-400 text-xs font-bold tracking-widest uppercase opacity-90 mt-1">
+                            Seguimiento Gerencia Guajira
+                        </p>
                     </div>
-                    <p class="text-yellow-400 text-xs font-bold tracking-widest uppercase opacity-90 mt-1">
-                        Seguimiento de gestión
-                    </p>
+                </div>
+
+                <!-- Acciones rápidas, conexión y Estado Global -->
+                <div class="flex flex-wrap items-center justify-center gap-3">
+                    <span id="update-date" class="bg-black/35 border border-white/15 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest text-white/95">
+                        Cargando fecha...
+                    </span>
+                    
+                    <span id="connection-badge" class="bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
+                        <i class="fa-solid fa-circle text-[8px] animate-pulse"></i>
+                        Sincronizado Online
+                    </span>
+
+                    <span id="header-kpi-status" class="px-3 py-1.5 rounded-full text-[10px] font-extrabold uppercase bg-white/10 text-white border border-white/20 flex-shrink-0 hidden md:inline-flex items-center gap-1">
+                        --
+                    </span>
                 </div>
             </div>
 
-            <!-- Acciones rápidas y conexión -->
-            <div class="flex items-center gap-3">
-                <span id="update-date" class="bg-black/35 border border-white/15 px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest text-white/95">
-                    Cargando fecha...
-                </span>
+            <!-- Fila Inferior: Panel Integrado de Avance Global -->
+            <div class="bg-black/20 border border-white/10 rounded-2xl p-4 md:px-6 flex flex-col sm:flex-row items-center gap-6 shadow-inner backdrop-blur-sm mt-1">
+                <div class="text-center sm:text-left min-w-[120px] flex-shrink-0 border-b sm:border-b-0 sm:border-r border-white/10 pb-3 sm:pb-0 sm:pr-6">
+                    <span class="block text-[9px] font-bold text-white/60 uppercase tracking-widest mb-0.5">Avance Global</span>
+                    <span id="header-kpi-real" class="text-3xl md:text-4xl font-black text-white">--%</span>
+                </div>
                 
-                <span id="connection-badge" class="bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
-                    <i class="fa-solid fa-circle text-[8px] animate-pulse"></i>
-                    Sincronizado Online
-                </span>
+                <div class="w-full flex-grow">
+                    <div class="flex justify-between text-[11px] text-white/80 mb-2 font-medium">
+                        <span class="md:hidden" id="header-kpi-status-mobile">Estado: --</span>
+                        <span class="hidden md:inline-block">Progreso General del Proyecto</span>
+                        <span>Meta Esperada: <strong id="header-kpi-plan" class="text-white">--%</strong></span>
+                    </div>
+                    <div class="relative bg-black/40 rounded-full h-2.5 md:h-3 w-full overflow-hidden border border-black/50 shadow-inner">
+                        <div id="header-kpi-bar" class="progress-bar-fill absolute top-0 left-0 h-full rounded-full bg-yellow-400 shadow-[inset_0_1px_3px_rgba(255,255,255,0.3)]" style="width: 0%"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </header>
 
     <!-- Contenedor principal de la aplicación -->
-    <main class="max-w-[1700px] mx-auto p-4 md:p-8 w-full flex-grow flex flex-col gap-8">
+    <main class="max-w-[1700px] mx-auto p-4 md:p-8 w-full flex-grow flex flex-col gap-6">
         
-        <!-- SECCIÓN DE KPIs CONSOLIDADOS POR COMPONENTE -->
-        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
+        <!-- SECCIÓN UNIFICADA: COMPONENTES -->
+        <section class="w-full max-w-5xl mx-auto flex flex-col gap-6 transition-all duration-500">
             
-            <!-- Bloque Resumen Gerencia Guajira -->
-            <div class="bg-white p-6 rounded-2xl card-shadow border-t-4 border-[#003366] relative overflow-visible flex flex-col justify-between">
-                <div class="flex justify-between items-start mb-4">
-                    <div class="flex flex-col gap-2">
-                        <h3 id="kpi-title-1" class="text-base font-black text-[#003366] uppercase mt-1 leading-tight">GERENCIA GUAJIRA</h3>
-                        <div class="flex items-center gap-3 flex-wrap">
-                            <span id="kpi-acciones-1"></span>
-                        </div>
-                    </div>
-                    <span id="kpi-status-1" class="px-2.5 py-1 rounded-full text-[9px] font-extrabold uppercase bg-emerald-50 text-emerald-600 flex-shrink-0">--</span>
-                </div>
-                
-                <div class="flex flex-col sm:flex-row items-center gap-6 w-full">
-                    <div class="text-center p-3.5 bg-blue-50/50 rounded-2xl min-w-[115px] border border-blue-100/30 w-full sm:w-auto flex-shrink-0">
-                        <span class="block text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-1">Avance Logrado</span>
-                        <span id="kpi-real-1" class="text-3xl font-black text-[#003366]">--%</span>
-                    </div>
-                    <div class="w-full">
-                        <div class="flex justify-between text-[10px] text-slate-500 mb-1">
-                            <span>Avance Esperado: <strong id="kpi-plan-1" class="text-slate-700">--%</strong></span>
-                        </div>
-                        <div class="progress-bar-bg relative bg-slate-100 rounded-full h-2.5 w-full overflow-hidden border border-slate-200/50">
-                            <div id="kpi-bar-1" class="progress-bar-fill absolute top-0 left-0 h-full rounded-full bg-[#003366]" style="width: 0%"></div>
-                        </div>
-                    </div>
-                </div>
+            <!-- Contenedor dinámico de Desglose de Componentes (Sin caja adicional exterior) -->
+            <div id="group-1" class="space-y-5">
+                <!-- Aquí se inyectan las tarjetas de 1.1, 1.2, etc. -->
             </div>
-
-            <!-- Bloque Resumen Pacto por la Transición Energética Justa -->
-            <div class="bg-white p-6 rounded-2xl card-shadow border-t-4 border-yellow-500 relative overflow-visible flex flex-col justify-between">
-                <div class="flex justify-between items-start mb-4 gap-3">
-                    <div class="flex flex-col gap-3 w-full">
-                        <h3 id="kpi-title-2" class="text-base font-black text-[#003366] uppercase mt-1 leading-tight">PACTO POR LA TRANSICIÓN ENERGÉTICA JUSTA</h3>
-                        <div class="flex items-center gap-3 flex-wrap">
-                            <span id="kpi-acciones-2"></span>
-                            <button onclick="openPdfModal()" class="flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 text-[10px] font-extrabold px-3 py-1.5 rounded-md border border-rose-200 transition-colors shadow-sm" title="Ver documento anexo">
-                                <i class="fa-solid fa-file-pdf text-rose-500"></i>
-                                VER ANEXO
-                            </button>
-                            <button onclick="openExcelModal()" class="flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[10px] font-extrabold px-3 py-1.5 rounded-md border border-emerald-200 transition-colors shadow-sm" title="Ver matriz de SharePoint">
-                                <i class="fa-solid fa-file-excel text-emerald-500"></i>
-                                VER MATRIZ
-                            </button>
-                        </div>
-                    </div>
-                    <span id="kpi-status-2" class="px-2.5 py-1 rounded-full text-[9px] font-extrabold uppercase bg-rose-50 text-rose-600 flex-shrink-0 mt-1">--</span>
-                </div>
-                
-                <div class="flex flex-col sm:flex-row items-center gap-6 w-full">
-                    <div class="text-center p-3.5 bg-yellow-50/40 rounded-2xl min-w-[115px] border border-yellow-100/30 w-full sm:w-auto flex-shrink-0">
-                        <span class="block text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-1">Avance Logrado</span>
-                        <span id="kpi-real-2" class="text-3xl font-black text-yellow-600">--%</span>
-                    </div>
-                    <div class="w-full">
-                        <div class="flex justify-between text-[10px] text-slate-500 mb-1">
-                            <span>Avance Esperado: <strong id="kpi-plan-2" class="text-slate-700">--%</strong></span>
-                        </div>
-                        <div class="progress-bar-bg relative bg-slate-100 rounded-full h-2.5 w-full overflow-hidden border border-slate-200/50">
-                            <div id="kpi-bar-2" class="progress-bar-fill absolute top-0 left-0 h-full rounded-full bg-yellow-500" style="width: 0%"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-        </section>
-
-        <!-- Contenedor Principal de Reportes de Secciones -->
-        <section id="grid-view" class="grid grid-cols-1 xl:grid-cols-2 gap-8 w-full">
-            
-            <!-- SECCIÓN 1: GERENCIA GUAJIRA -->
-            <article class="card-project p-6 md:p-8 relative bg-white rounded-3xl transition-all duration-300 card-shadow">
-                <div class="absolute top-0 left-0 w-full h-1.5 bg-[#003366]"></div>
-                
-                <!-- Cabecera de Sección -->
-                <div class="text-center mb-6">
-                    <h2 class="text-lg font-black text-[#003366] tracking-tight uppercase text-center" id="title-1">
-                        GERENCIA GUAJIRA
-                    </h2>
-                </div>
-
-                <!-- Componentes de Sección 1 -->
-                <div class="space-y-4">
-                    <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Detalles del Componente</span>
-                        <span class="text-[9px] font-semibold text-slate-400">Avance y Planificación</span>
-                    </div>
-                    <!-- Contenedor dinámico de ítems -->
-                    <div id="group-1" class="space-y-6"></div>
-                </div>
-            </article>
-
-            <!-- SECCIÓN 2: PACTO TRANSICIÓN ENERGÉTICA -->
-            <article class="card-project p-6 md:p-8 relative bg-white rounded-3xl transition-all duration-300 card-shadow">
-                <div class="absolute top-0 left-0 w-full h-1.5 bg-yellow-500"></div>
-                
-                <!-- Cabecera de Sección -->
-                <div class="text-center mb-6">
-                    <h2 class="text-lg font-black text-[#003366] tracking-tight uppercase text-center" id="title-2">
-                        PACTO TRANSICIÓN
-                    </h2>
-                </div>
-
-                <!-- Componentes de Sección 2 -->
-                <div class="space-y-4">
-                    <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Detalles del Componente</span>
-                        <span class="text-[9px] font-semibold text-slate-400">Avance y Planificación</span>
-                    </div>
-                    <!-- Contenedor dinámico de ítems -->
-                    <div id="group-2" class="space-y-6"></div>
-                </div>
-            </article>
             
         </section>
 
@@ -276,98 +192,23 @@
         </p>
     </footer>
 
-    <!-- Modal Visor de PDF -->
-    <div id="pdf-modal" class="fixed inset-0 z-[100] hidden flex-col items-center justify-center">
-        <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity" onclick="closePdfModal()"></div>
-        <div class="relative w-[95%] md:w-[85%] lg:w-[75%] h-[90vh] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-fade-in">
-            <!-- Encabezado del Modal -->
-            <div class="bg-[#003366] px-6 py-4 flex justify-between items-center text-white border-b border-[#002244]">
-                <h3 class="font-black uppercase tracking-wider text-sm flex items-center gap-2">
-                    <i class="fa-solid fa-file-pdf text-rose-400 text-lg"></i>
-                    Documento Anexo - Seguimiento
-                </h3>
-                <button onclick="closePdfModal()" class="text-white/70 hover:text-white transition-colors bg-white/10 hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
-            <!-- Cuerpo del Modal (Iframe con el PDF de Drive) -->
-            <div class="flex-grow w-full bg-slate-100 relative">
-                <iframe src="https://drive.google.com/file/d/1Y6EOoPG8AF6iX4lsRDTp3LMLTsXbxYIx/preview" class="absolute inset-0 w-full h-full border-0"></iframe>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal Visor de Excel (SharePoint) -->
-    <div id="excel-modal" class="fixed inset-0 z-[100] hidden flex-col items-center justify-center">
-        <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity" onclick="closeExcelModal()"></div>
-        <div class="relative w-[95%] md:w-[85%] lg:w-[75%] h-[90vh] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-fade-in">
-            <!-- Encabezado del Modal -->
-            <div class="bg-[#003366] px-6 py-4 flex justify-between items-center text-white border-b border-[#002244]">
-                <h3 class="font-black uppercase tracking-wider text-sm flex items-center gap-2">
-                    <i class="fa-solid fa-file-excel text-emerald-400 text-lg"></i>
-                    Matriz SharePoint
-                </h3>
-                <button onclick="closeExcelModal()" class="text-white/70 hover:text-white transition-colors bg-white/10 hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
-            <!-- Cuerpo del Modal (Iframe con el Excel de SharePoint) -->
-            <div class="flex-grow w-full bg-slate-100 relative">
-                <!-- Se anexa action=embedview para forzar la vista incrustada -->
-                <iframe src="https://minenergiacol-my.sharepoint.com/:x:/g/personal/javillamizar_minenergia_gov_co/IQADkeAj8D1OTZhNG4Ynd0-NAff8_R7NrE0ZqnS27foyoP8?e=GOJNzm&action=embedview" class="absolute inset-0 w-full h-full border-0"></iframe>
-            </div>
-        </div>
-    </div>
-
     <script>
         // FUENTES DE DATOS GLOBALES
         // 1. Cronograma MS Project (Niveles, Fechas, Avances)
         const URL_PROJECT = `https://docs.google.com/spreadsheets/d/1CWZlW4Ij8KhhYqPJdMKozk_bAHXmRQlq/gviz/tq?tqx=out:json`;
-        
-        // 2. Base de datos de Acciones (Distribución de solicitudes de comunidades)
-        const URL_ACCIONES = `https://docs.google.com/spreadsheets/d/1lnrQTF5pxSkaNZia1Jkl1XsNkPHImP8Ktb2zu_uDF0A/gviz/tq?tqx=out:json`;
 
-        // CONFIGURACIÓN DE ESTILOS E ICONOS
-        const STYLE_CONFIG = {
-            '1.1': { // Étnica
-                svg: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>',
-                color: 'bg-amber-500', text: 'text-amber-600', light: 'bg-amber-50', borderClass: 'border-amber-200'
-            },
-            '1.2': { // Territorial
-                svg: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>',
-                color: 'bg-blue-500', text: 'text-blue-600', light: 'bg-blue-50', borderClass: 'border-blue-200'
-            },
-            '1.3': { // Gestión de Conflictos
-                svg: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M18 11c.7 0 1.37.1 2 .29V8c0-2.2-1.8-4-4-4H4C1.8 4 0 5.8 0 8v8c0 2.2 1.8 4 4 4h4v3l4.3-3H16c.3 0 .6-.04.9-.11-.56-.84-.9-1.85-.9-2.93s.34-2.09.9-2.93c-.9-.03-1.9-.03-2.9-.03zm1-3H5V6h11V8zm-5 3H5V9h6V11zm9 3.5l-3.5 3.5-1.5-1.5-1.4 1.4 2.9 2.9 4.9-4.9-1.4-1.4z"/></svg>',
-                color: 'bg-rose-500', text: 'text-rose-600', light: 'bg-rose-50', borderClass: 'border-rose-200'
-            },
-            '1.4': { // Gestión Ambiental
-                svg: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M12.3 3c-1-.1-2 .1-3 .5C7.4 4.3 6.1 5.8 5.4 7.6c-1 2.3-.6 5 1 6.9l-3.1 3.1 1.4 1.4 3.1-3.1c1.4 1.1 3.2 1.6 5 1.4 2.4-.3 4.6-1.7 5.7-3.9 1.5-3 1-6.7-1.2-9-1.3-1.4-3.1-2.2-5-2.3zm2.5 10c-.7 1.4-2.1 2.3-3.7 2.5-1.1.1-2.2-.2-3-.9l6.3-6.3c1 .9 1.3 2.2 1.9 3.4l-.5 1.3z"/></svg>',
-                color: 'bg-emerald-500', text: 'text-emerald-600', light: 'bg-emerald-50', borderClass: 'border-emerald-200'
-            },
-            '2.1': { // Mesa 1
-                svg: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5.06 11.53l-3.34 3.34a2 2 0 01-2.83 0l-3.34-3.34a2 2 0 010-2.83c.78-.78 2.05-.78 2.83 0l1.1 1.1 1.1-1.1c.78-.78 2.05-.78 2.83 0a2 2 0 010 2.83z" /></svg>',
-                color: 'bg-cyan-500', text: 'text-cyan-600', light: 'bg-cyan-50', borderClass: 'border-cyan-200'
-            },
-            '2.2': { // Mesa 2
-                svg: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm-2 16l-4-4h2.5v-3h3v3H16l-4 4zm1-9V3.5L18.5 9H13z"/></svg>',
-                color: 'bg-indigo-500', text: 'text-indigo-600', light: 'bg-indigo-50', borderClass: 'border-indigo-200'
-            },
-            '2.3': { // Mesa 3
-                svg: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M12 3L2 12h3v8h14v-8h3L12 3zm0 13c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>',
-                color: 'bg-orange-500', text: 'text-orange-600', light: 'bg-orange-50', borderClass: 'border-orange-200'
-            },
-            '2.4': { // Mesa 4
-                svg: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 17.08l1.5 1.41z"/></svg>',
-                color: 'bg-purple-500', text: 'text-purple-600', light: 'bg-purple-50', borderClass: 'border-purple-200'
-            }
+        // CONFIGURACIÓN DE ICONOS (Se eliminan los colores específicos, todo será neutro)
+        const ICON_CONFIG = {
+            '1.1': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>',
+            '1.2': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>',
+            '1.3': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M18 11c.7 0 1.37.1 2 .29V8c0-2.2-1.8-4-4-4H4C1.8 4 0 5.8 0 8v8c0 2.2 1.8 4 4 4h4v3l4.3-3H16c.3 0 .6-.04.9-.11-.56-.84-.9-1.85-.9-2.93s.34-2.09.9-2.93c-.9-.03-1.9-.03-2.9-.03zm1-3H5V6h11V8zm-5 3H5V9h6V11zm9 3.5l-3.5 3.5-1.5-1.5-1.4 1.4 2.9 2.9 4.9-4.9-1.4-1.4z"/></svg>',
+            '1.4': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M12.3 3c-1-.1-2 .1-3 .5C7.4 4.3 6.1 5.8 5.4 7.6c-1 2.3-.6 5 1 6.9l-3.1 3.1 1.4 1.4 3.1-3.1c1.4 1.1 3.2 1.6 5 1.4 2.4-.3 4.6-1.7 5.7-3.9 1.5-3 1-6.7-1.2-9-1.3-1.4-3.1-2.2-5-2.3zm2.5 10c-.7 1.4-2.1 2.3-3.7 2.5-1.1.1-2.2-.2-3-.9l6.3-6.3c1 .9 1.3 2.2 1.9 3.4l-.5 1.3z"/></svg>'
         };
 
         // VARIABLES GLOBALES
         let currentData = {}; 
         let SUB_ACTIVITIES = {}; 
-        let FLAT_DATA = {}; // Mapa plano global del Project para enlazar textos
-        let accionesMap = {}; // Mapa que guardará la cantidad de Acciones por EDT
+        let FLAT_DATA = {}; // Mapa plano global
         
         let expandedWbsNodes = {};
         let expandedComponents = {};
@@ -442,104 +283,6 @@
             return dateStr;
         }
 
-        // ANALIZADOR INTELIGENTE: Escanea la segunda base de datos garantizando el número exacto
-        function buildAccionesMap(rows) {
-            accionesMap = {};
-            
-            // 1. Encontrar el índice de la columna que contiene "Acciones" (buscando en cabeceras)
-            let colAccionesIdx = -1;
-            for (let i = 0; i < Math.min(10, rows.length); i++) {
-                if (!rows[i] || !rows[i].c) continue;
-                rows[i].c.forEach((cell, idx) => {
-                    if (cell && typeof cell.v === 'string') {
-                        const text = cell.v.toLowerCase().trim();
-                        if (text === 'acciones' || (text.includes('acciones') && !text.includes('macro'))) {
-                            colAccionesIdx = idx;
-                        }
-                    }
-                });
-                if (colAccionesIdx !== -1) break;
-            }
-
-            rows.forEach(r => {
-                if (!r.c) return;
-                
-                let rowText = "";
-                let numsInRow = [];
-                
-                r.c.forEach(cell => {
-                    if (!cell || cell.v === null) return;
-                    if (typeof cell.v === 'string') {
-                        rowText += " " + cell.v.toLowerCase();
-                        const m = cell.v.trim().match(/^(\d+)$/);
-                        if (m) numsInRow.push(parseInt(m[1]));
-                    } else if (typeof cell.v === 'number') {
-                        numsInRow.push(cell.v);
-                    }
-                });
-
-                let count = 0;
-                
-                // Si encontramos la columna "Acciones", tomar su valor
-                if (colAccionesIdx !== -1 && r.c[colAccionesIdx]) {
-                    const cell = r.c[colAccionesIdx];
-                    if (typeof cell.v === 'number') count = cell.v;
-                    else if (typeof cell.v === 'string') {
-                        const match = cell.v.match(/^(\d+)$/);
-                        if (match) count = parseInt(match[1]);
-                    }
-                }
-
-                // Fallback: Tomar el número mayor de la fila que tenga sentido para una cuenta de acciones
-                if (count === 0) {
-                    let validNums = numsInRow.filter(n => n > 0 && n < 5000 && n !== 2024 && n !== 2025 && n !== 2026);
-                    if (validNums.length > 0) count = Math.max(...validNums);
-                }
-
-                if (count === 0) return;
-
-                let foundKey = null;
-
-                // Mapear con Mesas
-                if (rowText.includes('mesa 1') && !rowText.includes('ma ')) foundKey = '2.1';
-                else if (rowText.includes('mesa 2') && !rowText.includes('ma ')) foundKey = '2.2';
-                else if (rowText.includes('mesa 3') && !rowText.includes('ma ')) foundKey = '2.3';
-                else if (rowText.includes('mesa 4') && !rowText.includes('ma ')) foundKey = '2.4';
-                else {
-                    // Mapear con Macroacciones (MA X)
-                    const maMatch = rowText.match(/\bma\s*(\d+)\b/);
-                    if (maMatch) {
-                        const maNum = maMatch[1];
-                        for (let edt in FLAT_DATA) {
-                            const desc = FLAT_DATA[edt].desc.toLowerCase();
-                            if (desc.includes(`ma ${maNum}`) || desc.includes(`ma${maNum}`) || desc.includes(`macroacción ${maNum}`) || desc.includes(`macroaccion ${maNum}`)) {
-                                foundKey = edt;
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                // Mapeo difuso si no se encuentra
-                if (!foundKey) {
-                    for (let edt in FLAT_DATA) {
-                        const desc = FLAT_DATA[edt].desc.toLowerCase().trim();
-                        // Prevenir fallos con descripciones muy cortas
-                        if (desc.length > 15 && rowText.includes(desc.substring(0, 15))) {
-                            foundKey = edt;
-                            break;
-                        }
-                    }
-                }
-
-                if (foundKey) {
-                    // Evitar sobreescrituras incorrectas preservando el valor máximo detectado
-                    accionesMap[foundKey] = Math.max((accionesMap[foundKey] || 0), count);
-                }
-            });
-        }
-
-        // Construir el árbol jerárquico del Cronograma principal (Project)
         function buildDynamicWbsTree(rows) {
             const flatMap = {};
             
@@ -627,65 +370,6 @@
             }
         }
 
-        // Inicialización General (Doble Fetch)
-        async function init() {
-            showLoader(true);
-            setDynamicDate();
-            try {
-                // Fetch paralelo seguro a las dos fuentes de datos aisladas
-                const [resProject, resAcciones] = await Promise.all([
-                    fetch(URL_PROJECT).catch(e => null),
-                    fetch(URL_ACCIONES).catch(e => null)
-                ]);
-                
-                // 1. Procesar Cronograma MS Project
-                if (resProject && resProject.ok) {
-                    const text1 = await resProject.text();
-                    const json1 = JSON.parse(text1.substring(text1.indexOf('{'), text1.lastIndexOf('}') + 1));
-                    buildDynamicWbsTree(json1.table.rows);
-                } else {
-                    throw new Error("No se pudo cargar el Cronograma base.");
-                }
-                
-                // 2. Procesar Mapeo de Acciones (Soluciones de las comunidades)
-                if (resAcciones && resAcciones.ok) {
-                    const text2 = await resAcciones.text();
-                    const json2 = JSON.parse(text2.substring(text2.indexOf('{'), text2.lastIndexOf('}') + 1));
-                    buildAccionesMap(json2.table.rows);
-                }
-
-                // 3. Algoritmo de Rollup Seguro (Suma Acciones de Macroacciones -> Mesas -> Pacto)
-                // Se asegura de no sobrescribir si el conteo maestro ya determinó el valor correcto
-                if (FLAT_DATA) {
-                    [4, 3, 2].forEach(level => {
-                        Object.keys(FLAT_DATA).forEach(edt => {
-                            const parts = edt.split('.');
-                            if (parts.length === level - 1) { 
-                                let sum = 0;
-                                Object.keys(accionesMap).forEach(k => {
-                                    if (k.startsWith(edt + '.') && k.split('.').length === level) {
-                                        sum += accionesMap[k];
-                                    }
-                                });
-                                // Asignamos al padre el valor más alto (o la suma o el valor detectado en su resumen)
-                                if (sum > 0) {
-                                    accionesMap[edt] = Math.max((accionesMap[edt] || 0), sum);
-                                }
-                            }
-                        });
-                    });
-                }
-
-                updateConnectionBadge(true);
-            } catch (e) {
-                console.error("Fallo de conexión.", e);
-                updateConnectionBadge(false);
-            } finally {
-                renderUI();
-                showLoader(false);
-            }
-        }
-
         function setDynamicDate() {
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/Bogota' };
             const today = new Date();
@@ -695,60 +379,86 @@
             document.getElementById('update-date').innerText = formattedDate;
         }
 
-        function renderUI() {
-            // Actualizar KPIs Nivel Superior (1 y 2)
-            if (currentData['1']) {
-                const h1 = getHealthStatus(currentData['1'].real, currentData['1'].esperado);
-                document.getElementById('kpi-real-1').innerText = `${Math.round(currentData['1'].real)}%`;
-                document.getElementById('kpi-plan-1').innerText = `${Math.round(currentData['1'].esperado)}%`;
-                document.getElementById('kpi-bar-1').style.width = `${currentData['1'].real}%`;
-                document.getElementById('kpi-bar-1').className = `progress-bar-fill absolute top-0 left-0 h-full rounded-full ${h1.colorClass}`;
+        async function init() {
+            showLoader(true);
+            setDynamicDate();
+            try {
+                const resProject = await fetch(URL_PROJECT);
                 
-                const statusBadge1 = document.getElementById('kpi-status-1');
-                statusBadge1.className = `px-2.5 py-1 rounded-full text-[9px] font-extrabold uppercase ${h1.lightBg} ${h1.textColor} border ${h1.borderClass}`;
-                statusBadge1.innerText = h1.text;
+                if (resProject && resProject.ok) {
+                    const text1 = await resProject.text();
+                    const json1 = JSON.parse(text1.substring(text1.indexOf('{'), text1.lastIndexOf('}') + 1));
+                    buildDynamicWbsTree(json1.table.rows);
+                    updateConnectionBadge(true);
+                } else {
+                    throw new Error("No se pudo cargar el Cronograma base.");
+                }
                 
-                document.getElementById('kpi-title-1').innerText = `${currentData['1'].nombre.toUpperCase()}`;
-                document.getElementById('title-1').innerText = `${currentData['1'].nombre.toUpperCase()}`;
-
-                // Inyectar Conteo de Acciones en Título 1 si las hay
-                const acc1 = accionesMap['1'] || 0;
-                const badge1 = document.getElementById('kpi-acciones-1');
-                if (badge1 && acc1 > 0) badge1.innerHTML = `<span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-md text-[10px] font-black tracking-widest border border-blue-200"><i class="fa-solid fa-list-check mr-1"></i> ${acc1} ACCIONES</span>`;
+            } catch (e) {
+                console.error("Fallo de conexión.", e);
+                updateConnectionBadge(false);
+            } finally {
+                renderUI();
+                showLoader(false);
             }
-            
-            if (currentData['2']) {
-                const h2 = getHealthStatus(currentData['2'].real, currentData['2'].esperado);
-                document.getElementById('kpi-real-2').innerText = `${Math.round(currentData['2'].real)}%`;
-                document.getElementById('kpi-plan-2').innerText = `${Math.round(currentData['2'].esperado)}%`;
-                document.getElementById('kpi-bar-2').style.width = `${currentData['2'].real}%`;
-                document.getElementById('kpi-bar-2').className = `progress-bar-fill absolute top-0 left-0 h-full rounded-full ${h2.colorClass}`;
-                
-                const statusBadge2 = document.getElementById('kpi-status-2');
-                statusBadge2.className = `px-2.5 py-1 rounded-full text-[9px] font-extrabold uppercase ${h2.lightBg} ${h2.textColor} border ${h2.borderClass}`;
-                statusBadge2.innerText = h2.text;
-                
-                document.getElementById('kpi-title-2').innerText = `${currentData['2'].nombre.toUpperCase()}`;
-                document.getElementById('title-2').innerText = `${currentData['2'].nombre.toUpperCase()}`;
+        }
 
-                // Inyectar Conteo de Acciones en Título 2 si las hay
-                const acc2 = accionesMap['2'] || 0;
-                const badge2 = document.getElementById('kpi-acciones-2');
-                if (badge2 && acc2 > 0) badge2.innerHTML = `<span class="bg-rose-100 text-rose-700 px-2 py-0.5 rounded-md text-[10px] font-black tracking-widest border border-rose-200"><i class="fa-solid fa-list-check mr-1"></i> ${acc2} ACCIONES</span>`;
+        function renderUI() {
+            if (currentData['1']) {
+                const gap = currentData['1'].esperado - currentData['1'].real;
+                let statusText = '';
+                let statusClass = '';
+                let icon = '';
+                let barColor = '';
+                
+                if (gap <= 0) {
+                    statusText = 'AL DÍA';
+                    statusClass = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
+                    icon = '🟢';
+                    barColor = 'bg-emerald-400';
+                } else if (gap <= 10) {
+                    statusText = 'ALERTA LEVE';
+                    statusClass = 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30';
+                    icon = '🟡';
+                    barColor = 'bg-yellow-400';
+                } else {
+                    statusText = 'CRÍTICO / DEMORA';
+                    statusClass = 'bg-rose-500/20 text-rose-300 border-rose-500/30';
+                    icon = '🔴';
+                    barColor = 'bg-rose-400';
+                }
+
+                document.getElementById('header-kpi-real').innerText = `${Math.round(currentData['1'].real)}%`;
+                document.getElementById('header-kpi-plan').innerText = `${Math.round(currentData['1'].esperado)}%`;
+                
+                const bar = document.getElementById('header-kpi-bar');
+                bar.style.width = `${currentData['1'].real}%`;
+                bar.className = `progress-bar-fill absolute top-0 left-0 h-full rounded-full ${barColor} shadow-[inset_0_1px_3px_rgba(255,255,255,0.3)]`;
+                
+                const statusBadge = document.getElementById('header-kpi-status');
+                const statusMobile = document.getElementById('header-kpi-status-mobile');
+                
+                if (statusBadge) {
+                    statusBadge.className = `px-3 py-1.5 rounded-full text-[10px] font-extrabold uppercase flex-shrink-0 hidden md:inline-flex items-center gap-1.5 ${statusClass}`;
+                    statusBadge.innerHTML = `<span>${icon}</span> ${statusText}`;
+                }
+                if (statusMobile) {
+                    statusMobile.innerHTML = `Estado: <span class="font-bold">${statusText}</span> ${icon}`;
+                }
             }
 
             renderItems('group-1', ['1.1', '1.2', '1.3', '1.4']);
-            renderItems('group-2', ['2.1', '2.2', '2.3', '2.4']);
         }
 
+        // Nueva lógica de estados: El color solo se usa para indicar salud, no para diferenciar componentes.
         function getHealthStatus(real, esperado) {
             const gap = esperado - real;
             if (gap <= 0) {
-                return { text: 'AL DÍA', colorClass: 'bg-emerald-500', textColor: 'text-emerald-600', lightBg: 'bg-emerald-50', borderClass: 'border-emerald-500/20', icon: '🟢' };
+                return { text: 'AL DÍA', textColor: 'text-emerald-600', lightBg: 'bg-emerald-50', borderClass: 'border-emerald-200', icon: '🟢', barColor: 'bg-emerald-500' };
             } else if (gap <= 10) {
-                return { text: 'ALERTA LEVE', colorClass: 'bg-amber-500', textColor: 'text-amber-600', lightBg: 'bg-amber-50', borderClass: 'border-amber-500/20', icon: '🟡' };
+                return { text: 'ALERTA LEVE', textColor: 'text-amber-600', lightBg: 'bg-amber-50', borderClass: 'border-amber-200', icon: '🟡', barColor: 'bg-amber-500' };
             } else {
-                return { text: 'CRÍTICO / DEMORA', colorClass: 'bg-rose-500', textColor: 'text-rose-600', lightBg: 'bg-rose-50', borderClass: 'border-rose-500/20', icon: '🔴' };
+                return { text: 'CRÍTICO / DEMORA', textColor: 'text-rose-600', lightBg: 'bg-rose-50', borderClass: 'border-rose-200', icon: '🔴', barColor: 'bg-rose-500' };
             }
         }
 
@@ -763,7 +473,6 @@
             }
         }
 
-        // Renderizado de las filas del árbol WBS
         function buildTreeRows(items, depth = 0, parentExpanded = true, componentKey) {
             let rowsHtml = '';
             if (!items) return rowsHtml;
@@ -782,16 +491,9 @@
                 const statusBadge = getWbsStatusBadge(realPercent, planPercent);
                     
                 let indentClass = '';
-                let textClass = 'font-bold text-slate-800';
+                let textClass = 'font-bold text-slate-700';
                 let bgClass = 'bg-white';
                 
-                // Conteo e inclusión de etiqueta para Macroacciones (Nivel 3) a partir del Mapa de Acciones
-                const numAcciones = accionesMap[item.code] || 0;
-                let actionBadge = '';
-                if (numAcciones > 0) {
-                    actionBadge = `<span class="inline-block align-middle ml-2 bg-slate-100 text-slate-600 border border-slate-200 text-[8px] px-1.5 py-0.5 rounded-md font-extrabold uppercase tracking-wider">${numAcciones} ACCIONES</span>`;
-                }
-
                 if (depth === 0) {
                     indentClass = 'pl-4';
                     textClass = 'font-bold text-slate-900 text-[11px] leading-relaxed';
@@ -799,14 +501,14 @@
                 } else if (depth === 1) {
                     indentClass = 'pl-10';
                     textClass = 'font-semibold text-slate-700 text-[10.5px]';
-                    bgClass = 'bg-slate-100/10';
+                    bgClass = 'bg-slate-50/20';
                 } else if (depth === 2) {
                     indentClass = 'pl-16';
-                    textClass = 'font-normal text-slate-500 text-[10px]';
+                    textClass = 'font-medium text-slate-600 text-[10px]';
                     bgClass = 'bg-white';
                 } else if (depth >= 3) {
                     indentClass = 'pl-20';
-                    textClass = 'font-normal text-slate-400 text-[9.5px]';
+                    textClass = 'font-normal text-slate-500 text-[9.5px]';
                     bgClass = 'bg-white';
                 }
                 
@@ -818,17 +520,17 @@
                     
                 if (parentExpanded) {
                     rowsHtml += `
-                        <tr class="hover:bg-slate-50 transition-colors ${bgClass}">
+                        <tr class="hover:bg-slate-100/60 transition-colors ${bgClass}">
                             <td class="p-3 ${indentClass} flex items-center gap-1.5 select-none" ${clickAction} style="cursor: ${hasChildren ? 'pointer' : 'default'}">
                                 ${chevronIcon}
-                                <span class="leading-snug ${textClass}">${item.desc} ${actionBadge}</span>
+                                <span class="leading-snug ${textClass}">${item.desc}</span>
                             </td>
                             <td class="p-3 text-center whitespace-nowrap">${statusBadge}</td>
-                            <td class="p-3 text-center font-extrabold whitespace-nowrap text-slate-950">${realPercent}%</td>
+                            <td class="p-3 text-center font-extrabold whitespace-nowrap text-slate-900">${realPercent}%</td>
                             <td class="p-3 text-center font-semibold whitespace-nowrap text-slate-500">${planPercent}%</td>
                             <td class="p-3 text-center text-slate-500 whitespace-nowrap">${formatDateShort(item.inicio)}</td>
                             <td class="p-3 text-center text-slate-500 whitespace-nowrap">${formatDateShort(item.fin)}</td>
-                            <td class="p-3 text-right pr-4 text-slate-600 font-medium whitespace-nowrap">${item.responsable || '-'}</td>
+                            <td class="p-3 text-right pr-4 text-slate-500 font-medium whitespace-nowrap text-[10px]">${item.responsable || '-'}</td>
                         </tr>
                     `;
                 }
@@ -840,7 +542,6 @@
             return rowsHtml;
         }
 
-        // Renderizado de las tarjetas principales (Nivel 2)
         function renderItems(containerId, keys) {
             const container = document.getElementById(containerId);
             container.innerHTML = '';
@@ -849,85 +550,76 @@
                 const data = currentData[k];
                 if (!data) return;
 
-                const style = STYLE_CONFIG[k] || {
-                    svg: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg>',
-                    color: 'bg-slate-500', text: 'text-slate-600', light: 'bg-slate-50', borderClass: 'border-slate-200'
-                };
-
+                const svgIcon = ICON_CONFIG[k] || '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg>';
                 const health = getHealthStatus(data.real, data.esperado);
                 const subActivitiesList = SUB_ACTIVITIES[k] || [];
                 const subActivitiesRows = buildTreeRows(subActivitiesList, 0, true, k);
                 const isMainExpanded = expandedComponents[k] === true;
 
-                // Conteo de Acciones asociadas a esta Mesa
-                const numAcciones = accionesMap[k] || 0;
-                const badgeAccionesHtml = numAcciones > 0 ? `<span class="inline-flex items-center ml-2 ${style.light} ${style.text} text-[9px] px-2 py-0.5 rounded-md font-black tracking-widest border ${style.borderClass} shadow-sm"><i class="fa-solid fa-list-check mr-1.5"></i> ${numAcciones} ACCIONES</span>` : '';
-
+                // Estilos neutros para la estructura del componente
                 const html = `
-                    <div class="animate-fade-in hover:bg-slate-50/40 p-4 rounded-2xl border ${health.borderClass} transition-all duration-300 relative group" style="animation-delay: ${index * 70}ms" data-edt-item="${k}">
-                        <div class="flex flex-col space-y-3.5">
+                    <div class="animate-fade-in bg-white p-5 md:p-6 rounded-2xl border border-slate-200 card-shadow transition-all duration-300 relative group hover:border-slate-300" style="animation-delay: ${index * 70}ms" data-edt-item="${k}">
+                        <div class="flex flex-col space-y-4">
                             
-                            <div class="flex justify-between items-center gap-2">
-                                <div class="flex items-start space-x-3.5">
-                                    <div class="icon-container w-10 h-10 rounded-xl flex items-center justify-center ${style.light} ${style.text} shadow-sm border border-black/5 flex-shrink-0 text-lg">
-                                        ${style.svg}
+                            <div class="flex justify-between items-center gap-3">
+                                <div class="flex items-center space-x-4 w-full">
+                                    <div class="icon-container w-12 h-12 rounded-xl flex items-center justify-center bg-slate-50 text-slate-600 shadow-sm border border-slate-200 flex-shrink-0 text-xl group-hover:bg-blue-50 group-hover:text-[#003366] transition-colors">
+                                        ${svgIcon}
                                     </div>
-                                    <div>
-                                        <div class="flex items-center gap-2 flex-wrap">
-                                            <span class="text-[8px] font-bold ${health.textColor} uppercase flex items-center gap-1">
-                                                <span>${health.icon}</span> ${health.text}
-                                            </span>
-                                        </div>
-                                        <h4 class="text-xs font-extrabold text-slate-800 leading-tight mt-1 max-w-[220px] md:max-w-xs group-hover:text-blue-700 transition-colors uppercase">
+                                    <div class="flex flex-col justify-center">
+                                        <span class="text-[9px] font-bold ${health.textColor} uppercase flex items-center gap-1 mb-1 bg-white inline-block">
+                                            <span>${health.icon}</span> ${health.text}
+                                        </span>
+                                        <h4 class="text-sm font-extrabold text-slate-800 leading-tight group-hover:text-[#003366] transition-colors uppercase">
                                             ${data.nombre}
-                                            ${badgeAccionesHtml}
                                         </h4>
                                     </div>
                                 </div>
                                 
-                                <div class="flex items-center space-x-2.5 flex-shrink-0 bg-slate-50/80 border border-slate-100/80 px-3 py-1.5 rounded-xl">
+                                <div class="flex items-center space-x-3 flex-shrink-0 bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl">
                                     <div class="text-right">
-                                        <span class="${style.text} font-black text-base md:text-lg">${Math.round(data.real)}%</span>
-                                        <span class="text-[8px] font-extrabold text-slate-400 block -mt-1 uppercase">REAL</span>
+                                        <span class="text-slate-800 font-black text-lg md:text-xl">${Math.round(data.real)}%</span>
+                                        <span class="text-[9px] font-extrabold text-slate-400 block -mt-1.5 uppercase">REAL</span>
                                     </div>
-                                    <div class="h-6 w-[1px] bg-slate-200"></div>
+                                    <div class="h-8 w-[1px] bg-slate-200"></div>
                                     <div class="text-right">
-                                        <span class="text-slate-600 font-bold text-sm md:text-base">${Math.round(data.esperado)}%</span>
-                                        <span class="text-[8px] font-extrabold text-slate-400 block -mt-1 uppercase">ESP</span>
+                                        <span class="text-slate-500 font-bold text-base md:text-lg">${Math.round(data.esperado)}%</span>
+                                        <span class="text-[9px] font-extrabold text-slate-400 block -mt-1.5 uppercase">ESP</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="progress-bar-bg relative bg-slate-100 rounded-full h-2 w-full overflow-hidden border border-slate-200/50">
-                                <div class="progress-bar-fill absolute top-0 left-0 h-full rounded-full ${style.color} shadow-inner" style="width: ${data.real}%; z-index: 2">
+                            <!-- Barra de progreso que toma el color de la salud del componente -->
+                            <div class="progress-bar-bg relative bg-slate-100 rounded-full h-2.5 w-full overflow-hidden border border-slate-200/50">
+                                <div class="progress-bar-fill absolute top-0 left-0 h-full rounded-full ${health.barColor} shadow-inner" style="width: ${data.real}%; z-index: 2">
                                     <div class="absolute inset-0 bg-white/10 [background-image:linear-gradient(45deg,rgba(255,255,255,.15)_25%,transparent_25%,transparent_50%,rgba(255,255,255,.15)_50%,rgba(255,255,255,.15)_75%,transparent_75%,transparent)] [background-size:1rem_1rem]"></div>
                                 </div>
                                 <div class="absolute top-0 left-0 h-full bg-slate-200" style="width: ${data.esperado}%; z-index: 1"></div>
                             </div>
                             
-                            <div class="flex justify-end items-center pt-1.5 text-[10px] text-slate-400">
-                                <button onclick="toggleMainComponent('${k}')" class="text-[#003366] hover:text-[#002244] font-extrabold uppercase tracking-wider flex items-center gap-1.5 text-[9px] transition-all bg-slate-100 hover:bg-slate-200/80 px-3 py-1.5 rounded-lg border border-slate-200/50 shadow-sm">
-                                    <span>Consultar Detalle</span>
+                            <div class="flex justify-end items-center pt-1 text-[10px] text-slate-400">
+                                <button onclick="toggleMainComponent('${k}')" class="text-slate-600 hover:text-[#003366] font-extrabold uppercase tracking-wider flex items-center gap-1.5 text-[9px] transition-all bg-white hover:bg-slate-50 px-4 py-2 rounded-lg border border-slate-200 shadow-sm">
+                                    <span>Consultar Detalle del Componente</span>
                                     <i id="chevron-${k.replace('.', '-')}" class="fa-solid fa-chevron-down text-[8px] transition-transform duration-350 ${isMainExpanded ? 'rotate-180' : ''}"></i>
                                 </button>
                             </div>
 
                             <div id="activities-panel-${k.replace('.', '-')}" class="collapsible-activities w-full ${isMainExpanded ? 'open' : ''}">
-                                <div class="w-full overflow-x-auto rounded-xl border border-slate-200 shadow-sm mt-3 scrollbar-hide bg-white animate-fade-in">
+                                <div class="w-full overflow-x-auto rounded-xl border border-slate-200 shadow-sm mt-2 scrollbar-hide bg-white animate-fade-in">
                                     <table class="w-full text-left text-[11px] min-w-[850px]">
-                                        <thead class="bg-slate-100 text-slate-700 font-extrabold uppercase text-[8px] tracking-wider border-b border-slate-200">
+                                        <thead class="bg-slate-50 text-slate-500 font-extrabold uppercase text-[8px] tracking-wider border-b border-slate-200">
                                             <tr>
-                                                <th class="p-3 pl-4">Fase / Actividad</th>
-                                                <th class="p-3 text-center">Estado</th>
-                                                <th class="p-3 text-center">% Comp.</th>
-                                                <th class="p-3 text-center">% Esp.</th>
-                                                <th class="p-3 text-center">Inicio</th>
-                                                <th class="p-3 text-center">Fin</th>
-                                                <th class="p-3 text-right pr-4">Responsable</th>
+                                                <th class="p-3.5 pl-4">Fase / Actividad</th>
+                                                <th class="p-3.5 text-center">Estado</th>
+                                                <th class="p-3.5 text-center">% Comp.</th>
+                                                <th class="p-3.5 text-center">% Esp.</th>
+                                                <th class="p-3.5 text-center">Inicio</th>
+                                                <th class="p-3.5 text-center">Fin</th>
+                                                <th class="p-3.5 text-right pr-4">Responsable</th>
                                             </tr>
                                         </thead>
                                         <tbody class="divide-y divide-slate-100">
-                                            ${subActivitiesRows || `<tr><td colspan="7" class="p-4 text-center text-slate-400 italic">No hay detalles registrados para esta sección.</td></tr>`}
+                                            ${subActivitiesRows || `<tr><td colspan="7" class="p-4 text-center text-slate-400 italic">No hay detalles registrados para este componente.</td></tr>`}
                                         </tbody>
                                     </table>
                                 </div>
@@ -950,43 +642,9 @@
             renderUI();
         }
 
-        function openPdfModal() {
-            const modal = document.getElementById('pdf-modal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            document.body.style.overflow = 'hidden'; 
-        }
-
-        function closePdfModal() {
-            const modal = document.getElementById('pdf-modal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-            document.body.style.overflow = ''; 
-        }
-
-        // Funciones para el visor de Excel
-        function openExcelModal() {
-            const modal = document.getElementById('excel-modal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            document.body.style.overflow = 'hidden'; 
-        }
-
-        function closeExcelModal() {
-            const modal = document.getElementById('excel-modal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-            document.body.style.overflow = ''; 
-        }
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                closePdfModal();
-                closeExcelModal();
-            }
-        });
-
-        window.onload = init;
+        window.onload = function() {
+            init();
+        };
     </script>
 </body>
 </html>
