@@ -10,6 +10,8 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <!-- Google Fonts: Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- html2canvas para captura de pantalla -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
         :root {
@@ -76,10 +78,10 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col selection:bg-blue-100">
+<body class="min-h-screen flex flex-col selection:bg-blue-100" id="dashboard-body">
 
     <!-- Loader de optimización de datos -->
-    <div id="loader" class="fixed inset-0 bg-slate-900/95 z-50 flex flex-col justify-center items-center backdrop-blur-sm transition-opacity duration-500">
+    <div id="loader" data-html2canvas-ignore="true" class="fixed inset-0 bg-slate-900/95 z-50 flex flex-col justify-center items-center backdrop-blur-sm transition-opacity duration-500">
         <div class="flex flex-col items-center">
             <div class="relative w-16 h-16 mb-4">
                 <div class="absolute inset-0 rounded-full border-4 border-slate-700"></div>
@@ -93,7 +95,7 @@
     </div>
 
     <!-- Línea tricolor patria -->
-    <div class="flag-strip"></div>
+    <div class="flag-strip" data-html2canvas-ignore></div>
     
     <header class="header-gradient text-white py-5 px-6 shadow-xl relative overflow-hidden">
         <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
@@ -130,6 +132,12 @@
                     <span id="header-kpi-status" class="px-3 py-1.5 rounded-full text-[10px] font-extrabold uppercase bg-white/10 text-white border border-white/20 flex-shrink-0 hidden md:inline-flex items-center gap-1">
                         --
                     </span>
+
+                    <!-- Botón de Descarga Imagen -->
+                    <button onclick="downloadScreenshot()" id="download-btn" class="bg-blue-500/30 hover:bg-blue-500/50 text-white border border-blue-400/40 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 transition-colors" data-html2canvas-ignore>
+                        <i class="fa-solid fa-camera"></i>
+                        Capturar
+                    </button>
                 </div>
             </div>
 
@@ -597,7 +605,7 @@
                                 <div class="absolute top-0 left-0 h-full bg-slate-200" style="width: ${data.esperado}%; z-index: 1"></div>
                             </div>
                             
-                            <div class="flex justify-end items-center pt-1 text-[10px] text-slate-400">
+                            <div class="flex justify-end items-center pt-1 text-[10px] text-slate-400" data-html2canvas-ignore>
                                 <button onclick="toggleMainComponent('${k}')" class="text-slate-600 hover:text-[#003366] font-extrabold uppercase tracking-wider flex items-center gap-1.5 text-[9px] transition-all bg-white hover:bg-slate-50 px-4 py-2 rounded-lg border border-slate-200 shadow-sm">
                                     <span>Consultar Detalle del Componente</span>
                                     <i id="chevron-${k.replace('.', '-')}" class="fa-solid fa-chevron-down text-[8px] transition-transform duration-350 ${isMainExpanded ? 'rotate-180' : ''}"></i>
@@ -640,6 +648,74 @@
         function toggleWbsNode(nodeKey, componentKey) {
             expandedWbsNodes[nodeKey] = !expandedWbsNodes[nodeKey];
             renderUI();
+        }
+
+        // --- LÓGICA DE CAPTURA DE PANTALLA ---
+        async function downloadScreenshot() {
+            const btn = document.getElementById('download-btn');
+            const originalHTML = btn.innerHTML;
+            
+            // Estado de carga en el botón
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generando...';
+            btn.disabled = true;
+
+            // 1. Guardar el scroll actual y mover al inicio (evita cortes blancos en html2canvas)
+            const currentScroll = window.scrollY;
+            window.scrollTo(0, 0);
+
+            // 2. Desactivar animaciones temporalmente y forzar visibilidad SOLO en las tarjetas
+            const disableAnim = document.createElement('style');
+            disableAnim.innerHTML = `
+                * { animation: none !important; transition: none !important; }
+                .animate-fade-in { opacity: 1 !important; transform: translateY(0) !important; }
+            `;
+            document.head.appendChild(disableAnim);
+
+            try {
+                // Pequeña pausa para asegurar que el navegador aplicó los estilos y el scroll
+                await new Promise(r => setTimeout(r, 150));
+
+                // Seleccionamos todo el body para la captura
+                const elementToCapture = document.getElementById('dashboard-body');
+                
+                // Usamos html2canvas
+                const canvas = await html2canvas(elementToCapture, {
+                    scale: 2, // Mejora la calidad y nitidez de la imagen
+                    useCORS: true, // Permite cargar recursos externos como fuentes de Google
+                    backgroundColor: '#f8fafc', // Fondo Tailwind slate-50
+                    windowWidth: document.documentElement.offsetWidth,
+                    windowHeight: document.documentElement.scrollHeight,
+                    scrollY: 0
+                });
+                
+                // Convertir a Data URL (PNG)
+                const imgData = canvas.toDataURL('image/png');
+                
+                // Crear un enlace temporal para forzar la descarga
+                const link = document.createElement('a');
+                link.href = imgData;
+                
+                // Nombre del archivo con fecha
+                const dateStr = new Date().toISOString().split('T')[0];
+                link.download = `Tablero_Gerencia_Guajira_${dateStr}.png`;
+                
+                // Disparar descarga
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+            } catch (error) {
+                console.error("Error al generar la captura:", error);
+                alert("Hubo un error al intentar generar la imagen. Inténtalo de nuevo.");
+            } finally {
+                // 3. Restaurar animaciones y devolver al usuario donde estaba (scroll)
+                document.head.removeChild(disableAnim);
+                window.scrollTo(0, currentScroll);
+
+                // Restaurar botón
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+            }
         }
 
         window.onload = function() {
