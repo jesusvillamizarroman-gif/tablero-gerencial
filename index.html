@@ -381,6 +381,10 @@
             '3.8': { 
                 corto: "8. Fortalecimiento de entes territoriales",
                 completo: "8. Fortalecer las capacidades de los entes territoriales y mejorar la información disponible en las Entidades Territoriales y el Ministerio del Interior para facilitar la toma de decisiones en los procesos de consulta previa, el licenciamiento ambiental y la ejecución de proyectos de inversión social." 
+            },
+            '3.9': { 
+                corto: "9. DISEÑO Y ADOPCIÓN DEL PLAN OPERATIVO DEL PACTO",
+                completo: "9. Diseño y adopción del Plan Operativo para materializar el Pacto y su contenido, asegurando las líneas estratégicas de Derechos, Viabilidad de Proyectos, Diálogo Vinculante y Reactivación Económica." 
             }
         };
 
@@ -574,6 +578,7 @@
                 return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
             });
 
+            // Agrupar hijos y padres
             allEdts.forEach(edt => {
                 const item = flatMap[edt];
                 const parts = edt.split('.');
@@ -755,7 +760,7 @@
             }
 
             renderItems('group-2', ['2.1', '2.2', '2.3', '2.4']);
-            renderCompromisos('compromisos-grid', ['3.1', '3.2', '3.3', '3.4', '3.5', '3.6', '3.7', '3.8']);
+            renderCompromisos('compromisos-grid', ['3.1', '3.2', '3.3', '3.4', '3.5', '3.6', '3.7', '3.8', '3.9']);
             
             if (activeDrawerKey) renderDrawerContent();
         }
@@ -976,7 +981,6 @@
                 const subActivitiesList = SUB_ACTIVITIES[k] || [];
                 const subActivitiesRows = buildTreeRows(subActivitiesList, 0, true, k);
                 
-                // Ocultar si está filtrado y no hay filas
                 if (currentFilter !== 'all' && (!subActivitiesRows || subActivitiesRows === '')) return;
 
                 const ringColor = palette[index % palette.length];
@@ -1028,7 +1032,7 @@
             const data = currentData[k];
             if (!data) return;
 
-            const keys = ['3.1', '3.2', '3.3', '3.4', '3.5', '3.6', '3.7', '3.8'];
+            const keys = ['3.1', '3.2', '3.3', '3.4', '3.5', '3.6', '3.7', '3.8', '3.9'];
             const index = keys.indexOf(k);
             const palette = ['#008080', '#2E4053', '#D35400', '#2471A3', '#117A65', '#9C640C', '#283747', '#A04000'];
             const ringColor = palette[index % palette.length] || '#003366';
