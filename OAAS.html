@@ -168,7 +168,7 @@
         <!-- SECCIÓN UNIFICADA: COMPONENTES -->
         <section class="w-full max-w-5xl mx-auto flex flex-col gap-6 transition-all duration-500">
             
-            <!-- Contenedor dinámico de Desglose de Componentes (Sin caja adicional exterior) -->
+            <!-- Contenedor dinámico de Desglose de Componentes -->
             <div id="group-1" class="space-y-5">
                 <!-- Aquí se inyectan las tarjetas de 1.1, 1.2, etc. -->
             </div>
@@ -202,7 +202,6 @@
 
     <script>
         // FUENTES DE DATOS GLOBALES
-        // 1. Cronograma MS Project (Niveles, Fechas, Avances)
         const URL_PROJECT = `https://docs.google.com/spreadsheets/d/1CWZlW4Ij8KhhYqPJdMKozk_bAHXmRQlq/gviz/tq?tqx=out:json`;
 
         // CONFIGURACIÓN DE ICONOS
@@ -234,10 +233,11 @@
             }
         }
 
+        // --- SOLUCIÓN PRINCIPAL: LECTURA CORRECTA DE PORCENTAJES ---
         function parseValue(cell) {
             if (!cell) return 0;
             
-            // Evaluamos si el dato viene formateado como porcentaje ("1%", "50.5%")
+            // Verificamos si hay texto original con un signo de porcentaje
             let textValue = cell.f ? cell.f.toString() : (typeof cell.v === 'string' ? cell.v : null);
             
             if (textValue) {
@@ -245,31 +245,29 @@
                 const val = parseFloat(clean);
                 
                 if (!isNaN(val)) {
-                    // Si el texto original contenía '%', asumimos que el número extraído
-                    // ya está en la escala 0-100 correcta.
+                    // Si incluía el símbolo %, significa que ya está en escala 0-100 (Ej: "1%" -> 1)
                     if (textValue.includes('%')) {
                         return Math.min(Math.max(val, 0), 100);
                     }
                 }
             }
             
-            // Si no hay texto con '%', fallback al valor numérico puro
+            // Procesamiento de datos numéricos puros (sin %)
             let num = cell.v;
             if (typeof num === 'string') {
                 num = parseFloat(num.replace(',', '.'));
             }
             
             if (typeof num === 'number' && !isNaN(num)) {
-                // En Excel/Project los porcentajes suelen ser base 1 (100% = 1.0).
-                // Pero multiplicamos sólo si el número es estrictamente menor a 1 (ej. 0.01 = 1%) 
-                // o si tenemos certeza absoluta, para evitar el error donde "1" (como texto en %) pasaba a 100.
+                // En MS Project a menudo 100% se exporta como 1.0
+                // Lo multiplicamos solo si es menor o igual a 1 para pasar de decimal a porcentaje.
                 if (num > 0 && num <= 1) {
                     return Math.min(Math.max(num * 100, 0), 100);
                 }
                 return Math.min(Math.max(num, 0), 100);
             }
             
-            return 0;
+            return 0; // Previene valores NaN
         }
 
         function formatDateShort(dateStr) {
@@ -309,7 +307,6 @@
                 // Soporte mejorado ISO
                 const parsedDate = new Date(dateStr);
                 if (!isNaN(parsedDate.getTime())) {
-                    // Usamos getUTCDate si la fecha detectada es puramente ISO para evitar saltos de día
                     if (dateStr.includes('T') && dateStr.includes('Z')) {
                         return `${parsedDate.getUTCDate()}-${monthNames[parsedDate.getUTCMonth()]}-${parsedDate.getUTCFullYear().toString().slice(-2)}`;
                     }
@@ -357,7 +354,7 @@
             currentData = {};
             SUB_ACTIVITIES = {};
 
-            // Algoritmo de orden jerárquico numérico en vez de lexicográfico (localeCompare)
+            // Algoritmo de orden jerárquico numérico en vez de lexicográfico
             const allEdts = Object.keys(flatMap).sort((a, b) => {
                 const partsA = a.split('.').map(Number);
                 const partsB = b.split('.').map(Number);
@@ -378,8 +375,8 @@
                 if (parts.length === 1) {
                     currentData[edt] = {
                         nombre: item.desc,
-                        real: item.comp, // Guardamos exactos
-                        esperado: item.esp // Guardamos exactos
+                        real: item.comp, // Guardamos exactos, sin Math.round aquí
+                        esperado: item.esp
                     };
                 }
                 else if (parts.length === 2) {
@@ -488,7 +485,7 @@
                 
                 const isExpanded = expandedWbsNodes[nodeKey];
                 
-                // Aplicamos Math.round solo para la visualización (Evita el doble redondeo lógico)
+                // Aplicamos Math.round solo para la visualización
                 let realPercent = Math.round(item.comp);
                 let planPercent = Math.round(item.esp);
                 const statusBadge = getWbsStatusBadge(realPercent, planPercent);
@@ -645,7 +642,7 @@
                                 </div>
                             </div>
 
-                            <!-- Barra con Math.min para evitar que explote si un dato es > 100 -->
+                            <!-- Barra con Math.min para evitar desbordes -->
                             <div class="progress-bar-bg relative bg-slate-100 rounded-full h-2.5 w-full overflow-hidden border border-slate-200/50">
                                 <div class="progress-bar-fill absolute top-0 left-0 h-full rounded-full ${health.barColor} shadow-inner" style="width: ${Math.min(data.real, 100)}%; z-index: 2">
                                     <div class="absolute inset-0 bg-white/10 [background-image:linear-gradient(45deg,rgba(255,255,255,.15)_25%,transparent_25%,transparent_50%,rgba(255,255,255,.15)_50%,rgba(255,255,255,.15)_75%,transparent_75%,transparent)] [background-size:1rem_1rem]"></div>
@@ -674,7 +671,7 @@
                                                 <th class="p-3.5 text-right pr-4">Responsable</th>
                                             </tr>
                                         </thead>
-                                        <!-- Se añade ID y clase para inyección dinámica y rápida sin re-render de todo el DOM -->
+                                        <!-- Inyección dinámica para evitar re-render de todo el DOM -->
                                         <tbody id="tbody-${k.replace(/\./g, '-')}" class="divide-y divide-slate-100">
                                             ${subActivitiesRows || `<tr><td colspan="7" class="p-4 text-center text-slate-400 italic">No hay detalles registrados para este componente.</td></tr>`}
                                         </tbody>
@@ -692,8 +689,7 @@
         function toggleMainComponent(key) {
             expandedComponents[key] = !expandedComponents[key];
             
-            // Reemplazamos la llamada general renderUI() por manipulación de clases
-            // para evitar parpadeos y pérdida de transiciones.
+            // Reemplazamos la llamada general renderUI() por manipulación de clases directa
             const panelId = `activities-panel-${key.replace(/\./g, '-')}`;
             const chevronId = `chevron-${key.replace(/\./g, '-')}`;
             
@@ -701,21 +697,15 @@
             const chevron = document.getElementById(chevronId);
             
             if (panel && chevron) {
-                if (expandedComponents[key]) {
-                    panel.classList.add('open');
-                    chevron.classList.add('rotate-180');
-                } else {
-                    panel.classList.remove('open');
-                    chevron.classList.remove('rotate-180');
-                }
+                panel.classList.toggle('open');
+                chevron.classList.toggle('rotate-180');
             }
         }
 
         function toggleWbsNode(nodeKey, componentKey) {
             expandedWbsNodes[nodeKey] = !expandedWbsNodes[nodeKey];
             
-            // En vez de renderizar TODO el dashboard de nuevo, 
-            // solo redibujamos el TBody específico para este componente
+            // Solo redibujamos el TBody específico para este componente
             const tbodyId = `tbody-${componentKey.replace(/\./g, '-')}`;
             const tbody = document.getElementById(tbodyId);
             
@@ -730,7 +720,6 @@
             const btn = document.getElementById('download-btn');
             const originalHTML = btn.innerHTML;
             
-            // Estado de carga en el botón
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generando...';
             btn.disabled = true;
 
