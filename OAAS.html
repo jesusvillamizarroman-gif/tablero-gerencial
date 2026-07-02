@@ -205,7 +205,7 @@
         // 1. Cronograma MS Project (Niveles, Fechas, Avances)
         const URL_PROJECT = `https://docs.google.com/spreadsheets/d/1CWZlW4Ij8KhhYqPJdMKozk_bAHXmRQlq/gviz/tq?tqx=out:json`;
 
-        // CONFIGURACIÓN DE ICONOS (Se eliminan los colores específicos, todo será neutro)
+        // CONFIGURACIÓN DE ICONOS
         const ICON_CONFIG = {
             '1.1': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>',
             '1.2': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>',
@@ -216,7 +216,7 @@
         // VARIABLES GLOBALES
         let currentData = {}; 
         let SUB_ACTIVITIES = {}; 
-        let FLAT_DATA = {}; // Mapa plano global
+        let FLAT_DATA = {}; 
         
         let expandedWbsNodes = {};
         let expandedComponents = {};
@@ -236,17 +236,40 @@
 
         function parseValue(cell) {
             if (!cell) return 0;
-            let val = 0;
-            if (typeof cell.v === 'number') {
-                val = cell.v;
-            } else if (cell.f || typeof cell.v === 'string') {
-                const text = (cell.f || cell.v).toString();
-                const clean = text.replace('%', '').replace(',', '.').trim();
-                val = parseFloat(clean);
+            
+            // Evaluamos si el dato viene formateado como porcentaje ("1%", "50.5%")
+            let textValue = cell.f ? cell.f.toString() : (typeof cell.v === 'string' ? cell.v : null);
+            
+            if (textValue) {
+                const clean = textValue.replace('%', '').replace(',', '.').trim();
+                const val = parseFloat(clean);
+                
+                if (!isNaN(val)) {
+                    // Si el texto original contenía '%', asumimos que el número extraído
+                    // ya está en la escala 0-100 correcta.
+                    if (textValue.includes('%')) {
+                        return Math.min(Math.max(val, 0), 100);
+                    }
+                }
             }
-            if (isNaN(val)) return 0;
-            if (val > 0 && val <= 1.1) return val * 100;
-            return val;
+            
+            // Si no hay texto con '%', fallback al valor numérico puro
+            let num = cell.v;
+            if (typeof num === 'string') {
+                num = parseFloat(num.replace(',', '.'));
+            }
+            
+            if (typeof num === 'number' && !isNaN(num)) {
+                // En Excel/Project los porcentajes suelen ser base 1 (100% = 1.0).
+                // Pero multiplicamos sólo si el número es estrictamente menor a 1 (ej. 0.01 = 1%) 
+                // o si tenemos certeza absoluta, para evitar el error donde "1" (como texto en %) pasaba a 100.
+                if (num > 0 && num <= 1) {
+                    return Math.min(Math.max(num * 100, 0), 100);
+                }
+                return Math.min(Math.max(num, 0), 100);
+            }
+            
+            return 0;
         }
 
         function formatDateShort(dateStr) {
@@ -283,8 +306,13 @@
                 return `${day}-${monthNames[month]}-${year.toString().slice(-2)}`;
             }
             try {
+                // Soporte mejorado ISO
                 const parsedDate = new Date(dateStr);
                 if (!isNaN(parsedDate.getTime())) {
+                    // Usamos getUTCDate si la fecha detectada es puramente ISO para evitar saltos de día
+                    if (dateStr.includes('T') && dateStr.includes('Z')) {
+                        return `${parsedDate.getUTCDate()}-${monthNames[parsedDate.getUTCMonth()]}-${parsedDate.getUTCFullYear().toString().slice(-2)}`;
+                    }
                     return `${parsedDate.getDate()}-${monthNames[parsedDate.getMonth()]}-${parsedDate.getFullYear().toString().slice(-2)}`;
                 }
             } catch (e) {}
@@ -303,8 +331,11 @@
 
                 const nombre = r.c[1]?.v || 'Sin Nombre';
                 const duracion = r.c[2]?.v || '';
+                
+                // Extraemos valores exactos y se delega el Math.round a las funciones de render
                 const real = parseValue(r.c[3]);
                 const esperado = parseValue(r.c[4]);
+                
                 const comienzo = r.c[6]?.f || r.c[6]?.v || '';
                 const fin = r.c[7]?.f || r.c[7]?.v || '';
                 const responsable = r.c[8]?.v || '';
@@ -326,8 +357,18 @@
             currentData = {};
             SUB_ACTIVITIES = {};
 
+            // Algoritmo de orden jerárquico numérico en vez de lexicográfico (localeCompare)
             const allEdts = Object.keys(flatMap).sort((a, b) => {
-                return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+                const partsA = a.split('.').map(Number);
+                const partsB = b.split('.').map(Number);
+                const maxLen = Math.max(partsA.length, partsB.length);
+                
+                for (let i = 0; i < maxLen; i++) {
+                    const valA = partsA[i] || 0;
+                    const valB = partsB[i] || 0;
+                    if (valA !== valB) return valA - valB;
+                }
+                return 0;
             });
 
             allEdts.forEach(edt => {
@@ -337,15 +378,15 @@
                 if (parts.length === 1) {
                     currentData[edt] = {
                         nombre: item.desc,
-                        real: Math.round(item.comp),
-                        esperado: Math.round(item.esp)
+                        real: item.comp, // Guardamos exactos
+                        esperado: item.esp // Guardamos exactos
                     };
                 }
                 else if (parts.length === 2) {
                     currentData[edt] = {
                         nombre: item.desc,
-                        real: Math.round(item.comp),
-                        esperado: Math.round(item.esp)
+                        real: item.comp,
+                        esperado: item.esp
                     };
                     SUB_ACTIVITIES[edt] = [];
                 }
@@ -411,62 +452,14 @@
             }
         }
 
-        function renderUI() {
-            if (currentData['1']) {
-                const gap = currentData['1'].esperado - currentData['1'].real;
-                let statusText = '';
-                let statusClass = '';
-                let icon = '';
-                let barColor = '';
-                
-                if (gap <= 0) {
-                    statusText = 'AL DÍA';
-                    statusClass = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
-                    icon = '🟢';
-                    barColor = 'bg-emerald-400';
-                } else if (gap <= 10) {
-                    statusText = 'ALERTA LEVE';
-                    statusClass = 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30';
-                    icon = '🟡';
-                    barColor = 'bg-yellow-400';
-                } else {
-                    statusText = 'CRÍTICO / DEMORA';
-                    statusClass = 'bg-rose-500/20 text-rose-300 border-rose-500/30';
-                    icon = '🔴';
-                    barColor = 'bg-rose-400';
-                }
-
-                document.getElementById('header-kpi-real').innerText = `${Math.round(currentData['1'].real)}%`;
-                document.getElementById('header-kpi-plan').innerText = `${Math.round(currentData['1'].esperado)}%`;
-                
-                const bar = document.getElementById('header-kpi-bar');
-                bar.style.width = `${currentData['1'].real}%`;
-                bar.className = `progress-bar-fill absolute top-0 left-0 h-full rounded-full ${barColor} shadow-[inset_0_1px_3px_rgba(255,255,255,0.3)]`;
-                
-                const statusBadge = document.getElementById('header-kpi-status');
-                const statusMobile = document.getElementById('header-kpi-status-mobile');
-                
-                if (statusBadge) {
-                    statusBadge.className = `px-3 py-1.5 rounded-full text-[10px] font-extrabold uppercase flex-shrink-0 hidden md:inline-flex items-center gap-1.5 ${statusClass}`;
-                    statusBadge.innerHTML = `<span>${icon}</span> ${statusText}`;
-                }
-                if (statusMobile) {
-                    statusMobile.innerHTML = `Estado: <span class="font-bold">${statusText}</span> ${icon}`;
-                }
-            }
-
-            renderItems('group-1', ['1.1', '1.2', '1.3', '1.4']);
-        }
-
-        // Nueva lógica de estados: El color solo se usa para indicar salud, no para diferenciar componentes.
         function getHealthStatus(real, esperado) {
             const gap = esperado - real;
             if (gap <= 0) {
-                return { text: 'AL DÍA', textColor: 'text-emerald-600', lightBg: 'bg-emerald-50', borderClass: 'border-emerald-200', icon: '🟢', barColor: 'bg-emerald-500' };
+                return { text: 'AL DÍA', textColor: 'text-emerald-600', borderClass: 'border-emerald-200', icon: '🟢', barColor: 'bg-emerald-500' };
             } else if (gap <= 10) {
-                return { text: 'ALERTA LEVE', textColor: 'text-amber-600', lightBg: 'bg-amber-50', borderClass: 'border-amber-200', icon: '🟡', barColor: 'bg-amber-500' };
+                return { text: 'ALERTA LEVE', textColor: 'text-amber-600', borderClass: 'border-amber-200', icon: '🟡', barColor: 'bg-amber-500' };
             } else {
-                return { text: 'CRÍTICO / DEMORA', textColor: 'text-rose-600', lightBg: 'bg-rose-50', borderClass: 'border-rose-200', icon: '🔴', barColor: 'bg-rose-500' };
+                return { text: 'CRÍTICO / DEMORA', textColor: 'text-rose-600', borderClass: 'border-rose-200', icon: '🔴', barColor: 'bg-rose-500' };
             }
         }
 
@@ -494,6 +487,8 @@
                 }
                 
                 const isExpanded = expandedWbsNodes[nodeKey];
+                
+                // Aplicamos Math.round solo para la visualización (Evita el doble redondeo lógico)
                 let realPercent = Math.round(item.comp);
                 let planPercent = Math.round(item.esp);
                 const statusBadge = getWbsStatusBadge(realPercent, planPercent);
@@ -550,6 +545,56 @@
             return rowsHtml;
         }
 
+        function renderUI() {
+            if (currentData['1']) {
+                const realRound = Math.round(currentData['1'].real);
+                const espRound = Math.round(currentData['1'].esperado);
+                const gap = espRound - realRound;
+                
+                let statusText = '';
+                let statusClass = '';
+                let icon = '';
+                let barColor = '';
+                
+                if (gap <= 0) {
+                    statusText = 'AL DÍA';
+                    statusClass = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
+                    icon = '🟢';
+                    barColor = 'bg-emerald-400';
+                } else if (gap <= 10) {
+                    statusText = 'ALERTA LEVE';
+                    statusClass = 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30';
+                    icon = '🟡';
+                    barColor = 'bg-yellow-400';
+                } else {
+                    statusText = 'CRÍTICO / DEMORA';
+                    statusClass = 'bg-rose-500/20 text-rose-300 border-rose-500/30';
+                    icon = '🔴';
+                    barColor = 'bg-rose-400';
+                }
+
+                document.getElementById('header-kpi-real').innerText = `${realRound}%`;
+                document.getElementById('header-kpi-plan').innerText = `${espRound}%`;
+                
+                const bar = document.getElementById('header-kpi-bar');
+                bar.style.width = `${Math.min(realRound, 100)}%`;
+                bar.className = `progress-bar-fill absolute top-0 left-0 h-full rounded-full ${barColor} shadow-[inset_0_1px_3px_rgba(255,255,255,0.3)]`;
+                
+                const statusBadge = document.getElementById('header-kpi-status');
+                const statusMobile = document.getElementById('header-kpi-status-mobile');
+                
+                if (statusBadge) {
+                    statusBadge.className = `px-3 py-1.5 rounded-full text-[10px] font-extrabold uppercase flex-shrink-0 hidden md:inline-flex items-center gap-1.5 ${statusClass}`;
+                    statusBadge.innerHTML = `<span>${icon}</span> ${statusText}`;
+                }
+                if (statusMobile) {
+                    statusMobile.innerHTML = `Estado: <span class="font-bold">${statusText}</span> ${icon}`;
+                }
+            }
+
+            renderItems('group-1', ['1.1', '1.2', '1.3', '1.4']);
+        }
+
         function renderItems(containerId, keys) {
             const container = document.getElementById(containerId);
             container.innerHTML = '';
@@ -564,7 +609,10 @@
                 const subActivitiesRows = buildTreeRows(subActivitiesList, 0, true, k);
                 const isMainExpanded = expandedComponents[k] === true;
 
-                // Estilos neutros para la estructura del componente
+                // Valores redondeados estrictamente para interfaz
+                const realRound = Math.round(data.real);
+                const espRound = Math.round(data.esperado);
+
                 const html = `
                     <div class="animate-fade-in bg-white p-5 md:p-6 rounded-2xl border border-slate-200 card-shadow transition-all duration-300 relative group hover:border-slate-300" style="animation-delay: ${index * 70}ms" data-edt-item="${k}">
                         <div class="flex flex-col space-y-4">
@@ -586,33 +634,33 @@
                                 
                                 <div class="flex items-center space-x-3 flex-shrink-0 bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl">
                                     <div class="text-right">
-                                        <span class="text-slate-800 font-black text-lg md:text-xl">${Math.round(data.real)}%</span>
+                                        <span class="text-slate-800 font-black text-lg md:text-xl">${realRound}%</span>
                                         <span class="text-[9px] font-extrabold text-slate-400 block -mt-1.5 uppercase">REAL</span>
                                     </div>
                                     <div class="h-8 w-[1px] bg-slate-200"></div>
                                     <div class="text-right">
-                                        <span class="text-slate-500 font-bold text-base md:text-lg">${Math.round(data.esperado)}%</span>
+                                        <span class="text-slate-500 font-bold text-base md:text-lg">${espRound}%</span>
                                         <span class="text-[9px] font-extrabold text-slate-400 block -mt-1.5 uppercase">ESP</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Barra de progreso que toma el color de la salud del componente -->
+                            <!-- Barra con Math.min para evitar que explote si un dato es > 100 -->
                             <div class="progress-bar-bg relative bg-slate-100 rounded-full h-2.5 w-full overflow-hidden border border-slate-200/50">
-                                <div class="progress-bar-fill absolute top-0 left-0 h-full rounded-full ${health.barColor} shadow-inner" style="width: ${data.real}%; z-index: 2">
+                                <div class="progress-bar-fill absolute top-0 left-0 h-full rounded-full ${health.barColor} shadow-inner" style="width: ${Math.min(data.real, 100)}%; z-index: 2">
                                     <div class="absolute inset-0 bg-white/10 [background-image:linear-gradient(45deg,rgba(255,255,255,.15)_25%,transparent_25%,transparent_50%,rgba(255,255,255,.15)_50%,rgba(255,255,255,.15)_75%,transparent_75%,transparent)] [background-size:1rem_1rem]"></div>
                                 </div>
-                                <div class="absolute top-0 left-0 h-full bg-slate-200" style="width: ${data.esperado}%; z-index: 1"></div>
+                                <div class="absolute top-0 left-0 h-full bg-slate-200" style="width: ${Math.min(data.esperado, 100)}%; z-index: 1"></div>
                             </div>
                             
                             <div class="flex justify-end items-center pt-1 text-[10px] text-slate-400" data-html2canvas-ignore>
                                 <button onclick="toggleMainComponent('${k}')" class="text-slate-600 hover:text-[#003366] font-extrabold uppercase tracking-wider flex items-center gap-1.5 text-[9px] transition-all bg-white hover:bg-slate-50 px-4 py-2 rounded-lg border border-slate-200 shadow-sm">
                                     <span>Consultar Detalle del Componente</span>
-                                    <i id="chevron-${k.replace('.', '-')}" class="fa-solid fa-chevron-down text-[8px] transition-transform duration-350 ${isMainExpanded ? 'rotate-180' : ''}"></i>
+                                    <i id="chevron-${k.replace(/\./g, '-')}" class="fa-solid fa-chevron-down text-[8px] transition-transform duration-350 ${isMainExpanded ? 'rotate-180' : ''}"></i>
                                 </button>
                             </div>
 
-                            <div id="activities-panel-${k.replace('.', '-')}" class="collapsible-activities w-full ${isMainExpanded ? 'open' : ''}">
+                            <div id="activities-panel-${k.replace(/\./g, '-')}" class="collapsible-activities w-full ${isMainExpanded ? 'open' : ''}">
                                 <div class="w-full overflow-x-auto rounded-xl border border-slate-200 shadow-sm mt-2 scrollbar-hide bg-white animate-fade-in">
                                     <table class="w-full text-left text-[11px] min-w-[850px]">
                                         <thead class="bg-slate-50 text-slate-500 font-extrabold uppercase text-[8px] tracking-wider border-b border-slate-200">
@@ -626,7 +674,8 @@
                                                 <th class="p-3.5 text-right pr-4">Responsable</th>
                                             </tr>
                                         </thead>
-                                        <tbody class="divide-y divide-slate-100">
+                                        <!-- Se añade ID y clase para inyección dinámica y rápida sin re-render de todo el DOM -->
+                                        <tbody id="tbody-${k.replace(/\./g, '-')}" class="divide-y divide-slate-100">
                                             ${subActivitiesRows || `<tr><td colspan="7" class="p-4 text-center text-slate-400 italic">No hay detalles registrados para este componente.</td></tr>`}
                                         </tbody>
                                     </table>
@@ -642,12 +691,38 @@
 
         function toggleMainComponent(key) {
             expandedComponents[key] = !expandedComponents[key];
-            renderUI();
+            
+            // Reemplazamos la llamada general renderUI() por manipulación de clases
+            // para evitar parpadeos y pérdida de transiciones.
+            const panelId = `activities-panel-${key.replace(/\./g, '-')}`;
+            const chevronId = `chevron-${key.replace(/\./g, '-')}`;
+            
+            const panel = document.getElementById(panelId);
+            const chevron = document.getElementById(chevronId);
+            
+            if (panel && chevron) {
+                if (expandedComponents[key]) {
+                    panel.classList.add('open');
+                    chevron.classList.add('rotate-180');
+                } else {
+                    panel.classList.remove('open');
+                    chevron.classList.remove('rotate-180');
+                }
+            }
         }
 
         function toggleWbsNode(nodeKey, componentKey) {
             expandedWbsNodes[nodeKey] = !expandedWbsNodes[nodeKey];
-            renderUI();
+            
+            // En vez de renderizar TODO el dashboard de nuevo, 
+            // solo redibujamos el TBody específico para este componente
+            const tbodyId = `tbody-${componentKey.replace(/\./g, '-')}`;
+            const tbody = document.getElementById(tbodyId);
+            
+            if (tbody) {
+                const subActivitiesList = SUB_ACTIVITIES[componentKey] || [];
+                tbody.innerHTML = buildTreeRows(subActivitiesList, 0, true, componentKey);
+            }
         }
 
         // --- LÓGICA DE CAPTURA DE PANTALLA ---
@@ -659,11 +734,9 @@
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generando...';
             btn.disabled = true;
 
-            // 1. Guardar el scroll actual y mover al inicio (evita cortes blancos en html2canvas)
             const currentScroll = window.scrollY;
             window.scrollTo(0, 0);
 
-            // 2. Desactivar animaciones temporalmente y forzar visibilidad SOLO en las tarjetas
             const disableAnim = document.createElement('style');
             disableAnim.innerHTML = `
                 * { animation: none !important; transition: none !important; }
@@ -672,34 +745,26 @@
             document.head.appendChild(disableAnim);
 
             try {
-                // Pequeña pausa para asegurar que el navegador aplicó los estilos y el scroll
                 await new Promise(r => setTimeout(r, 150));
 
-                // Seleccionamos todo el body para la captura
                 const elementToCapture = document.getElementById('dashboard-body');
                 
-                // Usamos html2canvas
                 const canvas = await html2canvas(elementToCapture, {
-                    scale: 2, // Mejora la calidad y nitidez de la imagen
-                    useCORS: true, // Permite cargar recursos externos como fuentes de Google
-                    backgroundColor: '#f8fafc', // Fondo Tailwind slate-50
+                    scale: 2, 
+                    useCORS: true,
+                    backgroundColor: '#f8fafc',
                     windowWidth: document.documentElement.offsetWidth,
                     windowHeight: document.documentElement.scrollHeight,
                     scrollY: 0
                 });
                 
-                // Convertir a Data URL (PNG)
                 const imgData = canvas.toDataURL('image/png');
-                
-                // Crear un enlace temporal para forzar la descarga
                 const link = document.createElement('a');
                 link.href = imgData;
                 
-                // Nombre del archivo con fecha
                 const dateStr = new Date().toISOString().split('T')[0];
                 link.download = `Tablero_Gerencia_Guajira_${dateStr}.png`;
                 
-                // Disparar descarga
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
@@ -708,11 +773,9 @@
                 console.error("Error al generar la captura:", error);
                 alert("Hubo un error al intentar generar la imagen. Inténtalo de nuevo.");
             } finally {
-                // 3. Restaurar animaciones y devolver al usuario donde estaba (scroll)
                 document.head.removeChild(disableAnim);
                 window.scrollTo(0, currentScroll);
 
-                // Restaurar botón
                 btn.innerHTML = originalHTML;
                 btn.disabled = false;
             }
