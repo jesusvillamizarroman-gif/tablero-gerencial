@@ -3,22 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistematización de Oferta Institucional - Guajira</title>
+    <title>Tablero Oferta Institucional - La Guajira</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- FontAwesome para Íconos -->
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- PapaParse para leer Google Sheets -->
+    <!-- PapaParse para Google Sheets -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
-    <!-- Leaflet para el Mapa Interactivo -->
+    <!-- Leaflet para el Mapa -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
-    <!-- Google Fonts (Inter) -->
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <script>
@@ -27,821 +27,834 @@
                 extend: {
                     fontFamily: { sans: ['Inter', 'sans-serif'] },
                     colors: {
-                        'riohacha-green': '#00843D',
-                        'riohacha-light': '#E6F3EB',
+                        brand: {
+                            primary: '#00843D',
+                            light: '#E6F3EB',
+                            sidebar: '#004a29',
+                            sidebarHover: '#005f34'
+                        }
+                    },
+                    boxShadow: {
+                        'card': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
                     }
                 }
             }
         }
     </script>
     <style>
-        body { background-color: #f8fafc; }
-        .card-hover:hover { transform: translateY(-3px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
-        .bg-pattern {
-            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-        }
-        #guajira-map { height: 450px; z-index: 10; }
+        body { background-color: #f8fafc; font-family: 'Inter', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
-        /* Personalización de pines del mapa */
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-3px); box-shadow: 0 12px 25px -5px rgba(0,0,0,0.1); border-color: #00843D; }
+        
         .custom-pin { display: flex; align-items: center; justify-content: center; background: transparent; border: none; }
-        .active-pin { filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.4)); transform: scale(1.2); transition: all 0.3s ease; z-index: 1000 !important; }
+        .active-pin { filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.4)); transform: scale(1.15); transition: all 0.3s ease; z-index: 1000 !important; }
         .inactive-pin { opacity: 0.5; filter: grayscale(100%); }
         
-        /* Scrollbar personalizado */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
+        .drawer-open { transform: translateX(0%); }
+        .drawer-closed { transform: translateX(100%); }
     </style>
 </head>
-<body class="flex flex-col min-h-screen">
+<body class="flex h-screen overflow-hidden bg-gray-50 text-gray-800">
 
-    <!-- Cabecera -->
-    <header class="bg-riohacha-green text-white relative overflow-hidden shadow-md">
-        <div class="absolute inset-0 bg-pattern"></div>
-        <div class="absolute inset-0 bg-gradient-to-r from-riohacha-green to-[#005a28] opacity-90"></div>
-        <div class="max-w-7xl mx-auto px-4 py-12 relative z-10 flex flex-col md:flex-row items-center justify-between">
-            <div class="mb-6 md:mb-0">
-                <div class="flex items-center gap-3 mb-2">
-                    <span class="bg-white/20 px-3 py-1 rounded-full text-xs font-semibold tracking-wider uppercase backdrop-blur-sm">Sistematización de la oferta</span>
-                </div>
-                <h1 class="text-4xl font-bold tracking-tight mb-2">Guajira</h1>
-            </div>
-            <!-- Bandera de La Guajira dibujada con CSS -->
-            <div class="bg-white p-2 rounded-lg shadow-lg flex items-center justify-center border-b-4 border-gray-200" title="Bandera de La Guajira">
-                <div class="w-16 h-10 flex flex-col rounded overflow-hidden shadow-inner border border-gray-100">
-                    <div class="h-1/2 bg-[#00843D] w-full"></div>
-                    <div class="h-1/2 bg-white w-full"></div>
+    <!-- Sidebar Izquierdo -->
+    <aside class="w-64 bg-brand-sidebar text-white flex flex-col flex-shrink-0 z-20 h-full overflow-y-auto no-scrollbar shadow-xl">
+        <!-- Logo Area -->
+        <div class="p-6 pb-2">
+            <div class="flex items-start gap-3">
+                <i class="fa-solid fa-people-group text-2xl mt-1 text-green-300"></i>
+                <div>
+                    <h1 class="font-bold text-sm leading-tight tracking-wide">OFERTA Y<br>OPORTUNIDADES</h1>
+                    <p class="text-xs text-green-200 mt-1">La Guajira</p>
                 </div>
             </div>
         </div>
-    </header>
 
-    <!-- Contenedor Principal -->
-    <main class="max-w-7xl mx-auto px-4 mt-8 relative z-20 pb-12 w-full">
+        <!-- Explicación del Tablero -->
+        <div class="px-4 py-3 mx-4 my-2 bg-[#005f34] rounded-xl border border-green-500/30">
+            <p class="text-[11px] text-green-100 leading-relaxed" data-es="Este tablero consolida oportunidades, proyectos y formación para las comunidades de La Guajira.">Este tablero consolida oportunidades, proyectos y formación para las comunidades de La Guajira.</p>
+        </div>
+
+        <!-- Navegación -->
+        <nav class="mt-2 flex-1 px-3">
+            <ul class="space-y-1.5">
+                <li>
+                    <a href="#" id="nav-inicio" onclick="toggleFavoritesFilter(false)" class="flex items-center gap-3 px-4 py-3 bg-brand-primary rounded-lg text-sm font-medium border border-green-500/30 text-white cursor-pointer transition-colors shadow-sm">
+                        <i class="fa-solid fa-house w-5 text-center text-green-200"></i> <span data-es="Inicio">Inicio</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" id="nav-intereses" onclick="toggleFavoritesFilter(true)" class="flex items-center justify-between px-4 py-3 hover:bg-brand-sidebarHover rounded-lg text-sm text-gray-300 hover:text-white transition-colors cursor-pointer group">
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-heart text-center w-5 text-gray-400 group-hover:text-red-400 transition-colors"></i> <span data-es="Mis intereses">Mis intereses</span>
+                        </div>
+                        <span id="counter-intereses" class="bg-gray-700/50 text-gray-300 text-[10px] font-bold py-1 px-2.5 rounded-full">0</span>
+                    </a>
+                </li>
+                <li class="pt-4 pb-2">
+                    <div class="px-4 text-[10px] font-bold text-green-600/60 uppercase tracking-wider mb-2">Herramientas</div>
+                </li>
+                <li>
+                    <button onclick="toggleTranslation()" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-brand-sidebarHover rounded-lg text-sm text-gray-300 hover:text-white transition-colors text-left group">
+                        <i class="fa-solid fa-language text-center w-5 text-gray-400 group-hover:text-blue-300 transition-colors"></i> <span id="btn-traducir-text">Traducir (Wayuunaiki)</span>
+                    </button>
+                </li>
+                <li class="px-4 py-3 bg-brand-sidebarHover/30 rounded-lg border border-green-500/10 mt-2">
+                    <div class="flex items-center gap-3 text-sm text-gray-300">
+                        <i class="fa-solid fa-envelope text-center w-5 text-gray-400"></i> 
+                        <span data-es="¿Dudas?">¿Dudas?</span>
+                    </div>
+                    <div class="mt-2 pl-8 text-[10px] text-gray-400 leading-tight">
+                        <span data-es="Escríbenos si necesitas ayuda:">Escríbenos si necesitas ayuda:</span><br>
+                        <span class="text-orange-300/80 font-medium select-all">gerencia.guajira@minenergia.gov.co</span>
+                    </div>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Contenido Principal -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative w-full">
         
-        <!-- SECCIÓN 1: DATOS CUANTITATIVOS (Post-its) -->
-        <section class="mb-10">
-            <div id="stats-container" class="space-y-4">
-                <!-- Loader mientras carga CSV -->
-                <div class="animate-pulse flex space-x-4 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <div class="flex-1 space-y-4 py-1">
-                        <div class="h-4 bg-gray-200 rounded w-1/4"></div>
-                        <div class="space-y-2">
-                            <div class="h-4 bg-gray-200 rounded"></div>
-                            <div class="h-4 bg-gray-200 rounded w-5/6"></div>
-                        </div>
-                    </div>
-                </div>
+        <!-- Header Superior -->
+        <header class="bg-brand-primary border-b border-brand-sidebar px-6 py-3 flex items-center justify-between flex-shrink-0 shadow-sm z-10">
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                Ministerio de Minas y Energía
+            </h2>
+            <!-- Bandera Guajira -->
+            <div class="w-10 h-6 flex flex-col rounded shadow-md border-2 border-gray-900 overflow-hidden" title="La Guajira">
+                <div class="h-1/2 bg-[#00843D] w-full"></div>
+                <div class="h-1/2 bg-white w-full"></div>
             </div>
-        </section>
+        </header>
 
-        <!-- SECCIÓN 2: MAPA DE INTERVENCIÓN -->
-        <section class="mb-10">
-            <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2"><i class="fa-solid fa-map-location-dot text-riohacha-green"></i> Mapa de Intervención</h2>
-            <div class="bg-white p-2 rounded-xl shadow-sm border border-gray-200 relative">
-                <!-- Capa de carga del mapa -->
-                <div id="map-loading" class="absolute inset-0 bg-white/80 z-20 flex flex-col items-center justify-center rounded-xl transition-opacity duration-500">
-                    <i class="fa-solid fa-circle-notch fa-spin text-4xl text-riohacha-green mb-3"></i>
-                    <p class="text-sm font-medium text-gray-600">Georreferenciando ofertas...</p>
-                </div>
-                <div id="guajira-map" class="rounded-lg w-full"></div>
-            </div>
-            <p class="text-xs text-gray-500 mt-2 ml-1"><i class="fa-solid fa-lightbulb text-yellow-500 mr-1"></i> <span class="font-semibold">Tip Analítico:</span> Haz clic en los pines del mapa y selecciona "Ver ofertas" para filtrar la tabla automáticamente. El pin amarillo indica tu selección actual.</p>
-        </section>
-
-        <!-- SECCIÓN 3: OFERTA INSTITUCIONAL -->
-        <section class="mb-8">
-            <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2"><i class="fa-solid fa-database text-riohacha-green"></i> Base de Ofertas</h2>
+        <!-- Área Scrolleable -->
+        <div class="flex-1 overflow-y-auto p-4 lg:p-6 custom-scroll relative bg-gray-50">
             
-            <!-- Panel de Filtros -->
-            <div class="bg-white rounded-xl shadow-sm p-6 mb-6 border border-gray-200">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            <!-- Grid Superior (Filtros, Stats y Mapa) -->
+            <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 mb-8">
+                
+                <!-- Columna Izquierda (Textos, Stats, Post-its, Buscador) -->
+                <div class="xl:col-span-7 flex flex-col gap-5">
+                    
                     <div>
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Sector</label>
-                        <select id="filter-sector" class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-riohacha-green focus:border-riohacha-green block p-2.5 outline-none transition-colors">
-                            <option value="">Todos los sectores</option>
-                        </select>
+                        <div class="text-gray-500 text-xs mb-1 font-medium tracking-wide"><span data-es="Bienvenido 👋">Bienvenido 👋</span></div>
+                        <h2 id="main-title-text" class="text-2xl font-extrabold text-gray-900 leading-tight">
+                            Encuentra oportunidades<br><span class="text-brand-primary">para tu comunidad</span>
+                        </h2>
                     </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Enfoque Poblacional</label>
-                        <select id="filter-poblacional" class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-riohacha-green focus:border-riohacha-green block p-2.5 outline-none transition-colors">
-                            <option value="">Toda la población</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Municipio / Zona</label>
-                        <select id="filter-municipio" class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-riohacha-green focus:border-riohacha-green block p-2.5 outline-none transition-colors">
-                            <option value="">Todos los municipios</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Búsqueda Omnipresente</label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                <i class="fa-solid fa-magnifying-glass text-gray-400"></i>
+
+                    <!-- Estadísticas / Filtros Rápidos -->
+                    <div id="stats-row" class="flex flex-wrap gap-3 mt-1">
+                        <!-- Disponibles -->
+                        <button onclick="setStatusFilter('disponibles')" id="stat-btn-disponibles" class="text-left bg-white border border-gray-200 rounded-xl p-3 flex-1 min-w-[110px] shadow-sm flex flex-col justify-center transition-all hover:border-brand-primary opacity-60">
+                            <div class="flex items-center gap-2 mb-0.5">
+                                <div class="w-2.5 h-2.5 rounded-full bg-brand-primary"></div>
+                                <div id="stat-disponibles" class="text-2xl font-extrabold text-brand-primary">0</div>
                             </div>
-                            <input type="text" id="filter-text" class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-riohacha-green focus:border-riohacha-green block pl-10 p-2.5 outline-none transition-colors" placeholder="Buscar en toda la base...">
+                            <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold" data-es="Disponibles">Disponibles</div>
+                        </button>
+                        
+                        <!-- Cerradas -->
+                        <button onclick="setStatusFilter('cerradas')" id="stat-btn-cerradas" class="text-left bg-white border border-gray-200 rounded-xl p-3 flex-1 min-w-[110px] shadow-sm flex flex-col justify-center transition-all hover:border-orange-400 opacity-60">
+                            <div class="flex items-center gap-2 mb-0.5">
+                                <div class="w-2.5 h-2.5 rounded-full bg-orange-500"></div>
+                                <div id="stat-cerradas" class="text-2xl font-extrabold text-orange-500">0</div>
+                            </div>
+                            <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold" data-es="Cerradas">Cerradas</div>
+                        </button>
+
+                        <!-- Total -->
+                        <button onclick="setStatusFilter('all')" id="stat-btn-all" class="text-left bg-white border-2 border-gray-900 rounded-xl p-3 flex-1 min-w-[110px] shadow-sm flex flex-col justify-center transition-all hover:bg-gray-50">
+                            <div id="stat-total" class="text-2xl font-extrabold text-gray-900 mb-0.5">0</div>
+                            <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold" data-es="Total">Total</div>
+                        </button>
+                    </div>
+
+                    <!-- Categorías Post-it Dinámicas -->
+                    <div>
+                        <h3 class="text-[10px] uppercase tracking-wider font-bold text-gray-500 mb-2" data-es="Categorías">Categorías</h3>
+                        <div class="flex gap-2.5 overflow-x-auto pb-2 no-scrollbar" id="category-chips">
+                            <!-- Inyectados por JS según Columna G -->
+                        </div>
+                    </div>
+
+                    <!-- Buscador principal (Caja blanca) -->
+                    <div class="bg-white rounded-2xl shadow-card border border-gray-100 p-4 relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-brand-primary"></div>
+                        <div class="flex flex-col md:flex-row gap-4">
+                            <!-- Dropdown 1: Qué necesitas -->
+                            <div class="flex-1 relative">
+                                <label class="flex items-center gap-2 text-[10px] uppercase tracking-wider font-bold text-gray-500 mb-2">
+                                    <i class="fa-solid fa-layer-group text-brand-primary"></i> <span data-es="¿Qué necesitas?">¿Qué necesitas?</span>
+                                </label>
+                                <select id="filter-sector" class="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm py-2 px-3 rounded-lg focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary cursor-pointer transition-colors appearance-none">
+                                    <option value="">Selecciona una opción</option>
+                                </select>
+                                <i class="fa-solid fa-chevron-down absolute right-3 bottom-3 text-gray-400 text-[10px] pointer-events-none"></i>
+                            </div>
+                            
+                            <!-- Dropdown 2: Dónde estás -->
+                            <div class="flex-1 relative">
+                                <label class="flex items-center gap-2 text-[10px] uppercase tracking-wider font-bold text-gray-500 mb-2">
+                                    <i class="fa-solid fa-location-dot text-brand-primary"></i> <span data-es="¿Dónde estás?">¿Dónde estás?</span>
+                                </label>
+                                <select id="filter-municipio" class="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm py-2 px-3 rounded-lg focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary cursor-pointer transition-colors appearance-none">
+                                    <option value="">Municipio / comunidad</option>
+                                </select>
+                                <i class="fa-solid fa-chevron-down absolute right-3 bottom-3 text-gray-400 text-[10px] pointer-events-none"></i>
+                            </div>
+
+                            <!-- Dropdown 3: Para quién buscas -->
+                            <div class="flex-1 relative">
+                                <label class="flex items-center gap-2 text-[10px] uppercase tracking-wider font-bold text-gray-500 mb-2">
+                                    <i class="fa-solid fa-user-group text-brand-primary"></i> <span data-es="¿Para quién buscas?">¿Para quién buscas?</span>
+                                </label>
+                                <select id="filter-poblacional" class="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm py-2 px-3 rounded-lg focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary cursor-pointer transition-colors appearance-none">
+                                    <option value="">Selecciona una opción</option>
+                                </select>
+                                <i class="fa-solid fa-chevron-down absolute right-3 bottom-3 text-gray-400 text-[10px] pointer-events-none"></i>
+                            </div>
+                        </div>
+                        <div class="flex justify-end mt-3 pt-3 border-t border-gray-50">
+                            <button id="btn-clear-filters" class="text-gray-500 text-xs font-semibold hover:text-brand-primary flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-green-50 transition-colors">
+                                <i class="fa-solid fa-eraser"></i> <span data-es="Borrar filtros">Borrar filtros</span>
+                            </button>
+                        </div>
+                    </div>
+                </div> 
+                
+                <!-- Columna Derecha (Mapa) -->
+                <div class="xl:col-span-5 flex flex-col h-[400px] xl:h-auto min-h-[300px]">
+                    <div class="bg-white rounded-2xl shadow-card border border-gray-100 flex flex-col h-full overflow-hidden relative">
+                        <div class="p-3 border-b border-gray-100 flex justify-between items-center bg-white z-10 relative">
+                            <h3 class="font-bold text-sm text-gray-800 flex items-center gap-2">
+                                <i class="fa-solid fa-map text-brand-primary"></i> <span data-es="Cobertura en La Guajira">Cobertura en La Guajira</span>
+                            </h3>
+                            <span class="text-[9px] text-gray-400 bg-gray-100 px-2 py-1 rounded">Filtro Interactivo</span>
+                        </div>
+                        <div id="guajira-map" class="flex-1 w-full bg-gray-100 z-0"></div>
+                        
+                        <!-- Overlay de Carga -->
+                        <div id="map-loading" class="absolute inset-0 bg-white/90 z-20 flex flex-col items-center justify-center transition-opacity duration-300">
+                            <i class="fa-solid fa-circle-notch fa-spin text-3xl text-brand-primary mb-3"></i>
+                            <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Cargando mapa...</p>
                         </div>
                     </div>
                 </div>
-                
-                <div class="flex flex-wrap gap-3 justify-end border-t border-gray-100 pt-4 mt-2">
-                    <button id="btn-clear-filters" class="px-5 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors shadow-sm flex items-center gap-2">
-                        <i class="fa-solid fa-eraser"></i> Borrar filtros
-                    </button>
-                    <button id="btn-show-all" class="px-5 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm flex items-center gap-2">
-                        <i class="fa-solid fa-eye"></i> Mostrar todo
-                    </button>
-                    <button id="btn-search" class="px-5 py-2 text-sm font-medium text-white bg-riohacha-green rounded-lg hover:bg-[#006e33] transition-colors shadow-sm flex items-center gap-2">
-                        <i class="fa-solid fa-filter"></i> Analizar Datos
-                    </button>
+            </div> 
+
+            <!-- Oportunidades Destacadas -->
+            <div>
+                <div class="flex flex-wrap items-center justify-between mb-6 pb-2 border-b border-gray-200">
+                    <h3 class="text-xl font-extrabold text-gray-900 flex items-center gap-2">
+                        <i class="fa-solid fa-layer-group text-brand-primary"></i> <span data-es="Oportunidades destacadas">Oportunidades destacadas</span>
+                    </h3>
+                    <span id="results-count" class="text-sm font-bold text-brand-primary bg-green-50 px-3 py-1.5 rounded-lg border border-green-100">0 resultados</span>
+                </div>
+
+                <!-- Grid de Tarjetas -->
+                <div id="results-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <!-- Tarjetas inyectadas por JS -->
+                </div>
+
+                <!-- Estado sin resultados -->
+                <div id="no-results" class="hidden bg-white rounded-2xl shadow-sm border border-gray-200 p-16 text-center border-t-4 border-t-orange-400 mt-6">
+                    <i class="fa-solid fa-box-open text-5xl text-gray-300 mb-4 block"></i>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Sin coincidencias</h3>
+                    <p class="text-gray-500 max-w-md mx-auto text-sm">No hay ofertas que crucen con esta combinación de filtros. Intenta seleccionar otra ubicación o borrar los filtros.</p>
                 </div>
             </div>
-
-            <!-- Estado Inicial -->
-            <div id="initial-state" class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-50 mb-4">
-                    <i class="fa-solid fa-chart-pie text-2xl text-riohacha-green"></i>
-                </div>
-                <h3 class="text-lg font-bold text-gray-900 mb-2">Motor Analítico Listo</h3>
-                <p class="text-gray-500 max-w-md mx-auto">Selecciona los filtros en la parte superior, haz clic en el mapa o presiona "Mostrar todo" para iniciar la exploración de la oferta institucional.</p>
-            </div>
-
-            <!-- Cabecera de resultados -->
-            <div id="results-header" class="hidden mb-4 flex justify-between items-center">
-                <h3 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-list-ul mr-2 text-riohacha-green"></i> Resultados</h3>
-                <span id="results-count" class="bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1 rounded-full border border-blue-200">0 ofertas</span>
-            </div>
-
-            <!-- Estado sin resultados -->
-            <div id="no-results" class="hidden bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center border-t-4 border-t-yellow-400">
-                <i class="fa-solid fa-box-open text-4xl text-gray-300 mb-3"></i>
-                <h3 class="text-lg font-bold text-gray-900 mb-1">Sin coincidencias</h3>
-                <p class="text-gray-500">No hay ofertas que crucen con esta combinación exacta. Intenta borrar algún filtro.</p>
-            </div>
-
-            <!-- Cuadrícula de Tarjetas -->
-            <div id="results-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 hidden">
-                <!-- Inyectado por JS -->
-            </div>
-
-            <!-- Paginación (Lazy Loading) -->
-            <div id="load-more-container" class="hidden mt-8 text-center">
-                <button id="btn-load-more" class="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
-                    <i class="fa-solid fa-spinner mr-2"></i>Cargar más ofertas
-                </button>
-            </div>
-        </section>
-
+            
+        </div>
     </main>
 
-    <!-- Modal (Saber Más) -->
-    <div id="modal-backdrop" class="fixed inset-0 bg-gray-900/75 backdrop-blur-sm hidden z-[100] flex items-center justify-center p-4 transition-opacity">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden relative transform transition-all">
-            <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-500 hover:text-gray-900 bg-white shadow-sm border border-gray-200 hover:bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center transition-colors z-20">
+    <!-- Overlay del Drawer -->
+    <div id="drawer-overlay" class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-[60] hidden transition-opacity opacity-0" onclick="closeDrawer()"></div>
+    
+    <!-- Drawer / Panel Lateral -->
+    <div id="detail-drawer" class="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-[70] flex flex-col drawer-closed transition-transform duration-300 ease-in-out border-l border-gray-100">
+        
+        <!-- Header Drawer -->
+        <div class="p-5 border-b border-gray-100 flex justify-between items-start bg-gray-50 relative">
+            <div class="absolute top-0 left-0 w-full h-1 bg-brand-primary"></div>
+            <div class="pr-8">
+                <span class="text-[10px] font-bold text-brand-primary uppercase tracking-wider mb-2 block" data-es="Información General">Información General</span>
+                <h2 id="drawer-title" class="font-extrabold text-lg text-gray-900 leading-tight"></h2>
+            </div>
+            <button onclick="closeDrawer()" class="text-gray-400 hover:text-red-500 bg-white shadow-sm border border-gray-200 rounded-full w-8 h-8 flex items-center justify-center transition-colors shrink-0">
                 <i class="fa-solid fa-xmark"></i>
             </button>
-            
-            <div class="p-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
-                <span class="text-[10px] font-bold text-riohacha-green uppercase tracking-wider mb-2 inline-flex items-center gap-1 bg-green-50 px-2 py-1 rounded">
-                    <i class="fa-solid fa-building-columns"></i> Detalle Analítico de Oferta
-                </span>
-                <h2 id="modal-title" class="text-2xl font-bold text-gray-900 pr-8 leading-tight"></h2>
-            </div>
-            
-            <div id="modal-content" class="p-6 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 bg-white">
-                <!-- Inyectado por JS -->
-            </div>
-            
-            <div class="p-4 border-t border-gray-100 bg-gray-50 flex justify-end">
-                <button onclick="closeModal()" class="px-6 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors shadow-sm">
-                    Cerrar ventana
-                </button>
-            </div>
+        </div>
+        
+        <!-- Contenido Drawer -->
+        <div id="drawer-content" class="flex-1 overflow-y-auto p-6 space-y-5 bg-white custom-scroll">
+            <!-- Campos inyectados dinámicamente -->
+        </div>
+        
+        <!-- Footer Drawer -->
+        <div class="p-5 border-t border-gray-100 bg-gray-50">
+            <a href="#" id="drawer-apply-btn" target="_blank" class="w-full flex justify-center items-center gap-2 py-3.5 px-4 bg-brand-primary text-white font-bold rounded-xl shadow-md hover:bg-brand-sidebar transition-colors text-sm">
+                <span data-es="Postularme / Ir a la convocatoria">Postularme / Ir a la convocatoria</span> <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            </a>
+            <p class="text-center text-[10px] text-gray-400 mt-3 flex items-center justify-center gap-1">
+                <i class="fa-solid fa-circle-info"></i> Revisa todos los detalles antes de aplicar.
+            </p>
         </div>
     </div>
 
-    <!-- Scripts Lógicos -->
+    <!-- Scripts -->
     <script>
-        // URL pública en formato CSV generada desde Google Sheets
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/1bsVM5OT81A0_dxGqBKj-kZWppYSk1IALlpVhjIyKwbY/export?format=csv';
 
-        // Variables Globales y Estado
+        // Variables Globales
         let rawData = [];
         let filteredData = [];
         let map = null;
-        let mapMarkers = {}; // Almacenará los marcadores por nombre de ciudad
+        let mapMarkers = {};
         
-        // Paginación
-        let currentPage = 1;
-        const itemsPerPage = 12;
+        let favorites = new Set();
+        let showFavoritesOnly = false;
+        let isTranslated = false;
+        
+        let globalStatus = 'all'; // 'all', 'disponibles', 'cerradas'
+        let globalChip = ''; // Para los post-its de la columna G
 
-        // Referencias del DOM
-        const els = {
-            sector: document.getElementById('filter-sector'),
-            poblacional: document.getElementById('filter-poblacional'),
-            municipio: document.getElementById('filter-municipio'),
-            text: document.getElementById('filter-text'),
-            searchBtn: document.getElementById('btn-search'),
-            showAllBtn: document.getElementById('btn-show-all'),
-            clearBtn: document.getElementById('btn-clear-filters'),
-            grid: document.getElementById('results-grid'),
-            initial: document.getElementById('initial-state'),
-            noResults: document.getElementById('no-results'),
-            header: document.getElementById('results-header'),
-            count: document.getElementById('results-count'),
-            stats: document.getElementById('stats-container'),
-            mapLoading: document.getElementById('map-loading'),
-            loadMoreBtn: document.getElementById('btn-load-more'),
-            loadMoreContainer: document.getElementById('load-more-container')
-        };
-
-        // Identificación dinámica de columnas
         const colKeys = {
-            sector: null, enfoque: null, poblacional: null, 
-            entidad: null, objetivo: null, resultados: null, 
-            municipioCols: [], 
-            inicio: null, fin: null, observaciones: null
+            colD: null,          // ¿Qué necesitas? (Sector/Enfoque)
+            colG: null,          // Categorías/Post-its (Temática)
+            poblacional: null,   // ¿Para quién buscas?
+            estado: null,        // Estado de la oferta
+            entidad: null,
+            enlace: null,        // Para el botón postularse
+            municipioCols: []
         };
 
-        // Coordenadas oficiales de los 15 municipios de La Guajira
         const coordGuajira = {
-            'riohacha': [11.5444, -72.9072],
-            'maicao': [11.3797, -72.2472],
-            'uribia': [11.7139, -72.2661],
-            'manaure': [11.7751, -72.4445],
-            'san juan del cesar': [10.7711, -73.0039],
-            'dibulla': [11.2725, -73.3153],
-            'albania': [11.2611, -72.5858],
-            'fonseca': [10.8967, -72.8467],
-            'barrancas': [10.9575, -72.7844],
-            'distraccion': [10.8972, -72.8856],
-            'el molino': [10.6517, -72.9231],
-            'villanueva': [10.605, -72.9811],
-            'urumita': [10.5594, -73.0136],
-            'la jagua del pilar': [10.5161, -73.0489],
-            'hatonuevo': [11.0661, -72.7644]
+            'riohacha': [11.5444, -72.9072], 'maicao': [11.3797, -72.2472], 'uribia': [11.7139, -72.2661],
+            'manaure': [11.7751, -72.4445], 'san juan del cesar': [10.7711, -73.0039], 'dibulla': [11.2725, -73.3153],
+            'albania': [11.2611, -72.5858], 'fonseca': [10.8967, -72.8467], 'barrancas': [10.9575, -72.7844],
+            'distraccion': [10.8972, -72.8856], 'el molino': [10.6517, -72.9231], 'villanueva': [10.605, -72.9811],
+            'urumita': [10.5594, -73.0136], 'la jagua del pilar': [10.5161, -73.0489], 'hatonuevo': [11.0661, -72.7644]
         };
 
-        // Reconoce siglas (ej. SENA, ICBF) y las respeta. Capitaliza el resto de forma elegante.
         function capitalizeFormat(str) {
             if (!str) return '';
             const s = String(str).trim();
             if (s.length === 0) return '';
-            
             return s.split(' ').map(word => {
-                // Si la palabra tiene más de 1 letra y ya está toda en mayúsculas, asumimos que es una SIGLA
-                if (word.length > 1 && word === word.toUpperCase() && !/\d/.test(word)) {
-                    return word; // Dejar la sigla intacta
-                }
-                // Si no, capitalización normal
+                if (word.length > 1 && word === word.toUpperCase() && !/\d/.test(word)) return word; 
                 return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
             }).join(' ');
         }
 
         window.addEventListener('DOMContentLoaded', () => {
-            initMap(); 
+            initMap();
             
             Papa.parse(CSV_URL, {
                 download: true,
                 header: true,
                 skipEmptyLines: true,
                 complete: function(results) {
+                    const headers = results.meta.fields;
+                    identifyColumns(headers);
                     rawData = results.data;
                     
-                    if(rawData.length > 0) {
-                        identifyColumns(Object.keys(rawData[0]));
-                        filteredData = [...rawData];
-                        
-                        renderStats(rawData);
-                        populateDropdowns(); 
-                        initMapMarkers(); // Pintar todos los marcadores grises/base al inicio
-                        updateMapVisuals(rawData); // ¡NUEVO!: Inyectar popups y botones al mapa desde el inicio
-                        
-                        els.mapLoading.classList.add('opacity-0');
-                        setTimeout(() => els.mapLoading.classList.add('hidden'), 500);
-                    } else {
-                        els.stats.innerHTML = '<div class="p-4 bg-red-50 text-red-700 rounded-lg">El archivo de Google Sheets está vacío o no es público.</div>';
-                        els.mapLoading.classList.add('hidden');
-                    }
-                },
-                error: function(error) {
-                    els.stats.innerHTML = `<div class="p-4 bg-red-50 text-red-700 rounded-lg">Error de conexión: ${error.message}</div>`;
-                    els.mapLoading.classList.add('hidden');
+                    triggerFilters(); // Iniciar motor con todo en "all"
+                    setStatusFilter('all');
+                    
+                    document.getElementById('map-loading').classList.add('opacity-0');
+                    setTimeout(() => document.getElementById('map-loading').classList.add('hidden'), 300);
                 }
             });
 
-            // Listeners de interfaz
-            els.searchBtn.addEventListener('click', () => filterData(false));
-            els.showAllBtn.addEventListener('click', () => filterData(true));
-            els.clearBtn.addEventListener('click', () => {
-                els.sector.value = '';
-                els.poblacional.value = '';
-                els.municipio.value = '';
-                els.text.value = '';
-                updateCascadingDropdowns(); // Resetear opciones
-                filterData(true);
-            });
+            // Lógica unificada para desencadenar recálculo completo cuando el usuario toca un filtro
+            document.getElementById('filter-sector').addEventListener('change', triggerFilters);
+            document.getElementById('filter-municipio').addEventListener('change', triggerFilters);
+            document.getElementById('filter-poblacional').addEventListener('change', triggerFilters);
             
-            els.loadMoreBtn.addEventListener('click', () => {
-                currentPage++;
-                renderCards(filteredData, true); // true = append (agregar al final)
+            document.getElementById('btn-clear-filters').addEventListener('click', () => {
+                document.getElementById('filter-sector').value = '';
+                document.getElementById('filter-municipio').value = '';
+                document.getElementById('filter-poblacional').value = '';
+                globalChip = '';
+                triggerFilters();
             });
-
-            // Listener para los filtros en cascada (actualizar otros al cambiar uno)
-            els.sector.addEventListener('change', updateCascadingDropdowns);
-            els.poblacional.addEventListener('change', updateCascadingDropdowns);
         });
 
         function identifyColumns(headers) {
             const norm = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            colKeys.municipioCols = []; 
+            colKeys.municipioCols = [];
             
+            colKeys.colD = headers.length > 3 ? headers[3] : null;
+            colKeys.colG = headers.length > 6 ? headers[6] : null;
+
             headers.forEach(header => {
                 const n = norm(header);
-                if (n.includes('sector')) colKeys.sector = header;
-                else if (n.includes('poblacional')) colKeys.poblacional = header;
-                else if (n.includes('enfoque')) colKeys.enfoque = header; 
-                else if (n.includes('objetivo')) colKeys.objetivo = header;
-                else if (n.includes('resultado')) colKeys.resultados = header;
-                else if (n.includes('entidad') || n.includes('institucion') || n.includes('nombre')) colKeys.entidad = header;
-                else if (n.includes('inicio') || n.includes('ano inicio') || n.includes('año inicio')) colKeys.inicio = header;
-                else if (n.includes('fin') || n.includes('ano fin') || n.includes('año fin')) colKeys.fin = header;
-                else if (n.includes('observacion')) colKeys.observaciones = header;
-                
-                if (n.includes('municipio') || n.includes('zona') || n.includes('impacto') || n.includes('intervencion')) {
-                    colKeys.municipioCols.push(header);
-                }
+                if (n.includes('poblacional')) colKeys.poblacional = header;
+                if (n.includes('estado')) colKeys.estado = header;
+                if (n.includes('enlace') || n.includes('url') || n.includes('link')) colKeys.enlace = header;
+                if (n.includes('entidad') || n.includes('institucion') || n.includes('nombre')) colKeys.entidad = header;
+                if (n.includes('municipio') || n.includes('zona') || n.includes('cobertura')) colKeys.municipioCols.push(header);
             });
+            
+            if(!colKeys.estado) colKeys.estado = headers.find(h => norm(h).includes('estado')) || 'Estado';
         }
 
-        function initMap() {
-            map = L.map('guajira-map', { scrollWheelZoom: false }).setView([11.3, -72.5], 8);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; OpenStreetMap'
-            }).addTo(map);
+        function getRowStatus(row) {
+            if (!colKeys.estado || !row[colKeys.estado]) return 'blank';
+            const val = String(row[colKeys.estado]).trim().toLowerCase();
+            if (val === '') return 'blank';
+            
+            if (val.includes('cerrad') || val.includes('ejecutad') || val.includes('complet')) return 'cerradas';
+            return 'disponibles'; 
         }
 
-        function initMapMarkers() {
-            // Se crean todos los marcadores una vez y se guardan en el diccionario
-            for(const [cityName, coords] of Object.entries(coordGuajira)) {
-                const marker = L.marker(coords).addTo(map);
-                
-                // Eliminamos el auto-filtro instantáneo para que el usuario use el botón del popup
-                
-                mapMarkers[cityName] = marker;
-            }
+        // MOTOR LÓGICO DE FILTROS DEPENDIENTES
+        function rowMatchesFilters(row, ignoreFilterType = null) {
+            const status = getRowStatus(row);
+            if (status === 'blank') return false; 
+            
+            const matchStatus = (globalStatus === 'all') || (status === globalStatus);
+            
+            const sColD = document.getElementById('filter-sector').value;
+            const sMuni = document.getElementById('filter-municipio').value.toLowerCase();
+            const sPob = document.getElementById('filter-poblacional').value;
+            
+            const rowColD = colKeys.colD ? capitalizeFormat(row[colKeys.colD]) : '';
+            let rawPob = colKeys.poblacional ? capitalizeFormat(row[colKeys.poblacional]) : '';
+            if(rawPob.toUpperCase() === 'NNA') rawPob = 'Menores de edad';
+            
+            let rowMunis = "";
+            colKeys.municipioCols.forEach(c => { if(row[c]) rowMunis += String(row[c]).toLowerCase() + " "; });
+
+            // Revisión de Desplegables
+            let matchDrop = true;
+            if (ignoreFilterType !== 'sector' && sColD && rowColD !== sColD) matchDrop = false;
+            if (ignoreFilterType !== 'poblacional' && sPob && rawPob !== sPob) matchDrop = false;
+            if (ignoreFilterType !== 'municipio' && sMuni && !rowMunis.includes(sMuni)) matchDrop = false;
+
+            // Revisión de Chip
+            const rowColG = colKeys.colG ? capitalizeFormat(row[colKeys.colG]) : '';
+            const matchChip = (ignoreFilterType === 'chip') ? true : (!globalChip || rowColG === globalChip);
+
+            return matchStatus && matchDrop && matchChip;
         }
 
-        // Función global para filtrar desde el botón del popup del mapa
-        window.filterByMap = function(cityName) {
-            const ciudadFormateada = capitalizeFormat(cityName);
-            
-            // Validar que la opción exista en el menú, si no existe la agregamos a la fuerza
-            let existeOpcion = Array.from(els.municipio.options).some(opt => opt.value === ciudadFormateada);
-            if (!existeOpcion) {
-                els.municipio.add(new Option(ciudadFormateada, ciudadFormateada));
-            }
+        // Función Maestra: Actualiza dependencias de la UI y luego filtra datos
+        function triggerFilters() {
+            updateCascadingDropdowns(); // Actualiza los listados para que solo aparezca lo disponible
+            renderCategoryChips();      // Actualiza post-its para que solo aparezcan los disponibles
+            filterData();               // Aplica a la grilla y mapa
+        }
 
-            els.municipio.value = ciudadFormateada;
-            updateCascadingDropdowns();
-            
-            // Re-asignar valor después de actualizar selectores (seguridad anti-reseteos)
-            els.municipio.value = ciudadFormateada;
-            
-            filterData(false);
-            
-            // Cerrar el popup del mapa
-            map.closePopup();
-            
-            // Pequeño retraso para permitir que la interfaz de tarjetas se dibuje antes del scroll
-            setTimeout(() => {
-                els.grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 150);
-        };
-
-        // Íconos personalizados para el mapa
-        const iconActive = L.divIcon({className: 'custom-pin active-pin', html: '<i class="fa-solid fa-location-dot fa-3x text-yellow-500" style="text-shadow: 0 2px 4px rgba(0,0,0,0.5);"></i>', iconSize: [40, 40], iconAnchor: [20, 40]});
-        const iconNormal = L.divIcon({className: 'custom-pin', html: '<i class="fa-solid fa-location-dot fa-2x text-riohacha-green"></i>', iconSize: [30, 30], iconAnchor: [15, 30]});
-        const iconInactive = L.divIcon({className: 'custom-pin inactive-pin', html: '<i class="fa-solid fa-circle fa-sm text-gray-400"></i>', iconSize: [15, 15], iconAnchor: [7, 7]});
-
-        function updateMapVisuals(data) {
-            const countByCity = {};
-            data.forEach(row => {
-                let zones = [];
-                colKeys.municipioCols.forEach(col => {
-                    if (row[col] && row[col].trim() !== '') zones.push(row[col].trim().toLowerCase());
-                });
-                zones.forEach(zone => {
-                    for(const cityName of Object.keys(coordGuajira)) {
-                        if (zone.includes(cityName)) {
-                            countByCity[cityName] = (countByCity[cityName] || 0) + 1;
-                            break; 
-                        }
-                    }
-                });
+        function filterData() {
+            filteredData = rawData.filter((row, index) => {
+                const matchFav = (!showFavoritesOnly) || favorites.has(index);
+                return rowMatchesFilters(row, null) && matchFav;
             });
 
-            const selectedMuni = els.municipio.value.toLowerCase();
-            let bounds = [];
-
-            for(const [cityName, marker] of Object.entries(mapMarkers)) {
-                const count = countByCity[cityName] || 0;
-                
-                // Generar botón condicional para el popup
-                const actionButton = count > 0 
-                    ? `<button onclick="filterByMap('${cityName}')" class="mt-3 w-full px-3 py-1.5 bg-riohacha-green text-white text-xs font-bold rounded shadow-sm hover:bg-[#006e33] transition-colors flex items-center justify-center gap-1"><i class="fa-solid fa-eye"></i> Ver ofertas</button>`
-                    : `<span class="mt-3 block text-[10px] text-gray-400 text-center border-t border-gray-100 pt-1">Sin ofertas con los filtros actuales</span>`;
-
-                // Generar Popup dinámico
-                marker.bindPopup(`
-                    <div class="p-1 min-w-[130px]">
-                        <strong class="block text-gray-800 capitalize mb-1.5 text-center text-sm">${cityName}</strong>
-                        <div class="flex justify-center">
-                            <span class="bg-${count>0?'green-100':'gray-100'} text-${count>0?'riohacha-green':'gray-500'} px-2 py-0.5 rounded text-xs font-bold border border-${count>0?'green-200':'gray-200'}">
-                                ${count} Total
-                            </span>
-                        </div>
-                        ${actionButton}
-                    </div>
-                `);
-
-                // Asignar color e ícono según estado (Activo, Normal, Inactivo)
-                if (count > 0) {
-                    bounds.push(coordGuajira[cityName]);
-                    if (cityName === selectedMuni) {
-                        marker.setIcon(iconActive); // Selección actual
-                    } else {
-                        marker.setIcon(iconNormal); // Tiene ofertas
-                    }
-                } else {
-                    marker.setIcon(iconInactive); // No tiene ofertas en este filtro
-                }
-            }
-
-            // Auto-encuadre del mapa a los puntos visibles
-            if (bounds.length > 0) {
-                map.fitBounds(bounds, { padding: [50, 50], maxZoom: 10 });
-            } else {
-                map.setView([11.3, -72.5], 8); // Vista general Guajira
-            }
+            renderStats(); 
+            renderCards();
+            updateMapVisuals();
         }
 
-        // Obtiene opciones válidas calculando el filtro SIN incluirse a sí mismo
-        function getValidOptions(excludeFilter) {
-            const sSector = excludeFilter === 'sector' ? '' : els.sector.value;
-            const sPob = excludeFilter === 'poblacional' ? '' : els.poblacional.value;
-            const sMuni = excludeFilter === 'municipio' ? '' : els.municipio.value.toLowerCase();
-
-            return rawData.filter(row => {
-                const rowSector = capitalizeFormat(row[colKeys.sector]);
-                const rowPob = capitalizeFormat(row[colKeys.poblacional]);
+        function renderStats() {
+            let countDisp = 0;
+            let countCerr = 0;
+            
+            rawData.forEach((row, idx) => {
+                const status = getRowStatus(row);
+                if (status === 'blank') return;
+                
+                // Calculamos si la fila aplica basado en TODOS los filtros, pero ignorando 'globalStatus'
+                // para que los totales de arriba mantengan la cuenta de su propia columna.
+                
+                const sColD = document.getElementById('filter-sector').value;
+                const sMuni = document.getElementById('filter-municipio').value.toLowerCase();
+                const sPob = document.getElementById('filter-poblacional').value;
+                const rowColD = colKeys.colD ? capitalizeFormat(row[colKeys.colD]) : '';
+                let rawPob = colKeys.poblacional ? capitalizeFormat(row[colKeys.poblacional]) : '';
+                if(rawPob.toUpperCase() === 'NNA') rawPob = 'Menores de edad';
                 let rowMunis = "";
-                colKeys.municipioCols.forEach(c => { if (row[c]) rowMunis += String(row[c]).toLowerCase() + " "; });
+                colKeys.municipioCols.forEach(c => { if(row[c]) rowMunis += String(row[c]).toLowerCase() + " "; });
 
-                return (!sSector || rowSector === sSector) && 
-                       (!sPob || rowPob === sPob) && 
-                       (!sMuni || rowMunis.includes(sMuni));
+                const matchDrop = (!sColD || rowColD === sColD) && (!sPob || rawPob === sPob) && (!sMuni || rowMunis.includes(sMuni));
+                const rowColG = colKeys.colG ? capitalizeFormat(row[colKeys.colG]) : '';
+                const matchChip = (!globalChip || rowColG === globalChip);
+                const matchFav = (!showFavoritesOnly) || favorites.has(idx);
+
+                if (matchDrop && matchChip && matchFav) {
+                    if (status === 'disponibles') countDisp++;
+                    if (status === 'cerradas') countCerr++;
+                }
             });
+
+            document.getElementById('stat-disponibles').textContent = countDisp;
+            document.getElementById('stat-cerradas').textContent = countCerr;
+            document.getElementById('stat-total').textContent = countDisp + countCerr;
         }
 
-        function populateDropdowns() {
-            updateCascadingDropdowns(); // Llena por primera vez
+        window.setStatusFilter = function(status) {
+            globalStatus = status;
+            
+            const btnDisp = document.getElementById('stat-btn-disponibles');
+            const btnCerr = document.getElementById('stat-btn-cerradas');
+            const btnAll = document.getElementById('stat-btn-all');
+            
+            btnDisp.className = `text-left bg-white border rounded-xl p-3 flex-1 min-w-[110px] shadow-sm flex flex-col justify-center transition-all ${status === 'disponibles' ? 'border-brand-primary ring-2 ring-brand-primary/20 opacity-100' : 'border-gray-200 hover:border-brand-primary opacity-60'}`;
+            btnCerr.className = `text-left bg-white border rounded-xl p-3 flex-1 min-w-[110px] shadow-sm flex flex-col justify-center transition-all ${status === 'cerradas' ? 'border-orange-500 ring-2 ring-orange-500/20 opacity-100' : 'border-gray-200 hover:border-orange-400 opacity-60'}`;
+            btnAll.className = `text-left bg-white border-2 rounded-xl p-3 flex-1 min-w-[110px] shadow-sm flex flex-col justify-center transition-all ${status === 'all' ? 'border-gray-900 bg-gray-50 opacity-100' : 'border-transparent hover:bg-gray-50 opacity-80'}`;
+            
+            triggerFilters();
+        }
+
+        function renderCategoryChips() {
+            const container = document.getElementById('category-chips');
+            if(!colKeys.colG) return;
+            
+            const set = new Set();
+            rawData.forEach(row => {
+                if (rowMatchesFilters(row, 'chip') && row[colKeys.colG]) {
+                    set.add(capitalizeFormat(row[colKeys.colG]));
+                }
+            });
+            const chips = [...set].sort();
+            
+            // Si el chip seleccionado ya no existe en las opciones filtradas, deseleccionarlo
+            if (globalChip && !chips.includes(globalChip)) globalChip = '';
+
+            container.innerHTML = '';
+            
+            const getIcon = (n) => {
+                const str = n.toLowerCase();
+                if(str.includes('articulaci')) return 'fa-handshake text-indigo-500 bg-indigo-100';
+                if(str.includes('formaci') || str.includes('educa')) return 'fa-graduation-cap text-blue-500 bg-blue-100';
+                if(str.includes('inversi')) return 'fa-coins text-amber-500 bg-amber-100';
+                if(str.includes('emple')) return 'fa-briefcase text-orange-500 bg-orange-100';
+                if(str.includes('emprend')||str.includes('negocio')) return 'fa-rocket text-purple-500 bg-purple-100';
+                if(str.includes('fortalecimient')) return 'fa-people-group text-green-500 bg-green-100';
+                if(str.includes('proyect')) return 'fa-lightbulb text-yellow-500 bg-yellow-100';
+                if(str.includes('cultur')) return 'fa-masks-theater text-pink-500 bg-pink-100';
+                if(str.includes('ambient')||str.includes('energ')) return 'fa-leaf text-emerald-500 bg-emerald-100';
+                return 'fa-folder text-gray-500 bg-gray-100';
+            };
+            
+            chips.forEach(chip => {
+                const [iconCls, textCls, bgCls] = getIcon(chip).split(' ');
+                const isActive = (globalChip === chip);
+                
+                const btn = document.createElement('button');
+                btn.className = `flex-shrink-0 text-left w-[130px] p-2.5 rounded-xl border transition-all ${isActive ? 'bg-green-50 border-brand-primary shadow-md' : 'bg-white border-gray-200 shadow-sm hover:border-brand-primary'}`;
+                btn.innerHTML = `
+                    <div class="w-7 h-7 rounded-lg ${isActive ? 'bg-brand-primary text-white' : bgCls + ' ' + textCls} flex items-center justify-center mb-1.5">
+                        <i class="fa-solid ${iconCls} text-sm"></i>
+                    </div>
+                    <div class="text-[10px] font-bold text-gray-800 leading-tight line-clamp-2">${chip}</div>
+                `;
+                btn.onclick = () => {
+                    globalChip = isActive ? '' : chip;
+                    triggerFilters();
+                };
+                container.appendChild(btn);
+            });
         }
 
         function updateCascadingDropdowns() {
-            // Guardar selecciones actuales
-            const currSector = els.sector.value;
-            const currPob = els.poblacional.value;
-            const currMuni = els.municipio.value;
-
-            // Para cada select, calculamos las opciones válidas basadas en los otros selectores
-            const validForSector = getValidOptions('sector');
-            const validForPob = getValidOptions('poblacional');
-            const validForMuni = getValidOptions('municipio');
-
-            const extractUnique = (dataArray, keyOrLogic) => {
+            const extractUnique = (key, transform, ignoreType) => {
                 const set = new Set();
-                dataArray.forEach(row => {
-                    if (typeof keyOrLogic === 'string' && keyOrLogic !== 'muni_logic') {
-                        if(row[keyOrLogic]) set.add(capitalizeFormat(row[keyOrLogic]));
-                    } else if (keyOrLogic === 'muni_logic') { 
-                        // Estandarizar dinámicamente a los 15 municipios
-                        let fullText = "";
-                        colKeys.municipioCols.forEach(c => {
-                            if (row[c]) fullText += String(row[c]).toLowerCase() + " ";
-                        });
-                        for (const cityName of Object.keys(coordGuajira)) {
-                            if (fullText.includes(cityName)) {
-                                set.add(capitalizeFormat(cityName));
+                rawData.forEach(row => {
+                    if (rowMatchesFilters(row, ignoreType)) {
+                        if (transform === 'muni') {
+                            let text = "";
+                            colKeys.municipioCols.forEach(c => { if(row[c]) text += String(row[c]).toLowerCase() + " "; });
+                            for (const city of Object.keys(coordGuajira)) {
+                                if (text.includes(city)) set.add(capitalizeFormat(city));
                             }
+                        } else if (row[key]) {
+                            let val = capitalizeFormat(row[key]);
+                            if(transform === 'pob' && val.toUpperCase() === 'NNA') val = 'Menores de edad';
+                            set.add(val);
                         }
                     }
                 });
                 return [...set].sort();
             };
 
-            const secOptions = extractUnique(validForSector, colKeys.sector);
-            const pobOptions = extractUnique(validForPob, colKeys.poblacional);
-            const munOptions = extractUnique(validForMuni, 'muni_logic');
+            const secOptions = extractUnique(colKeys.colD, null, 'sector');
+            const pobOptions = extractUnique(colKeys.poblacional, 'pob', 'poblacional');
+            const munOptions = extractUnique(null, 'muni', 'municipio');
 
-            // Refrescar DOM
-            els.sector.innerHTML = '<option value="">Todos los sectores</option>';
-            secOptions.forEach(s => els.sector.add(new Option(s, s)));
-            els.sector.value = secOptions.includes(currSector) ? currSector : '';
+            const selSec = document.getElementById('filter-sector');
+            const selPob = document.getElementById('filter-poblacional');
+            const selMun = document.getElementById('filter-municipio');
 
-            els.poblacional.innerHTML = '<option value="">Toda la población</option>';
-            pobOptions.forEach(p => els.poblacional.add(new Option(p, p)));
-            els.poblacional.value = pobOptions.includes(currPob) ? currPob : '';
-
-            els.municipio.innerHTML = '<option value="">Todos los municipios</option>';
-            munOptions.forEach(m => els.municipio.add(new Option(m, m)));
-            els.municipio.value = munOptions.includes(currMuni) ? currMuni : '';
-        }
-
-        function renderStats(data) {
-            if (!data || data.length === 0) return;
-
-            let publicos = 0, privados = 0;
-            let pobCounts = {}, enfCounts = {};
-
-            data.forEach(row => {
-                const sector = capitalizeFormat(row[colKeys.sector]).toLowerCase();
-                if (sector.includes('públic') || sector.includes('public')) publicos++;
-                else if (sector.includes('privad')) privados++;
-
-                const poblacional = capitalizeFormat(row[colKeys.poblacional]);
-                if (poblacional) pobCounts[poblacional] = (pobCounts[poblacional] || 0) + 1;
-
-                const enfoque = capitalizeFormat(row[colKeys.enfoque] || row[colKeys.sector]); 
-                if (enfoque) enfCounts[enfoque] = (enfCounts[enfoque] || 0) + 1;
-            });
-
-            const generatePostIts = (obj, colorCls, bgCls, isPoblacional) => {
-                const getIcon = (name) => {
-                    const n = name.toLowerCase();
-                    if (isPoblacional) {
-                        if(n.includes('mujer')) return 'fa-solid fa-person-dress';
-                        if(n.includes('joven') || n.includes('jóven') || n.includes('niñ')) return 'fa-solid fa-child-reaching';
-                        if(n.includes('indígena') || n.includes('etnia') || n.includes('afro')) return 'fa-solid fa-feather-pointed';
-                        if(n.includes('víctima') || n.includes('conflicto')) return 'fa-solid fa-hands-holding-circle';
-                        if(n.includes('campesin')) return 'fa-solid fa-tractor';
-                        if(n.includes('discapacidad')) return 'fa-brands fa-accessible-icon';
-                        return 'fa-solid fa-users';
-                    } else {
-                        if(n.includes('educaci')) return 'fa-solid fa-book-open';
-                        if(n.includes('cultur')) return 'fa-solid fa-masks-theater';
-                        if(n.includes('ambient')) return 'fa-solid fa-leaf';
-                        if(n.includes('salud')) return 'fa-solid fa-notes-medical';
-                        if(n.includes('deport')) return 'fa-solid fa-futbol';
-                        if(n.includes('econom') || n.includes('emprend')) return 'fa-solid fa-chart-line';
-                        if(n.includes('tecnolog') || n.includes('tic')) return 'fa-solid fa-microchip';
-                        if(n.includes('paz') || n.includes('derecho')) return 'fa-solid fa-scale-balanced';
-                        if(n.includes('vivienda')) return 'fa-solid fa-house-chimney';
-                        return 'fa-solid fa-lightbulb';
-                    }
-                };
-
-                return Object.entries(obj).sort((a,b) => b[1] - a[1]).map(([key, val]) => `
-                    <div class="${bgCls} p-2 rounded border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow h-[70px]">
-                        <div class="flex justify-between items-start mb-1">
-                            <i class="${getIcon(key)} ${colorCls} text-lg opacity-75"></i>
-                            <span class="text-xl font-extrabold ${colorCls} leading-none">${val}</span>
-                        </div>
-                        <span class="text-[10px] font-bold text-gray-700 leading-tight line-clamp-2" title="${key}">${key}</span>
-                    </div>
-                `).join('');
+            const fill = (select, opts, defaultText) => {
+                const current = select.value;
+                select.innerHTML = `<option value="">${defaultText}</option>`;
+                opts.forEach(o => select.add(new Option(o, o)));
+                if(opts.includes(current)) select.value = current;
+                else select.value = ""; // Si la selección ya no es válida por otro filtro, se borra.
             };
 
-            els.stats.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                    <div class="bg-riohacha-green text-white p-5 rounded-xl shadow-sm md:col-span-2 relative overflow-hidden flex flex-col justify-center border border-[#005a28]">
-                        <i class="fa-solid fa-chart-column absolute right-4 bottom-[-10px] text-6xl text-white opacity-10 transform -rotate-12"></i>
-                        <span class="text-xs font-semibold text-green-200 uppercase tracking-widest mb-1 z-10">Total Base de Datos</span>
-                        <span class="text-5xl font-extrabold z-10 drop-shadow-md">${data.length}</span>
-                    </div>
-                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-center text-center hover:border-blue-300 transition-colors">
-                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2"><i class="fa-solid fa-landmark mr-1 text-blue-500"></i> Institucional Público</span>
-                        <span class="text-4xl font-bold text-gray-800">${publicos}</span>
-                    </div>
-                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-center text-center hover:border-purple-300 transition-colors">
-                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2"><i class="fa-solid fa-building-ngo mr-1 text-purple-500"></i> Sector Privado / ONG</span>
-                        <span class="text-4xl font-bold text-gray-800">${privados}</span>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                        <h4 class="text-xs font-bold text-gray-800 uppercase mb-3 pb-2 border-b border-gray-100 flex items-center"><i class="fa-solid fa-users text-blue-500 mr-2 text-base"></i> Segmentación Poblacional</h4>
-                        <div class="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-[160px] overflow-y-auto pr-2 custom-scroll">
-                            ${generatePostIts(pobCounts, 'text-blue-700', 'bg-blue-50/50 hover:bg-blue-50', true)}
-                        </div>
-                    </div>
-                    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                        <h4 class="text-xs font-bold text-gray-800 uppercase mb-3 pb-2 border-b border-gray-100 flex items-center"><i class="fa-solid fa-seedling text-emerald-500 mr-2 text-base"></i> Foco de Intervención</h4>
-                        <div class="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-[160px] overflow-y-auto pr-2 custom-scroll">
-                            ${generatePostIts(enfCounts, 'text-emerald-700', 'bg-emerald-50/50 hover:bg-emerald-50', false)}
-                        </div>
-                    </div>
-                </div>
-            `;
+            fill(selSec, secOptions, 'Selecciona una opción');
+            fill(selPob, pobOptions, 'Selecciona una opción');
+            fill(selMun, munOptions, 'Municipio / comunidad');
         }
 
-        function filterData(showAll = false) {
-            els.initial.classList.add('hidden');
-            els.header.classList.remove('hidden');
+        function renderCards() {
+            const grid = document.getElementById('results-grid');
+            const noResults = document.getElementById('no-results');
+            grid.innerHTML = '';
             
-            currentPage = 1; // Resetear paginación al filtrar
+            document.getElementById('results-count').textContent = isTranslated ? `${filteredData.length} pütchi` : `${filteredData.length} resultados`;
 
-            if (showAll) {
-                filteredData = [...rawData];
-            } else {
-                const sSector = els.sector.value;
-                const sPob = els.poblacional.value;
-                const sMuni = els.municipio.value.toLowerCase(); // Convertimos a minúscula para búsqueda segura
-                const sText = els.text.value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-                filteredData = rawData.filter(row => {
-                    const rowSector = capitalizeFormat(row[colKeys.sector]);
-                    const rowPob = capitalizeFormat(row[colKeys.poblacional]);
-                    
-                    let rowMunis = "";
-                    colKeys.municipioCols.forEach(col => { if (row[col]) rowMunis += String(row[col]).toLowerCase() + " "; });
-                    
-                    // Buscador Omnipresente (Data Discovery): Busca en TODAS las celdas de la fila
-                    const matchText = !sText || Object.values(row).some(val => 
-                        String(val).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(sText)
-                    );
-
-                    const matchSector = !sSector || rowSector === sSector;
-                    const matchPob = !sPob || rowPob === sPob;
-                    const matchMuni = !sMuni || rowMunis.includes(sMuni);
-
-                    return matchSector && matchPob && matchMuni && matchText;
-                });
-            }
-
-            renderCards(filteredData, false);
-            updateMapVisuals(filteredData);
-            updateCascadingDropdowns(); // Sincroniza visualmente los menús si algo quedó en 0
-        }
-
-        function renderCards(data, append = false) {
-            if (!append) els.grid.innerHTML = ''; // Limpiar si es búsqueda nueva
-            
-            if (data.length === 0) {
-                els.grid.classList.add('hidden');
-                els.noResults.classList.remove('hidden');
-                els.loadMoreContainer.classList.add('hidden');
-                els.count.textContent = `0 ofertas`;
+            if (filteredData.length === 0) {
+                grid.classList.add('hidden');
+                noResults.classList.remove('hidden');
                 return;
             }
 
-            els.grid.classList.remove('hidden');
-            els.noResults.classList.add('hidden');
-            els.count.textContent = `${data.length} oferta(s)`;
+            grid.classList.remove('hidden');
+            noResults.classList.add('hidden');
 
-            // Lógica de paginación
-            const startIndex = (currentPage - 1) * itemsPerPage;
-            const endIndex = startIndex + itemsPerPage;
-            const paginatedData = data.slice(startIndex, endIndex);
-
-            paginatedData.forEach((row, index) => {
-                // Índice global para el Modal
-                const globalIndex = rawData.indexOf(row);
+            filteredData.forEach(row => {
+                const originalIndex = rawData.indexOf(row);
+                const isFav = favorites.has(originalIndex);
                 
-                const sector = capitalizeFormat(row[colKeys.sector]) || 'No especificado';
-                const entidad = capitalizeFormat(row[colKeys.entidad]) || `Oferta Institucional`;
-                
-                let zonasArray = [];
-                colKeys.municipioCols.forEach(col => {
-                    if (row[col] && row[col].trim() !== '') {
-                        zonasArray.push(capitalizeFormat(row[col]));
-                    }
-                });
-                const zonasUnicas = [...new Set(zonasArray)];
-                const zonasText = zonasUnicas.length > 0 ? zonasUnicas.join(', ') : 'Departamento general';
+                const statusType = getRowStatus(row);
+                const statusStyle = statusType === 'disponibles' 
+                    ? { label: 'Disponible ahora', bg: 'bg-green-100', text: 'text-brand-primary', border: 'border-brand-primary' }
+                    : { label: 'Cerrada', bg: 'bg-orange-100', text: 'text-orange-600', border: 'border-orange-500' };
 
-                const card = document.createElement('article');
-                card.className = 'bg-white rounded-xl p-6 shadow-sm border border-gray-200 card-hover flex flex-col h-full border-t-4 border-t-riohacha-green relative';
+                let zonas = [];
+                colKeys.municipioCols.forEach(c => { if(row[c] && row[c].trim()!=='') zonas.push(capitalizeFormat(row[c])); });
+                const munisText = [...new Set(zonas)].slice(0,3).join(', ') || 'La Guajira';
+                
+                const sector = colKeys.colD ? capitalizeFormat(row[colKeys.colD]) : 'Sector general';
+                const titulo = colKeys.entidad ? capitalizeFormat(row[colKeys.entidad]) : 'Oferta Institucional';
+
+                const card = document.createElement('div');
+                card.className = `bg-white rounded-2xl p-5 shadow-card border border-gray-100 card-hover flex flex-col h-full border-t-[3px] ${statusStyle.border} relative`;
                 
                 card.innerHTML = `
-                    <div class="flex-grow">
-                        <span class="inline-block px-2.5 py-1 bg-gray-50 text-gray-600 text-xs font-bold rounded mb-3 border border-gray-200"><i class="fa-solid fa-layer-group text-gray-400 mr-1"></i> ${sector}</span>
-                        <h3 class="text-xl font-bold text-gray-900 mb-3 leading-tight line-clamp-3" title="${entidad}">${entidad}</h3>
-                        
-                        <div class="mb-4 text-sm text-gray-600 bg-gray-50 p-3 rounded border border-gray-100">
-                            <strong class="block text-[10px] uppercase tracking-wider text-gray-500 mb-1"><i class="fa-solid fa-map-pin text-riohacha-green mr-1"></i> COBERTURA</strong>
-                            <span class="line-clamp-2 font-medium">${zonasText}</span>
-                        </div>
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="${statusStyle.bg} ${statusStyle.text} px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wider">${statusStyle.label}</span>
+                        <button onclick="toggleFavorite(${originalIndex}, event)" class="${isFav ? 'text-red-500' : 'text-gray-300 hover:text-red-400'} transition-colors">
+                            <i class="fa-solid fa-heart text-lg"></i>
+                        </button>
                     </div>
-                    <div class="pt-4 mt-auto">
-                        <button onclick="openModal(${globalIndex})" class="w-full py-2.5 text-sm font-bold text-riohacha-green bg-riohacha-light rounded hover:bg-riohacha-green hover:text-white transition-colors flex items-center justify-center gap-2 border border-green-200 hover:border-transparent">
-                            <i class="fa-solid fa-magnifying-glass-plus"></i> Detalles
+                    
+                    <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-1 line-clamp-1" title="${sector}">${sector}</div>
+                    <h3 class="text-lg font-extrabold text-gray-900 mb-3 leading-tight line-clamp-3" title="${titulo}">${titulo}</h3>
+                    
+                    <div class="mt-auto pt-4 flex items-center justify-between border-t border-gray-50">
+                        <div class="flex items-center text-xs text-gray-500 font-medium truncate pr-2">
+                            <i class="fa-solid fa-location-dot text-brand-primary mr-1.5"></i> ${munisText}
+                        </div>
+                        <button onclick="openDrawer(${originalIndex})" class="text-brand-primary font-bold text-sm flex items-center gap-1 hover:text-[#005a28] whitespace-nowrap">
+                            Ver detalles <i class="fa-solid fa-arrow-right text-xs"></i>
                         </button>
                     </div>
                 `;
-                els.grid.appendChild(card);
+                grid.appendChild(card);
+            });
+        }
+
+        window.openDrawer = function(index) {
+            const row = rawData[index];
+            if(!row) return;
+
+            const titulo = colKeys.entidad ? capitalizeFormat(row[colKeys.entidad]) : 'Detalle de Oferta';
+            document.getElementById('drawer-title').textContent = titulo;
+            
+            const content = document.getElementById('drawer-content');
+            content.innerHTML = '';
+            
+            const applyBtn = document.getElementById('drawer-apply-btn');
+            if (colKeys.enlace && row[colKeys.enlace] && String(row[colKeys.enlace]).includes('http')) {
+                applyBtn.href = row[colKeys.enlace];
+                applyBtn.classList.remove('opacity-50', 'pointer-events-none', 'bg-gray-400');
+                applyBtn.classList.add('bg-brand-primary', 'hover:bg-brand-sidebar');
+                applyBtn.innerHTML = `<span data-es="Postularme / Ir a la convocatoria">Postularme / Ir a la convocatoria</span> <i class="fa-solid fa-arrow-up-right-from-square"></i>`;
+            } else {
+                applyBtn.removeAttribute('href');
+                applyBtn.classList.add('opacity-50', 'pointer-events-none', 'bg-gray-400');
+                applyBtn.classList.remove('bg-brand-primary', 'hover:bg-brand-sidebar');
+                applyBtn.innerHTML = `No hay enlace disponible`;
+            }
+
+            Object.keys(row).forEach(key => {
+                const val = String(row[key]).trim();
+                if(!val || val.toLowerCase() === 'n/a' || key.includes('__powerapps')) return;
+                if(colKeys.enlace && key === colKeys.enlace) return; 
+                
+                content.innerHTML += `
+                    <div class="border-b border-gray-100 pb-4 last:border-0">
+                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">${capitalizeFormat(key)}</span>
+                        <p class="text-sm text-gray-800 leading-relaxed font-medium">${capitalizeFormat(val)}</p>
+                    </div>
+                `;
             });
 
-            // Mostrar u ocultar botón de "Cargar más"
-            if (endIndex < data.length) {
-                els.loadMoreContainer.classList.remove('hidden');
-            } else {
-                els.loadMoreContainer.classList.add('hidden');
+            document.getElementById('drawer-overlay').classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('drawer-overlay').classList.add('opacity-100');
+                document.getElementById('detail-drawer').classList.remove('drawer-closed');
+                document.getElementById('detail-drawer').classList.add('drawer-open');
+            }, 10);
+            applyTranslation(); 
+        }
+
+        window.closeDrawer = function() {
+            document.getElementById('drawer-overlay').classList.remove('opacity-100');
+            document.getElementById('detail-drawer').classList.remove('drawer-open');
+            document.getElementById('detail-drawer').classList.add('drawer-closed');
+            setTimeout(() => { document.getElementById('drawer-overlay').classList.add('hidden'); }, 300);
+        }
+
+        function initMap() {
+            map = L.map('guajira-map', { scrollWheelZoom: false, zoomControl: false }).setView([11.4, -72.5], 8);
+            L.control.zoom({ position: 'topleft' }).addTo(map);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap'
+            }).addTo(map);
+
+            for(const [city, coords] of Object.entries(coordGuajira)) {
+                mapMarkers[city] = L.marker(coords).addTo(map);
             }
         }
 
-        window.openModal = function(globalIndex) {
-            const row = rawData[globalIndex];
-            if (!row) return;
-
-            document.getElementById('modal-title').textContent = capitalizeFormat(row[colKeys.entidad]) || 'Detalle de la Oferta';
-            const content = document.getElementById('modal-content');
-            content.innerHTML = ''; 
-
-            let municipiosEncontrados = [];
-            let inicioVal = '';
-            let finVal = '';
-            let skipKeys = []; 
-
-            Object.keys(row).forEach(key => {
-                const val = String(row[key]).trim();
-                const normKey = key.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                if (val === '') return;
-                
-                if (colKeys.municipioCols.includes(key)) {
-                    municipiosEncontrados.push(capitalizeFormat(val));
-                }
-                
-                if (key === colKeys.inicio || normKey.includes('ano inicio') || normKey === 'inicio') {
-                    inicioVal = val;
-                    skipKeys.push(key);
-                }
-                if (key === colKeys.fin || normKey.includes('ano fin') || normKey === 'fin') {
-                    finVal = val;
-                    skipKeys.push(key);
-                }
+        function updateMapVisuals() {
+            if(!map) return;
+            const counts = {};
+            
+            filteredData.forEach(row => {
+                let zones = [];
+                colKeys.municipioCols.forEach(c => { if(row[c]) zones.push(String(row[c]).toLowerCase()); });
+                zones.forEach(z => {
+                    for(const city of Object.keys(coordGuajira)) {
+                        if(z.includes(city)) counts[city] = (counts[city] || 0) + 1;
+                    }
+                });
             });
 
-            if (municipiosEncontrados.length > 0) {
-                const munisUnicos = [...new Set(municipiosEncontrados)].join(', ');
-                content.innerHTML += `
-                    <div class="col-span-1 md:col-span-2 p-4 rounded-lg border bg-blue-50 border-blue-200 shadow-sm">
-                        <span class="text-[10px] font-bold text-blue-500 uppercase tracking-wider block mb-1.5"><i class="fa-solid fa-map-location-dot mr-1"></i> Municipios o Regiones</span>
-                        <p class="text-sm font-semibold text-gray-900">${munisUnicos}</p>
-                    </div>
-                `;
-            }
+            const selMuni = document.getElementById('filter-municipio').value.toLowerCase();
 
-            if (inicioVal || finVal) {
-                const periodo = (inicioVal && finVal && inicioVal !== finVal) ? `${inicioVal} - ${finVal}` : (inicioVal || finVal);
-                content.innerHTML += `
-                    <div class="col-span-1 p-4 rounded-lg border bg-purple-50 border-purple-200 shadow-sm">
-                        <span class="text-[10px] font-bold text-purple-500 uppercase tracking-wider block mb-1.5"><i class="fa-regular fa-calendar mr-1"></i> Periodo de Ejecución</span>
-                        <p class="text-sm font-semibold text-gray-900">${periodo}</p>
-                    </div>
-                `;
+            for(const [city, marker] of Object.entries(mapMarkers)) {
+                const count = counts[city] || 0;
+                const isSelected = city === selMuni;
+                
+                const pinClass = isSelected ? 'custom-pin active-pin' : (count > 0 ? 'custom-pin' : 'custom-pin inactive-pin');
+                const pinHtml = isSelected 
+                    ? '<i class="fa-solid fa-location-dot fa-3x text-orange-500 drop-shadow-md"></i>' 
+                    : '<i class="fa-solid fa-location-dot fa-2x text-brand-primary drop-shadow-sm"></i>';
+                
+                marker.setIcon(L.divIcon({ className: pinClass, html: pinHtml, iconSize: [40,40], iconAnchor: [20,40] }));
+                
+                marker.unbindPopup();
+                if(count > 0 || isSelected) {
+                    marker.bindPopup(`
+                        <div class="p-1 text-center min-w-[120px]">
+                            <strong class="block text-gray-800 capitalize mb-1 text-sm">${city}</strong>
+                            <span class="bg-green-100 text-brand-primary px-2 py-0.5 rounded text-xs font-bold">${count} Ofertas</span>
+                            <button onclick="filterByMap('${city}')" class="mt-3 w-full py-1.5 ${isSelected ? 'bg-orange-500 hover:bg-orange-600' : 'bg-brand-primary hover:bg-[#005a28]'} text-white text-xs font-bold rounded transition-colors shadow-sm">
+                                ${isSelected ? 'Quitar filtro' : 'Filtrar por esta zona'}
+                            </button>
+                        </div>
+                    `);
+                    marker.bindTooltip(capitalizeFormat(city) + " (Clic para filtrar)", {direction: 'top', offset: [0, -30]});
+                }
             }
+        }
 
-            Object.keys(row).forEach(key => {
-                const val = String(row[key]).trim();
-                const normKey = key.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                
-                if (normKey.includes('observacion') || normKey.includes('__powerappsid__') || val === '') return;
-                if (colKeys.municipioCols.includes(key) || skipKeys.includes(key)) return;
-                
-                const isLongText = val.length > 80;
-                const colSpan = isLongText ? 'md:col-span-2' : 'col-span-1';
-                
-                const isResult = normKey.includes('resultado');
-                const isObj = normKey.includes('objetivo');
-                const bgStyle = isResult ? 'bg-green-50 border-green-200' : (isObj ? 'bg-amber-50 border-amber-200' : 'bg-gray-50 border-gray-200');
-                const icon = isResult ? '<i class="fa-solid fa-check-circle text-green-500 mr-1"></i>' : (isObj ? '<i class="fa-solid fa-bullseye text-amber-500 mr-1"></i>' : '');
-                const titleColor = isResult ? 'text-green-600' : (isObj ? 'text-amber-600' : 'text-gray-500');
-                
-                content.innerHTML += `
-                    <div class="${colSpan} p-4 rounded-lg border ${bgStyle} shadow-sm">
-                        <span class="text-[10px] font-bold ${titleColor} uppercase tracking-wider block mb-1.5">${icon} ${capitalizeFormat(key)}</span>
-                        <p class="text-sm text-gray-800 ${isLongText ? 'text-justify leading-relaxed' : 'font-semibold'}">${capitalizeFormat(val)}</p>
-                    </div>
-                `;
+        window.filterByMap = function(city) {
+            const formatted = capitalizeFormat(city);
+            const sel = document.getElementById('filter-municipio');
+            
+            if(sel.value === formatted) {
+                sel.value = ""; 
+            } else {
+                let exists = Array.from(sel.options).some(o => o.value === formatted);
+                if(!exists) sel.add(new Option(formatted, formatted));
+                sel.value = formatted;
+            }
+            
+            map.closePopup();
+            triggerFilters();
+        };
+
+        window.toggleFavorite = function(index, event) {
+            event.stopPropagation();
+            if (favorites.has(index)) favorites.delete(index);
+            else favorites.add(index);
+            
+            document.getElementById('counter-intereses').textContent = favorites.size;
+            if (showFavoritesOnly) filterData();
+            else renderCards();
+        };
+
+        window.toggleFavoritesFilter = function(show) {
+            showFavoritesOnly = show;
+            document.getElementById('nav-inicio').className = `flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-colors cursor-pointer ${show ? 'hover:bg-brand-sidebarHover text-gray-300 hover:text-white' : 'bg-brand-primary font-medium border border-green-500/30 text-white shadow-sm'}`;
+            document.getElementById('nav-intereses').className = `flex items-center justify-between px-4 py-3 rounded-lg text-sm transition-colors cursor-pointer group ${show ? 'bg-brand-primary font-medium border border-green-500/30 text-white shadow-sm' : 'hover:bg-brand-sidebarHover text-gray-300 hover:text-white'}`;
+            triggerFilters();
+        };
+
+        const translationDict = {
+            "Inicio": "Ekiirajia",
+            "Mis intereses": "Tachekaka",
+            "Traducir (Wayuunaiki)": "Aalijirawaa (Español)",
+            "¿Dudas?": "Püsaküla?",
+            "Escríbenos si necesitas ayuda:": "Püshajaa wamüin müleka pücheküle akaaliijia:",
+            "Bienvenido 👋": "Antüshi pia 👋",
+            "Cobertura en La Guajira": "Sulu'u Wajiira",
+            "Disponibles": "Eesü",
+            "Cerradas": "Asürünnüsü",
+            "Total": "Süpushuwa'a",
+            "¿Qué necesitas?": "Kasa püchekaka?",
+            "¿Dónde estás?": "Jalalü pia?",
+            "¿Para quién buscas?": "Jaralü püpüla?",
+            "Borrar filtros": "Püshanaa",
+            "Categorías": "Ekirajia",
+            "Oportunidades destacadas": "Anaaka ma'in",
+            "Información General": "Pütsü",
+            "Postularme / Ir a la convocatoria": "Püshataa",
+            "Este tablero consolida oportunidades, proyectos y formación para las comunidades de La Guajira.": "Tü pütchika tüü shia süpüla akaaliijaa na wayuukana sulu'u Wajiira."
+        };
+
+        function applyTranslation() {
+            document.querySelectorAll('[data-es]').forEach(el => {
+                const esText = el.getAttribute('data-es');
+                el.textContent = (isTranslated && translationDict[esText]) ? translationDict[esText] : esText;
             });
             
-            document.getElementById('modal-backdrop').classList.remove('hidden');
-            document.body.style.overflow = 'hidden'; 
+            const btnText = document.getElementById('btn-traducir-text');
+            if(btnText) btnText.textContent = isTranslated ? translationDict["Traducir (Wayuunaiki)"] : "Traducir (Wayuunaiki)";
+            
+            const titleEl = document.getElementById('main-title-text');
+            if (titleEl) {
+                if (isTranslated) titleEl.innerHTML = `Püpalirawaa eesüka<br><span class="text-brand-primary">püpüla mma</span>`;
+                else titleEl.innerHTML = `Encuentra oportunidades<br><span class="text-brand-primary">para tu comunidad</span>`;
+            }
+
+            const resCountEl = document.getElementById('results-count');
+            if (resCountEl) {
+                resCountEl.textContent = isTranslated ? `${filteredData.length} pütchi` : `${filteredData.length} resultados`;
+            }
+        }
+
+        window.toggleTranslation = function() {
+            isTranslated = !isTranslated;
+            applyTranslation();
         };
 
-        window.closeModal = function() {
-            document.getElementById('modal-backdrop').classList.add('hidden');
-            document.body.style.overflow = 'auto'; 
-        };
-
-        document.getElementById('modal-backdrop').addEventListener('click', (e) => {
-            if (e.target.id === 'modal-backdrop') closeModal();
-        });
     </script>
 </body>
 </html>
