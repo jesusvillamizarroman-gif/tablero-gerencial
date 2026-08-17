@@ -426,7 +426,13 @@
                     document.getElementById('loading-skeletons').classList.add('hidden');
                     const mainContent = document.getElementById('main-content');
                     mainContent.classList.remove('hidden');
-                    setTimeout(() => mainContent.classList.remove('opacity-0'), 50);
+                    setTimeout(() => {
+                        mainContent.classList.remove('opacity-0');
+                        // Forzar al mapa a recalcular su tamaño para evitar parches grises
+                        if (map) {
+                            map.invalidateSize();
+                        }
+                    }, 50);
 
                     triggerFilters();
                     setStatusFilter('all');
@@ -466,7 +472,9 @@
                 if (/\bestado\b/.test(n)) colKeys.estado = header;
                 if (n.includes('enlace') || /\burl\b/.test(n) || /\blink\b/.test(n)) colKeys.enlace = header;
                 if (/\bentidad\b/.test(n) || n.includes('institucion') || n.includes('nombre')) colKeys.entidad = header;
-                if (/\bmunicipio\b/.test(n) || /\bzona\b/.test(n) || n.includes('cobertura')) colKeys.municipioCols.push(header);
+                
+                // Solo se toman las columnas que digan explícitamente "municipio", se excluye "zona de intervención"
+                if (/\bmunicipio\b/.test(n)) colKeys.municipioCols.push(header);
             });
             if(!colKeys.estado) colKeys.estado = headers.find(h => norm(h).includes('estado')) || 'Estado';
         }
@@ -738,7 +746,10 @@
 
             Object.keys(row).forEach(key => {
                 const val = String(row[key]).trim();
-                if(!val || val.toLowerCase() === 'n/a' || key.includes('__powerapps') || (colKeys.enlace && key === colKeys.enlace)) return; 
+                const normKey = key.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                
+                // Excluir valores vacíos, columnas de sistema, el enlace (ya está en el botón) y la columna "contacto"
+                if(!val || val.toLowerCase() === 'n/a' || key.includes('__powerapps') || (colKeys.enlace && key === colKeys.enlace) || normKey.includes('contacto')) return; 
                 
                 htmlStr += `
                     <div class="border-b border-gray-100 pb-4 last:border-0">
