@@ -270,6 +270,7 @@
                                 </div>
                             </div>
                             <div class="flex justify-end mt-3 pt-3 border-t border-gray-50">
+                                <!-- Botón modificado para reiniciar todo, incluyendo estado global a 'all' -->
                                 <button id="btn-clear-filters" class="text-gray-500 text-xs font-semibold hover:text-brand-primary flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-green-50 transition-colors">
                                     <i class="fa-solid fa-eraser"></i> <span data-es="Borrar filtros">Borrar filtros</span>
                                 </button>
@@ -309,7 +310,7 @@
                     <!-- Grid de Tarjetas -->
                     <div id="results-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"></div>
 
-                    <!-- Estado sin resultados -->
+                    <!-- Estado sin resultados (Mejorado con botón de limpieza directa) -->
                     <div id="no-results" class="hidden bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center border-t-4 border-t-orange-400 mt-6">
                         <i class="fa-solid fa-box-open text-5xl text-gray-300 mb-4 block"></i>
                         <h3 class="text-xl font-bold text-gray-900 mb-2">Sin coincidencias</h3>
@@ -362,7 +363,7 @@
         let showFavoritesOnly = false;
         let isTranslated = false;
         
-        let globalStatus = 'all'; // 'all', 'disponibles', 'cerradas'
+        let globalStatus = 'all'; 
         let globalChip = ''; 
 
         const colKeys = { colD: null, colG: null, poblacional: null, estado: null, entidad: null, enlace: null, municipioCols: [] };
@@ -375,9 +376,37 @@
             'urumita': [10.5594, -73.0136], 'la jagua del pilar': [10.5161, -73.0489], 'hatonuevo': [11.0661, -72.7644]
         };
 
-        // Diccionario de traducción estática (UI) y dinámica (Sectores/Categorías comúnes)
+        // --- DICCIONARIO DE INTELIGENCIA GEOGRÁFICA (SINÓNIMOS Y SUBZONAS) ---
+        // Asocia corregimientos, veredas o comunidades a su cabecera municipal
+        const aliasMunicipios = {
+            'cabo de la vela': 'uribia',
+            'puerto bolivar': 'uribia',
+            'nazareth': 'uribia',
+            'macuira': 'uribia',
+            'siapana': 'uribia',
+            'punta gallinas': 'uribia',
+            'bahia honda': 'uribia',
+            'taroa': 'uribia',
+            'mingueo': 'dibulla',
+            'palomino': 'dibulla',
+            'campana': 'dibulla',
+            'la punta de los remedios': 'dibulla',
+            'mayapo': 'manaure',
+            'el pajaro': 'manaure',
+            'aremasain': 'manaure',
+            'paraguachon': 'maicao',
+            'carraipia': 'maicao',
+            'camarones': 'riohacha',
+            'tomarrazon': 'riohacha',
+            'tigreras': 'riohacha',
+            'choles': 'riohacha',
+            'papayal': 'barrancas',
+            'los pondores': 'san juan del cesar',
+            'canaverales': 'san juan del cesar',
+            'cañaverales': 'san juan del cesar'
+        };
+
         const translationDict = {
-            // UI
             "Inicio": "Ekiirajia", "Mis intereses": "Tachekaka", "Traducir (Wayuunaiki)": "Aalijirawaa (Español)",
             "¿Dudas?": "Püsaküla?", "Escríbenos si necesitas ayuda:": "Püshajaa wamüin müleka pücheküle akaaliijia:",
             "Bienvenido 👋": "Antüshi pia 👋", "Cobertura en La Guajira": "Sulu'u Wajiira",
@@ -385,9 +414,7 @@
             "¿Qué necesitas?": "Kasa püchekaka?", "¿Dónde estás?": "Jalalü pia?", "¿Para quién buscas?": "Jaralü püpüla?",
             "Borrar filtros": "Püshanaa", "Categorías": "Ekirajia", "Oportunidades destacadas": "Anaaka ma'in",
             "Información General": "Pütsü", "Postularme / Ir a la convocatoria": "Püshataa",
-            "Este tablero consolida oportunidades, proyectos y formación para las comunidades de La Guajira.": "Tü pütchika tüü shia süpüla akaaliijaa na wayuukana sulu'u Wajiira.",
-            // Dinámicas (Ejemplos demostrativos)
-            "Educación": "Ekirajawaa", "Salud": "Alijunaiki", "Cultura": "A'yatawaa"
+            "Este tablero consolida oportunidades, proyectos y formación para las comunidades de La Guajira.": "Tü pütchika tüü shia süpüla akaaliijaa na wayuukana sulu'u Wajiira."
         };
 
         function capitalizeFormat(str) {
@@ -400,10 +427,8 @@
             }).join(' ');
         }
 
-        // Helper para traducir contenido dinámico (Si no existe, devuelve el original)
         function translateDynamic(text) {
             if (!isTranslated || !text) return text;
-            // Buscar si hay coincidencia parcial o exacta en el diccionario de datos dinámicos
             for(let key in translationDict) {
                 if (text.toLowerCase().includes(key.toLowerCase())) return translationDict[key];
             }
@@ -422,30 +447,25 @@
                     identifyColumns(headers);
                     rawData = results.data;
                     
-                    // Transición UI
                     document.getElementById('loading-skeletons').classList.add('hidden');
                     const mainContent = document.getElementById('main-content');
                     mainContent.classList.remove('hidden');
                     setTimeout(() => {
                         mainContent.classList.remove('opacity-0');
-                        // Forzar al mapa a recalcular su tamaño para evitar parches grises
-                        if (map) {
-                            map.invalidateSize();
-                        }
+                        // Forzar al mapa a recalcular su tamaño (Fix parches grises)
+                        if (map) map.invalidateSize();
                     }, 50);
 
                     triggerFilters();
                     setStatusFilter('all');
                 },
                 error: function(err) {
-                    // Manejo de Error Robustecido
                     document.getElementById('loading-skeletons').classList.add('hidden');
                     document.getElementById('error-state').classList.remove('hidden');
                     document.getElementById('error-message').textContent = "Fallo en la comunicación con Google Sheets: " + err.message;
                 }
             });
 
-            // Listeners
             document.getElementById('filter-sector').addEventListener('change', triggerFilters);
             document.getElementById('filter-municipio').addEventListener('change', triggerFilters);
             document.getElementById('filter-poblacional').addEventListener('change', triggerFilters);
@@ -455,7 +475,7 @@
                 document.getElementById('filter-municipio').value = '';
                 document.getElementById('filter-poblacional').value = '';
                 globalChip = '';
-                setStatusFilter('all'); // UX: Reiniciar a total
+                setStatusFilter('all'); 
             });
         });
 
@@ -465,7 +485,6 @@
             colKeys.colD = headers.length > 3 ? headers[3] : null;
             colKeys.colG = headers.length > 6 ? headers[6] : null;
 
-            // Uso de Regex y mapeo más preciso para evitar falsos positivos
             headers.forEach(header => {
                 const n = norm(header);
                 if (/\bpoblacional\b/.test(n) || n.includes('enfoque')) colKeys.poblacional = header;
@@ -473,7 +492,7 @@
                 if (n.includes('enlace') || /\burl\b/.test(n) || /\blink\b/.test(n)) colKeys.enlace = header;
                 if (/\bentidad\b/.test(n) || n.includes('institucion') || n.includes('nombre')) colKeys.entidad = header;
                 
-                // Solo se toman las columnas que digan explícitamente "municipio", se excluye "zona de intervención"
+                // Mapeo Estricto: Ignora "Zonas" o "Cobertura", busca específicamente la palabra "municipio"
                 if (/\bmunicipio\b/.test(n)) colKeys.municipioCols.push(header);
             });
             if(!colKeys.estado) colKeys.estado = headers.find(h => norm(h).includes('estado')) || 'Estado';
@@ -503,6 +522,13 @@
             
             let rowMunis = "";
             colKeys.municipioCols.forEach(c => { if(row[c]) rowMunis += String(row[c]).toLowerCase() + " "; });
+
+            // Inyectar Padre si hay Subzona (Para lógica de filtrado)
+            for (const [alias, parentCity] of Object.entries(aliasMunicipios)) {
+                if (rowMunis.includes(alias) && !rowMunis.includes(parentCity)) {
+                    rowMunis += parentCity + " ";
+                }
+            }
 
             let matchDrop = true;
             if (ignoreFilterType !== 'sector' && sColD && rowColD !== sColD) matchDrop = false;
@@ -541,11 +567,16 @@
                 const sColD = document.getElementById('filter-sector').value;
                 const sMuni = document.getElementById('filter-municipio').value.toLowerCase();
                 const sPob = document.getElementById('filter-poblacional').value;
+                
                 const rowColD = colKeys.colD ? capitalizeFormat(row[colKeys.colD]) : '';
                 let rawPob = colKeys.poblacional ? capitalizeFormat(row[colKeys.poblacional]) : '';
                 if(rawPob.toUpperCase() === 'NNA') rawPob = 'Menores de edad';
+                
                 let rowMunis = "";
                 colKeys.municipioCols.forEach(c => { if(row[c]) rowMunis += String(row[c]).toLowerCase() + " "; });
+                for (const [alias, parentCity] of Object.entries(aliasMunicipios)) {
+                    if (rowMunis.includes(alias) && !rowMunis.includes(parentCity)) rowMunis += parentCity + " ";
+                }
 
                 const matchDrop = (!sColD || rowColD === sColD) && (!sPob || rawPob === sPob) && (!sMuni || rowMunis.includes(sMuni));
                 const rowColG = colKeys.colG ? capitalizeFormat(row[colKeys.colG]) : '';
@@ -592,7 +623,6 @@
             const chips = [...set].sort();
             if (globalChip && !chips.includes(globalChip)) globalChip = '';
             
-            // Renderizado por HTML String (Performance+)
             let htmlStr = '';
             const getIcon = (n) => {
                 const str = n.toLowerCase();
@@ -637,6 +667,10 @@
                         if (transform === 'muni') {
                             let text = "";
                             colKeys.municipioCols.forEach(c => { if(row[c]) text += String(row[c]).toLowerCase() + " "; });
+                            // Inyectar Alias para que el padre aparezca en el menú
+                            for (const [alias, parentCity] of Object.entries(aliasMunicipios)) {
+                                if (text.includes(alias) && !text.includes(parentCity)) text += parentCity + " ";
+                            }
                             for (const city of Object.keys(coordGuajira)) {
                                 if (text.includes(city)) set.add(capitalizeFormat(city));
                             }
@@ -683,7 +717,6 @@
             grid.classList.remove('hidden');
             noResults.classList.add('hidden');
 
-            // Renderizado de HTML Fragmentado (Performance+)
             let htmlStr = '';
             filteredData.forEach(row => {
                 const originalIndex = rawData.indexOf(row);
@@ -748,7 +781,7 @@
                 const val = String(row[key]).trim();
                 const normKey = key.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
                 
-                // Excluir valores vacíos, columnas de sistema, el enlace (ya está en el botón) y la columna "contacto"
+                // Excluir valores vacíos, columnas de sistema, enlace, y contacto
                 if(!val || val.toLowerCase() === 'n/a' || key.includes('__powerapps') || (colKeys.enlace && key === colKeys.enlace) || normKey.includes('contacto')) return; 
                 
                 htmlStr += `
@@ -780,7 +813,6 @@
             L.control.zoom({ position: 'topleft' }).addTo(map);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
             
-            // Inicializar marcadores pero ocultos
             for(const [city, coords] of Object.entries(coordGuajira)) {
                 mapMarkers[city] = L.marker(coords, { opacity: 0 }).addTo(map);
             }
@@ -797,9 +829,17 @@
                 
                 zones.forEach(z => {
                     let mapped = false;
+                    // Búsqueda directa
                     for(const city of Object.keys(coordGuajira)) {
                         if(z.includes(city)) { counts[city] = (counts[city] || 0) + 1; mapped = true; break; }
                     }
+                    // Búsqueda por alias (Subzonas)
+                    if (!mapped) {
+                        for(const [alias, parentCity] of Object.entries(aliasMunicipios)) {
+                            if(z.includes(alias)) { counts[parentCity] = (counts[parentCity] || 0) + 1; mapped = true; break; }
+                        }
+                    }
+                    // Descartados
                     if(!mapped && z !== 'la guajira') {
                         const cleanZ = capitalizeFormat(z);
                         unmapped[cleanZ] = (unmapped[cleanZ] || 0) + 1;
@@ -809,14 +849,12 @@
 
             const selMuni = document.getElementById('filter-municipio').value.toLowerCase();
 
-            // Mapa de Burbujas Proporcional
             for(const [city, marker] of Object.entries(mapMarkers)) {
                 const count = counts[city] || 0;
                 const isSelected = city === selMuni;
                 
                 if (count > 0 || isSelected) {
                     marker.setOpacity(1);
-                    // Cálculo de radio logarítmico para Bubble Map
                     const baseSize = 24;
                     const size = count > 0 ? baseSize + (Math.log(count + 1) * 8) : baseSize;
                     
@@ -835,11 +873,10 @@
                     `);
                     marker.bindTooltip(capitalizeFormat(city) + " (Clic)", {direction: 'top', offset: [0, -size/2]});
                 } else {
-                    marker.setOpacity(0); // Ocultar si no hay densidad
+                    marker.setOpacity(0);
                 }
             }
 
-            // Gestionar Zonas No Mapeadas (Servicio Light / Fallback)
             const unmappedContainer = document.getElementById('unmapped-zones');
             const unmappedList = document.getElementById('unmapped-list');
             if(Object.keys(unmapped).length > 0) {
@@ -894,7 +931,6 @@
                 if (isTranslated) titleEl.innerHTML = `Püpalirawaa eesüka<br><span class="text-brand-primary">püpüla mma</span>`;
                 else titleEl.innerHTML = `Encuentra oportunidades<br><span class="text-brand-primary">para tu comunidad</span>`;
             }
-            // Retrigger render para traducir contenido dinámico
             renderCategoryChips();
             updateCascadingDropdowns();
             renderCards();
