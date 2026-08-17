@@ -381,7 +381,8 @@
         let globalStatus = 'all'; // 'all', 'disponibles', 'cerradas'
         let globalChip = ''; 
 
-        const colKeys = { colD: null, colG: null, poblacional: null, estado: null, entidad: null, enlace: null, municipioCols: [] };
+        // SE AGREGÓ "contacto: null"
+        const colKeys = { colD: null, colG: null, poblacional: null, estado: null, entidad: null, enlace: null, contacto: null, municipioCols: [] };
 
         const coordGuajira = {
             'riohacha': [11.5444, -72.9072], 'maicao': [11.3797, -72.2472], 'uribia': [11.7139, -72.2661],
@@ -490,6 +491,8 @@
                 if (/\bpoblacional\b/.test(n) || n.includes('enfoque')) colKeys.poblacional = header;
                 if (/\bestado\b/.test(n)) colKeys.estado = header;
                 if (n.includes('enlace') || /\burl\b/.test(n) || /\blink\b/.test(n)) colKeys.enlace = header;
+                // SE AGREGÓ IDENTIFICACIÓN PARA LA COLUMNA CONTACTO
+                if (n.includes('contacto')) colKeys.contacto = header;
                 if (/\bentidad\b/.test(n) || n.includes('institucion') || n.includes('nombre')) colKeys.entidad = header;
                 // Atrapa todas las columnas que digan "municipio"
                 if (/\bmunicipio\b/.test(n)) colKeys.municipioCols.push(header);
@@ -800,10 +803,25 @@
             let htmlStr = '';
             const applyBtn = document.getElementById('drawer-apply-btn');
             
+            // LÓGICA INTELIGENTE DE ENLACE CORREGIDA AQUÍ
+            let foundLink = null;
             if (colKeys.enlace && row[colKeys.enlace] && String(row[colKeys.enlace]).includes('http')) {
-                applyBtn.href = row[colKeys.enlace];
+                foundLink = row[colKeys.enlace];
+            } else if (colKeys.contacto && row[colKeys.contacto]) {
+                const contactoText = String(row[colKeys.contacto]);
+                if (contactoText.includes('http')) {
+                    const match = contactoText.match(/https?:\/\/[^\s]+/);
+                    if (match) foundLink = match[0];
+                } else if (contactoText.includes('@')) {
+                    const match = contactoText.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/);
+                    if (match) foundLink = 'mailto:' + match[0];
+                }
+            }
+
+            if (foundLink) {
+                applyBtn.href = foundLink;
                 applyBtn.className = "w-full flex justify-center items-center gap-2 py-4 px-4 bg-brand-primary text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 hover:bg-brand-sidebar transition-all text-sm text-center";
-                applyBtn.innerHTML = `<span data-es="Postularme / Ir a la convocatoria">Postularme / Ir a la convocatoria</span> <i class="fa-solid fa-arrow-up-right-from-square shrink-0"></i>`;
+                applyBtn.innerHTML = `<span data-es="Postularme / Ir a la convocatoria">Postularme / Ir a la convocatoria</span> <i class="fa-solid ${foundLink.startsWith('mailto:') ? 'fa-envelope' : 'fa-arrow-up-right-from-square'} shrink-0"></i>`;
             } else {
                 applyBtn.removeAttribute('href');
                 applyBtn.className = "w-full flex justify-center items-center gap-2 py-4 px-4 bg-gray-300 text-white font-bold rounded-xl opacity-50 pointer-events-none text-sm text-center";
