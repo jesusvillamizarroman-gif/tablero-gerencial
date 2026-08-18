@@ -144,7 +144,7 @@
             <!-- VISTA: RESUMEN GLOBAL -->
             <div id="view-global" class="space-y-6 animate-fade-in w-full max-w-[1600px] mx-auto">
                 
-                <!-- Fila 1: KPIs Principales -->
+                <!-- Fila 1: KPIs Principales (Reordenados) -->
                 <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
                     <!-- 1. Compromisos PTEJ -->
                     <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col items-center justify-center text-center cursor-pointer hover:border-ptej-dark transition-colors" onclick="switchView('compromisos')">
@@ -236,7 +236,12 @@
                         <i class="fa-solid fa-arrow-left"></i> Volver
                     </button>
                     <div>
-                        <h2 id="detalle-titulo" class="text-xl font-black uppercase tracking-tight text-ptej-dark">Detalle</h2>
+                        <div class="flex items-center gap-3">
+                            <h2 id="detalle-titulo" class="text-xl font-black uppercase tracking-tight text-ptej-dark">Detalle</h2>
+                            <button id="btn-pdf-compromisos" onclick="openPdfModal()" class="hidden bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-colors items-center gap-1.5 shadow-sm">
+                                <i class="fa-solid fa-file-pdf"></i> Ver PDF de Compromisos
+                            </button>
+                        </div>
                         <p id="detalle-subtitulo" class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Navegación Interactiva</p>
                     </div>
                 </div>
@@ -249,6 +254,25 @@
 
         </div>
     </main>
+
+    <!-- Modal Visor de PDF -->
+    <div id="pdf-modal" class="fixed inset-0 z-[100] hidden flex-col items-center justify-center">
+        <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity" onclick="closePdfModal()"></div>
+        <div class="relative w-[95%] md:w-[85%] lg:w-[75%] h-[90vh] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-fade-in">
+            <div class="bg-ptej-dark px-6 py-4 flex justify-between items-center text-white border-b border-ptej-green">
+                <h3 class="font-black uppercase tracking-wider text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-file-pdf text-rose-400 text-lg"></i>
+                    Documento Anexo - Compromisos del Pacto
+                </h3>
+                <button onclick="closePdfModal()" class="text-white/70 hover:text-white transition-colors bg-white/10 hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="flex-grow w-full bg-slate-100 relative">
+                <iframe src="https://drive.google.com/file/d/1Y6EOoPG8AF6iX4lsRDTp3LMLTsXbxYIx/preview" class="absolute inset-0 w-full h-full border-0"></iframe>
+            </div>
+        </div>
+    </div>
 
     <script>
         // --- FUENTES DE DATOS GLOBALES ---
@@ -313,15 +337,16 @@
             return !isNaN(parsed.getTime()) ? parsed : null;
         }
 
+        // Formateador Estricto de Fechas con Guiones
         function formatShortDate(dateObj, rawStr) {
             if (dateObj && !isNaN(dateObj.getTime())) {
                 const m = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
                 return `${dateObj.getDate().toString().padStart(2, '0')}-${m[dateObj.getMonth()]}-${dateObj.getFullYear()}`;
             }
             if (rawStr) {
-                // Remove day of week and times to enforce simple format visually where possible
                 let clean = rawStr.toString().split(/\s+\d{1,2}:\d{2}/)[0].trim();
                 clean = clean.replace(/^(lun|mar|mié|mie|jue|vie|sáb|sab|dom)\.?\s+/i, '').trim();
+                clean = clean.replace(/\//g, '-'); // Forzar guiones en lugar de barras
                 return clean || '--';
             }
             return '--';
@@ -329,8 +354,7 @@
 
         function updateCurrentDate() {
             const date = new Date();
-            const options = { year: 'numeric', month: 'long', day: 'numeric' };
-            const dateStr = date.toLocaleDateString('es-CO', options);
+            const dateStr = formatShortDate(date); // Uso del formato unificado
             const el = document.getElementById('txt-fecha-actualizacion');
             if (el) el.innerHTML = `<i class="fa-regular fa-calendar mr-1"></i> ${dateStr}`;
         }
@@ -509,14 +533,20 @@
         }
 
         // --- PRÓXIMAS TAREAS ---
-        function getLeafTasks(items) {
+        function getLeafTasks(items, currentParentDesc = 'Tarea') {
             let leaves = [];
             if (!items) return leaves;
             items.forEach(item => {
+                // Rastrear la descripción de la Macroacción (Nivel 3: ej 2.1.1)
+                let nextParent = currentParentDesc;
+                if (item.code && item.code.split('.').length === 3) {
+                    nextParent = item.desc; // Guardamos el nombre de la macroacción
+                }
+
                 if (item.children && item.children.length > 0) {
-                    leaves = leaves.concat(getLeafTasks(item.children));
+                    leaves = leaves.concat(getLeafTasks(item.children, nextParent));
                 } else {
-                    leaves.push({...item});
+                    leaves.push({...item, parentMacro: nextParent});
                 }
             });
             return leaves;
@@ -595,10 +625,11 @@
                 let estadoColor = gap <= 0 ? 'text-emerald-600' : (gap <= 10 ? 'text-amber-600' : 'text-rose-600');
                 let bordeColor = gap <= 0 ? 'border-emerald-200 border-l-4 border-l-emerald-500' : (gap <= 10 ? 'border-amber-200 border-l-4 border-l-amber-500' : 'border-rose-200 border-l-4 border-l-rose-500');
 
+                // Mostrar el nombre de la macroacción a la que pertenece
                 html += `
                     <div class="bg-white rounded-xl p-4 border ${bordeColor} shadow-sm hover:shadow-md transition-shadow">
                         <div class="flex justify-between items-start mb-2">
-                            <span class="text-[9px] font-black uppercase text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">Tarea Asignada</span>
+                            <span class="text-[9px] font-black uppercase text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-200 line-clamp-1 max-w-[200px]" title="${t.parentMacro}">${t.parentMacro}</span>
                             <span class="text-[10px] font-bold ${estadoColor}">${realVal}% / ${espVal}%</span>
                         </div>
                         <h4 class="text-[11px] font-bold text-ptej-dark leading-snug line-clamp-2" title="${t.desc}">${t.desc}</h4>
@@ -625,6 +656,16 @@
                     el.classList.remove('active'); el.classList.add('text-slate-600');
                 }
             });
+
+            // Mostrar botón PDF si estamos en Compromisos
+            const btnPdf = document.getElementById('btn-pdf-compromisos');
+            if (viewName === 'compromisos') {
+                btnPdf.classList.remove('hidden');
+                btnPdf.classList.add('flex');
+            } else {
+                btnPdf.classList.add('hidden');
+                btnPdf.classList.remove('flex');
+            }
 
             // Toggle Vistas
             if (viewName === 'global') {
@@ -655,7 +696,8 @@
             keys.forEach(k => {
                 if (!currentData[k]) return;
                 const node = currentData[k];
-                const nombre = tipo === 'mesas' ? `Mesa ${k.split('.')[1]}: ${NOMBRES_MESAS[k].nombre}` : `${k} - ${NOMBRES_COMPROMISOS[k]}`;
+                // Lógica de títulos limpios: elimina el 3.X de los compromisos
+                const nombre = tipo === 'mesas' ? `Mesa ${k.split('.')[1]}: ${NOMBRES_MESAS[k].nombre}` : `Compromiso ${k.split('.')[1]}: ${NOMBRES_COMPROMISOS[k]}`;
                 const isOpen = accordionsState[k] || false;
                 
                 // Generar Árbol de Tareas Interno
@@ -779,6 +821,17 @@
             if(event) event.stopPropagation();
             treeExpandedNodes[code] = !treeExpandedNodes[code];
             renderDetalle(activeView);
+        }
+
+        // Modal PDF
+        function openPdfModal() {
+            document.getElementById('pdf-modal').classList.remove('hidden');
+            document.getElementById('pdf-modal').classList.add('flex');
+        }
+
+        function closePdfModal() {
+            document.getElementById('pdf-modal').classList.add('hidden');
+            document.getElementById('pdf-modal').classList.remove('flex');
         }
 
         // --- INICIALIZACIÓN SEGURA ---
