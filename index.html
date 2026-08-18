@@ -491,42 +491,102 @@
         function renderTendencia(node) {
             if (charts['tendencia']) charts['tendencia'].destroy();
             
-            // Puntos MS Project (2 por año)
-            const labels = ['Jun 2023', 'Dic 2023', 'Jun 2024', 'Dic 2024', 'Jun 2025', 'Dic 2025', 'Jun 2026', 'Dic 2026'];
-            const points = [
-                new Date(2023, 5, 30).getTime(), new Date(2023, 11, 31).getTime(),
-                new Date(2024, 5, 30).getTime(), new Date(2024, 11, 31).getTime(),
-                new Date(2025, 5, 30).getTime(), new Date(2025, 11, 31).getTime(),
-                new Date(2026, 5, 30).getTime(), new Date(2026, 11, 31).getTime()
+            const now = new Date();
+            const m = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+            const todayLabel = `${now.getDate().toString().padStart(2, '0')}-${m[now.getMonth()]}-${now.getFullYear().toString().slice(-2)} (Hoy)`;
+
+            // Puntos MS Project fijos + El punto de "Hoy" intercalado
+            let timePoints = [
+                { label: 'Jun 2023', time: new Date(2023, 5, 30).getTime() },
+                { label: 'Dic 2023', time: new Date(2023, 11, 31).getTime() },
+                { label: 'Jun 2024', time: new Date(2024, 5, 30).getTime() },
+                { label: 'Dic 2024', time: new Date(2024, 11, 31).getTime() },
+                { label: 'Jun 2025', time: new Date(2025, 5, 30).getTime() },
+                { label: 'Dic 2025', time: new Date(2025, 11, 31).getTime() },
+                { label: 'Jun 2026', time: new Date(2026, 5, 30).getTime() },
+                { label: 'Dic 2026', time: new Date(2026, 11, 31).getTime() },
+                { label: todayLabel, time: now.getTime(), isToday: true }
             ];
 
+            // Ordenamos todo cronológicamente
+            timePoints.sort((a, b) => a.time - b.time);
+
             let esperados = [];
+            let reales = [];
+
+            // Calculamos ambos valores respetando su lugar en la línea de tiempo
             if (node.inicioDate && node.finDate) {
                 const s = node.inicioDate.getTime();
                 const e = node.finDate.getTime();
                 const t = e - s;
-                if (t > 0) {
-                    esperados = points.map(pt => {
-                        if (pt < s) return 0;
-                        if (pt > e) return 100;
-                        return Math.round(((pt - s) / t) * 100);
-                    });
-                } else esperados = [0,0,0,0,0,0,0,0];
+                
+                timePoints.forEach(pt => {
+                    // Lógica para la curva de "Avance Esperado" (Calculada a ese punto del tiempo)
+                    if (t > 0) {
+                        if (pt.time < s) esperados.push(0);
+                        else if (pt.time > e) esperados.push(100);
+                        else esperados.push(Math.round(((pt.time - s) / t) * 100));
+                    } else {
+                        esperados.push(0);
+                    }
+
+                    // Lógica para el "Avance Real" (Solo existe en la fecha de Hoy)
+                    if (pt.isToday) {
+                        reales.push(Math.round(node.real || 0));
+                    } else {
+                        reales.push(null);
+                    }
+                });
             } else {
-                esperados = [12, 25, 37, 50, 62, 75, 87, 100]; // Fallback si no hay fechas
+                // Fallback de respaldo si faltan fechas en el EDT 2
+                esperados = timePoints.map((pt, i) => Math.round((i / (timePoints.length - 1)) * 100));
+                reales = timePoints.map(pt => pt.isToday ? Math.round(node.real || 0) : null);
             }
 
+            const labels = timePoints.map(pt => pt.label);
+
             const options = {
-                series: [{ name: 'Avance Esperado', data: esperados }],
-                chart: { type: 'area', height: 300, toolbar: { show: false }, fontFamily: 'Inter' },
-                stroke: { width: 3, curve: 'smooth' },
-                fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 100] }},
-                markers: { size: 6, colors: ['#D35400'], strokeColors: '#fff', strokeWidth: 2, hover: { size: 8 } },
-                colors: ['#197042'],
-                xaxis: { categories: labels, labels: { style: { fontSize: '11px', fontWeight: 600 } } },
-                yaxis: { min: 0, max: 100, labels: { style: { fontSize: '11px' }, formatter: val => val + '%' } },
+                series: [
+                    { name: 'Avance Esperado', type: 'area', data: esperados },
+                    { name: 'Avance Real (Hoy)', type: 'line', data: reales }
+                ],
+                chart: { height: 300, toolbar: { show: false }, fontFamily: 'Inter' },
+                stroke: { 
+                    width: [3, 0], // Evita trazar líneas secundarias que deformen el gráfico (la línea 'real' es invisible)
+                    curve: 'smooth' 
+                },
+                fill: { 
+                    type: ['gradient', 'solid'], 
+                    gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 100] }
+                },
+                markers: { 
+                    size: [6, 8], // El punto de Hoy es un poco más grande (8px)
+                    colors: ['#D35400', '#06403D'], // Puntos esperados Naranjas, Punto Real Verde Oscuro
+                    strokeColors: '#fff', 
+                    strokeWidth: 2, 
+                    hover: { size: 8 } 
+                },
+                colors: ['#197042', '#06403D'],
+                xaxis: { 
+                    categories: labels, 
+                    labels: { style: { fontSize: '10px', fontWeight: 600 } } 
+                },
+                yaxis: { 
+                    min: 0, 
+                    max: 100, 
+                    labels: { style: { fontSize: '11px' }, formatter: val => val + '%' } 
+                },
                 grid: { strokeDashArray: 4, padding: { left: 10, right: 10 } },
-                dataLabels: { enabled: true, offsetY: -10, style: { fontSize: '11px', colors: ['#06403D'] }, background: { enabled: true, foreColor: '#06403D', padding: 4, borderRadius: 2, borderWidth: 0, opacity: 0.8 } }
+                dataLabels: { 
+                    enabled: true, 
+                    offsetY: -10, 
+                    style: { fontSize: '11px', fontWeight: 'bold' }, 
+                    background: { enabled: true, padding: 4, borderRadius: 2, borderWidth: 0, opacity: 0.85, dropShadow: { enabled: false } },
+                    formatter: function (val, opts) {
+                        if (val === null) return '';
+                        return val + '%';
+                    }
+                }
             };
             charts['tendencia'] = new ApexCharts(document.querySelector("#chart-line-tendencia"), options);
             charts['tendencia'].render();
