@@ -514,34 +514,46 @@
             let esperados = [];
             let reales = [];
 
-            // Calculamos ambos valores respetando su lugar en la línea de tiempo
-            if (node.inicioDate && node.finDate) {
-                const s = node.inicioDate.getTime();
-                const e = node.finDate.getTime();
-                const t = e - s;
-                
-                timePoints.forEach(pt => {
-                    // Lógica para la curva de "Avance Esperado" (Calculada a ese punto del tiempo)
-                    if (t > 0) {
-                        if (pt.time < s) esperados.push(0);
-                        else if (pt.time > e) esperados.push(100);
-                        else esperados.push(Math.round(((pt.time - s) / t) * 100));
-                    } else {
-                        esperados.push(0);
-                    }
+            // Identificar min y max reales desde los hijos en caso de que el nodo padre no tenga fechas completas en el Sheet
+            let s = node.inicioDate ? node.inicioDate.getTime() : null;
+            let e = node.finDate ? node.finDate.getTime() : null;
 
-                    // Lógica para el "Avance Real" (Solo existe en la fecha de Hoy)
-                    if (pt.isToday) {
-                        reales.push(Math.round(node.real || 0));
-                    } else {
-                        reales.push(null);
+            if (!s || !e) {
+                let min = Infinity, max = -Infinity;
+                ['2.1', '2.2', '2.3', '2.4'].forEach(k => {
+                    if (currentData[k]) {
+                        if (currentData[k].inicioDate) min = Math.min(min, currentData[k].inicioDate.getTime());
+                        if (currentData[k].finDate) max = Math.max(max, currentData[k].finDate.getTime());
                     }
                 });
-            } else {
-                // Fallback de respaldo si faltan fechas en el EDT 2
-                esperados = timePoints.map((pt, i) => Math.round((i / (timePoints.length - 1)) * 100));
-                reales = timePoints.map(pt => pt.isToday ? Math.round(node.real || 0) : null);
+                if (min !== Infinity) s = min;
+                if (max !== -Infinity) e = max;
             }
+
+            const t = (s && e) ? e - s : 0;
+            
+            timePoints.forEach((pt, index) => {
+                // Lógica de "Avance Esperado"
+                if (pt.isToday && node.esperado !== undefined) {
+                    // Si es el punto de "Hoy", NO interpolamos. Tomamos exactamente el dato del Excel.
+                    esperados.push(Math.round(node.esperado));
+                } else if (t > 0) {
+                    // Interpolación para el resto del tiempo pasado o futuro
+                    if (pt.time < s) esperados.push(0);
+                    else if (pt.time > e) esperados.push(100);
+                    else esperados.push(Math.round(((pt.time - s) / t) * 100));
+                } else {
+                    // Fallback extremo
+                    esperados.push(Math.round((index / (timePoints.length - 1)) * 100));
+                }
+
+                // Lógica de "Avance Real" (Solo llenamos el punto si es la fecha de Hoy)
+                if (pt.isToday) {
+                    reales.push(Math.round(node.real || 0));
+                } else {
+                    reales.push(null);
+                }
+            });
 
             const labels = timePoints.map(pt => pt.label);
 
@@ -552,7 +564,7 @@
                 ],
                 chart: { height: 300, toolbar: { show: false }, fontFamily: 'Inter' },
                 stroke: { 
-                    width: [3, 0], // Evita trazar líneas secundarias que deformen el gráfico (la línea 'real' es invisible)
+                    width: [3, 0], // El '0' evita líneas cruzadas raras para los nulls del real
                     curve: 'smooth' 
                 },
                 fill: { 
@@ -560,8 +572,8 @@
                     gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 100] }
                 },
                 markers: { 
-                    size: [6, 8], // El punto de Hoy es un poco más grande (8px)
-                    colors: ['#D35400', '#06403D'], // Puntos esperados Naranjas, Punto Real Verde Oscuro
+                    size: [6, 8], 
+                    colors: ['#D35400', '#06403D'], 
                     strokeColors: '#fff', 
                     strokeWidth: 2, 
                     hover: { size: 8 } 
@@ -582,10 +594,15 @@
                     offsetY: -10, 
                     style: { fontSize: '11px', fontWeight: 'bold' }, 
                     background: { enabled: true, padding: 4, borderRadius: 2, borderWidth: 0, opacity: 0.85, dropShadow: { enabled: false } },
-                    formatter: function (val, opts) {
-                        if (val === null) return '';
+                    formatter: function (val) {
+                        // Limpia los números de la gráfica general para que los nulls no aparezcan
+                        if (val === null || val === undefined || isNaN(val)) return '';
                         return val + '%';
                     }
+                },
+                tooltip: {
+                    // Eliminamos el texto/cuadro que aparece al hacer hover
+                    enabled: false
                 }
             };
             charts['tendencia'] = new ApexCharts(document.querySelector("#chart-line-tendencia"), options);
