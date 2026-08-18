@@ -3,440 +3,295 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tablero - Pacto por la Transición Energética Justa</title>
+    <title>Pacto por la Transición Energética Justa - Tablero</title>
+    
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <!-- FontAwesome para Iconos -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    
     <!-- Google Fonts: Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     
-    <style>
-        :root {
-            --mme-blue-dark: #002244;
-            --mme-blue: #003366;
-            --mme-blue-light: #0055a5;
-            --mme-yellow: #FFD700;
-            --colombia-red: #da291c;
-        }
-        body {
-            background-color: #f8fafc;
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            color: #0f172a;
-        }
-        .header-gradient {
-            background: linear-gradient(135deg, var(--mme-blue-dark) 0%, #004080 50%, var(--mme-blue-light) 100%);
-        }
-        .flag-strip {
-            height: 4px;
-            background: linear-gradient(to right, var(--mme-yellow) 57%, var(--mme-blue) 57%, var(--mme-blue) 80%, var(--colombia-red) 80%);
-        }
-        .card-shadow {
-            box-shadow: 0 10px 30px -10px rgba(0, 51, 102, 0.08);
-            border: 1px solid rgba(226, 232, 240, 0.8);
-        }
-        .progress-bar-fill {
-            transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        /* Estilos para scrollbar en tablas */
-        .custom-scrollbar::-webkit-scrollbar {
-            height: 8px;
-            width: 8px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #f1f5f9; 
-            border-radius: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #cbd5e1; 
-            border-radius: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8; 
-        }
-        /* Transición de apertura suave del panel principal de detalles */
-        .collapsible-activities {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-out;
-            opacity: 0;
-        }
-        .collapsible-activities.open {
-            max-height: 8000px;
-            opacity: 1;
-            overflow-y: visible;
-        }
-        .icon-container {
-            width: 38px;
-            height: 38px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 10px;
-            flex-shrink: 0;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in {
-            animation: fadeIn 0.5s ease forwards;
-        }
-        /* Rotación de flechas en tablas */
-        th .fa-sort-up, th .fa-sort-down {
-            color: var(--mme-blue-light);
-        }
-        
-        /* Estilos para el Panel Lateral (Drawer) de Compromisos */
-        .drawer-overlay {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px);
-            z-index: 998; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
-        }
-        .drawer-overlay.open { opacity: 1; pointer-events: all; }
-        
-        .drawer-panel {
-            position: fixed; top: 0; right: -100%; width: 100%; max-width: 1000px; height: 100vh;
-            background: #f8fafc; z-index: 999; box-shadow: -10px 0 40px rgba(0,0,0,0.15);
-            transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex; flex-direction: column;
-        }
-        .drawer-panel.open { right: 0; }
-    </style>
-</head>
-<body class="min-h-screen flex flex-col selection:bg-yellow-200">
-
-    <!-- Loader de optimización de datos -->
-    <div id="loader" class="fixed inset-0 bg-slate-900/95 z-50 flex flex-col justify-center items-center backdrop-blur-sm transition-opacity duration-500">
-        <div class="flex flex-col items-center">
-            <div class="relative w-16 h-16 mb-4">
-                <div class="absolute inset-0 rounded-full border-4 border-slate-700"></div>
-                <div class="absolute inset-0 rounded-full border-4 border-t-[#FFD700] border-r-[#003366] animate-spin"></div>
-            </div>
-            <p class="text-xs font-bold text-white uppercase tracking-widest text-center max-w-xs leading-relaxed px-4">
-                Pacto por la Transición Energética Justa<br>
-                <span class="text-[#FFD700] font-normal text-[10px] tracking-normal">Conectando fuentes y cruzando acciones...</span>
-            </p>
-        </div>
-    </div>
-
-    <!-- Línea tricolor patria -->
-    <div class="flag-strip"></div>
-    
-    <header class="bg-gradient-to-b from-slate-50 to-slate-100/50 pt-8 pb-10 px-6 shadow-sm border-b border-slate-200 relative overflow-hidden">
-        <!-- Patrón de puntos sutil -->
-        <div class="absolute inset-0 opacity-40 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:16px_16px]"></div>
-        
-        <div class="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8 relative z-10">
-            <!-- Izquierda: Títulos y badges generales -->
-            <div class="flex flex-col gap-4 w-full md:w-[55%]">
-                <div class="flex items-center gap-4">
-                    <div class="p-3 bg-white rounded-2xl border border-slate-200 shadow-sm flex items-center justify-center flex-shrink-0">
-                        <svg class="w-8 h-8 text-[#003366]" fill="currentColor" viewBox="0 0 20 20"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path></svg>
-                    </div>
-                    <div>
-                        <h1 class="text-2xl md:text-3xl font-black tracking-tight uppercase leading-none mt-1 text-[#003366]">
-                            PACTO POR LA TRANSICIÓN ENERGÉTICA JUSTA
-                        </h1>
-                        <p class="text-slate-500 text-xs font-bold tracking-widest uppercase mt-2">
-                            TABLERO DE GESTIÓN Y SEGUIMIENTO
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Badges de contexto -->
-                <div class="flex flex-wrap items-center gap-2 mt-1">
-                    <button onclick="openPdfModal()" class="flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 text-[10px] font-extrabold px-3 py-1.5 rounded-md border border-rose-200 transition-colors shadow-sm" title="Ver documento anexo PDF">
-                        <i class="fa-solid fa-file-pdf text-rose-500"></i> VER COMPROMISOS
-                    </button>
-                    <span id="kpi-acciones-2"></span>
-                    <span id="connection-badge" class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 shadow-sm">
-                        <i class="fa-solid fa-circle text-[8px] animate-pulse text-emerald-500"></i> Online
-                    </span>
-                </div>
-            </div>
-
-            <!-- Derecha: Resumen Consolidado KPI -->
-            <div class="w-full md:w-[40%] bg-white rounded-2xl p-5 border border-slate-200 shadow-md relative overflow-hidden">
-                <!-- Acento superior -->
-                <div class="absolute top-0 left-0 w-full h-1 bg-[#003366]"></div>
-                
-                <div class="flex justify-between items-center mb-3">
-                    <span class="block text-xs font-black text-slate-400 uppercase tracking-widest">Avance Global</span>
-                    <span id="update-date" class="bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-widest text-slate-500 shadow-sm">
-                        Cargando...
-                    </span>
-                </div>
-                <div class="flex justify-between items-end mb-3">
-                    <div class="flex items-baseline gap-2">
-                        <span id="kpi-real-2" class="text-5xl font-black text-[#003366] leading-none tracking-tighter">--%</span>
-                    </div>
-                    <div class="flex flex-col items-end gap-1.5">
-                        <span id="kpi-status-2" class="px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-400 border border-slate-200 shadow-sm">--</span>
-                        <span class="text-xs font-semibold text-slate-500">Esperado: <strong id="kpi-plan-2" class="text-slate-800 font-black">--%</strong></span>
-                    </div>
-                </div>
-                <div class="progress-bar-bg relative bg-slate-100 rounded-full h-3 w-full overflow-hidden border border-slate-200 mt-1">
-                    <div id="kpi-bar-2" class="progress-bar-fill absolute top-0 left-0 h-full rounded-full bg-[#003366]" style="width: 0%"></div>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <!-- Controles de Pestañas y Filtros -->
-    <div class="w-full bg-white border-b border-slate-200 shadow-sm sticky top-0 z-30">
-        <div class="max-w-5xl mx-auto px-4 md:px-8 py-3 flex flex-col lg:flex-row justify-between items-center gap-4">
-            
-            <!-- Pestañas de Navegación -->
-            <div class="flex bg-slate-100 p-1 rounded-xl w-full lg:w-auto overflow-x-auto custom-scrollbar">
-                <button onclick="setTab('all')" id="tab-btn-all" class="px-4 py-2 rounded-lg text-xs font-bold bg-white shadow-sm text-[#003366] border border-slate-200 transition-all whitespace-nowrap">
-                    📋 Resumen Global
-                </button>
-                <button onclick="setTab('mesas')" id="tab-btn-mesas" class="px-4 py-2 rounded-lg text-xs font-bold text-slate-500 hover:bg-white hover:text-slate-800 transition-all whitespace-nowrap">
-                    🏢 Mesas Estratégicas
-                </button>
-                <button onclick="setTab('compromisos')" id="tab-btn-compromisos" class="px-4 py-2 rounded-lg text-xs font-bold text-slate-500 hover:bg-white hover:text-slate-800 transition-all whitespace-nowrap">
-                    🤝 Compromisos
-                </button>
-            </div>
-
-            <!-- Filtros Rápidos -->
-            <div class="flex gap-2 w-full lg:w-auto overflow-x-auto custom-scrollbar pb-1 lg:pb-0 items-center">
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mr-1">Filtros:</span>
-                <button onclick="setFilter('all')" id="filter-btn-all" class="px-3 py-1.5 rounded-lg text-[10px] font-bold bg-slate-800 text-white shadow-sm transition-all whitespace-nowrap">
-                    Todos
-                </button>
-                <button onclick="setFilter('critico')" id="filter-btn-critico" class="opacity-60 px-3 py-1.5 rounded-lg text-[10px] font-bold bg-white text-slate-600 border border-slate-200 hover:bg-rose-50 transition-all whitespace-nowrap">
-                    🔴 Críticos
-                </button>
-                <button onclick="setFilter('alerta')" id="filter-btn-alerta" class="opacity-60 px-3 py-1.5 rounded-lg text-[10px] font-bold bg-white text-slate-600 border border-slate-200 hover:bg-amber-50 transition-all whitespace-nowrap">
-                    🟡 Alertas Leves
-                </button>
-                <button onclick="setFilter('aldia')" id="filter-btn-aldia" class="opacity-60 px-3 py-1.5 rounded-lg text-[10px] font-bold bg-white text-slate-600 border border-slate-200 hover:bg-emerald-50 transition-all whitespace-nowrap">
-                    🟢 Al Día
-                </button>
-            </div>
-
-        </div>
-    </div>
-
-    <!-- Contenedor principal de la aplicación -->
-    <main class="max-w-[1700px] mx-auto p-4 md:p-8 w-full flex-grow flex flex-col gap-8 relative z-20">
-        
-        <!-- SECCIÓN 2: MESAS ESTRATÉGICAS -->
-        <section id="section-mesas" class="w-full max-w-5xl mx-auto">
-            <article class="card-project p-6 md:p-8 relative bg-white rounded-3xl transition-all duration-300 card-shadow">
-                <div class="absolute top-0 left-0 w-full h-1.5 bg-yellow-500"></div>
-
-                <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6 px-2">
-                    <div class="flex items-center gap-4">
-                        <h2 class="text-lg md:text-xl font-black text-[#003366] tracking-tight uppercase">
-                            MESAS ESTRATÉGICAS
-                        </h2>
-                    </div>
-                    <div class="flex gap-4 text-xs font-bold text-slate-500 uppercase tracking-widest">
-                        <span id="kpi-inicio-2"><i class="fa-regular fa-calendar mr-1"></i>INICIO: --</span>
-                        <span id="kpi-fin-2"><i class="fa-regular fa-calendar-check mr-1"></i>FIN: --</span>
-                    </div>
-                </div>
-                <div class="h-[1px] w-full bg-slate-200 mb-6"></div>
-
-                <!-- Componentes de Sección 2 -->
-                <div class="space-y-4">
-                    <!-- Contenedor dinámico de ítems -->
-                    <div id="group-2" class="space-y-6"></div>
-                </div>
-            </article>
-        </section>
-
-        <!-- SECCIÓN 3: COMPROMISOS PTEJ -->
-        <section id="section-compromisos" class="w-full max-w-5xl mx-auto mt-2">
-            <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
-                <div class="flex items-center gap-4 w-full md:w-auto">
-                    <div class="h-10 w-1.5 bg-[#003366] rounded-full"></div>
-                    <div>
-                        <h2 class="text-lg md:text-xl font-black text-[#003366] tracking-tight uppercase">
-                            SEGUIMIENTO COMPROMISOS
-                        </h2>
-                        <div class="flex gap-4 mt-1 text-xs font-bold text-slate-500 uppercase tracking-widest">
-                            <span id="kpi-inicio-3"><i class="fa-regular fa-calendar mr-1"></i>INICIO: --</span>
-                            <span id="kpi-fin-3"><i class="fa-regular fa-calendar-check mr-1"></i>FIN: --</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="flex items-center gap-4 w-full md:w-auto justify-end bg-slate-50 p-3 rounded-2xl border border-slate-100">
-                    <div class="text-right">
-                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Avance Global</span>
-                        <div class="flex items-baseline gap-2 justify-end">
-                            <span id="kpi-real-3" class="text-3xl font-black text-[#003366] leading-none">--%</span>
-                        </div>
-                    </div>
-                    <div class="h-8 w-[1px] bg-slate-200"></div>
-                    <div class="text-right">
-                         <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-widest block">Esperado</span>
-                         <span id="kpi-plan-3" class="text-xl font-bold text-slate-600 leading-none">--%</span>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Grid de donas interactivo (Limpio y Fijo) -->
-            <div id="compromisos-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <!-- Se inyectarán dinámicamente las gráficas de dona -->
-            </div>
-        </section>
-
-        <!-- Footer con compromiso territorial de La Guajira -->
-        <footer class="mt-8 mb-4 max-w-4xl mx-auto text-center w-full">
-            <div class="bg-gradient-to-r from-blue-50/40 via-blue-50/80 to-blue-50/40 p-6 rounded-[2rem] border border-blue-100/30">
-                <p class="text-sm font-medium italic text-[#003366]/80 px-4 leading-relaxed">
-                    "La Guajira es el epicentro de la Transición Energética Justa. El bienestar social y el respeto ambiental 
-                    en cada comunidad es nuestra prioridad permanente para forjar un desarrollo equitativo."
-                </p>
-                <div class="mt-4 flex items-center justify-center space-x-3">
-                    <div class="h-[1px] w-12 bg-yellow-400"></div>
-                    <span class="text-[10px] font-extrabold text-slate-500 uppercase tracking-[0.3em]">
-                        Compromiso Social, Ambiental y Minero • MinEnergía
-                    </span>
-                    <div class="h-[1px] w-12 bg-yellow-400"></div>
-                </div>
-            </div>
-        </footer>
-    </main>
-
-    <!-- Pie de página general -->
-    <footer class="bg-slate-950 py-4 text-center mt-auto border-t border-slate-900">
-        <p class="text-[10px] text-slate-400 font-bold tracking-[0.4em] uppercase">
-            Ministerio de Minas y Energía - República de Colombia
-        </p>
-    </footer>
-
-    <!-- Modal Visor de PDF -->
-    <div id="pdf-modal" class="fixed inset-0 z-[100] hidden flex-col items-center justify-center">
-        <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity" onclick="closePdfModal()"></div>
-        <div class="relative w-[95%] md:w-[85%] lg:w-[75%] h-[90vh] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-fade-in">
-            <div class="bg-[#003366] px-6 py-4 flex justify-between items-center text-white border-b border-[#002244]">
-                <h3 class="font-black uppercase tracking-wider text-sm flex items-center gap-2">
-                    <i class="fa-solid fa-file-pdf text-rose-400 text-lg"></i>
-                    Documento Anexo - Seguimiento
-                </h3>
-                <button onclick="closePdfModal()" class="text-white/70 hover:text-white transition-colors bg-white/10 hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
-            <div class="flex-grow w-full bg-slate-100 relative">
-                <iframe src="https://drive.google.com/file/d/1Y6EOoPG8AF6iX4lsRDTp3LMLTsXbxYIx/preview" class="absolute inset-0 w-full h-full border-0"></iframe>
-            </div>
-        </div>
-    </div>
-
-    <!-- Panel Lateral (Drawer) para Detalle de Compromisos -->
-    <div id="drawer-overlay" class="drawer-overlay" onclick="closeDrawer()"></div>
-    <div id="drawer-panel" class="drawer-panel">
-        <div class="flex justify-between items-center p-6 border-b border-slate-200 bg-white z-10 shadow-sm relative">
-            <h3 id="drawer-title" class="text-lg font-black text-[#003366] uppercase pr-10">Detalle del Compromiso</h3>
-            <button onclick="closeDrawer()" class="text-slate-500 hover:text-rose-600 bg-slate-100 hover:bg-rose-50 px-4 py-2 rounded-xl border border-slate-200 hover:border-rose-200 shadow-sm flex items-center gap-2 transition-colors flex-shrink-0 font-bold uppercase text-[10px] tracking-widest">
-                Cerrar Panel <i class="fa-solid fa-xmark text-sm"></i>
-            </button>
-        </div>
-        <div id="drawer-content" class="p-6 overflow-y-auto flex-grow bg-slate-50/80 custom-scrollbar pb-20">
-            <!-- El contenido detallado se inyecta aquí dinámicamente -->
-        </div>
-    </div>
+    <!-- ApexCharts -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
     <script>
-        // FUENTES DE DATOS GLOBALES
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'ptej-dark': '#06403D',
+                        'ptej-green': '#197042',
+                        'ptej-green-light': '#E8F5E9',
+                        'ptej-orange': '#D35400',
+                        'ptej-gray': '#F4F7F6'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { background-color: #F4F7F6; color: #1e293b; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Animaciones */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        
+        .nav-item.active { background-color: #06403D; color: white; }
+        .nav-item { transition: all 0.2s ease; cursor: pointer; }
+        .nav-item:hover:not(.active) { background-color: #E8F5E9; color: #06403D; }
+
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-in-out, opacity 0.3s ease;
+            opacity: 0;
+        }
+        .collapsible-content.open {
+            max-height: 8000px;
+            opacity: 1;
+        }
+
+        /* Loading Overlay */
+        #loader {
+            position: fixed; inset: 0; background: rgba(255,255,255,0.95); z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: opacity 0.5s ease;
+        }
+        .spinner {
+            width: 50px; height: 50px; border: 5px solid #E8F5E9; border-top: 5px solid #197042;
+            border-radius: 50%; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden text-sm selection:bg-green-200">
+
+    <!-- Loader -->
+    <div id="loader">
+        <div class="spinner mb-4"></div>
+        <h2 class="text-ptej-dark font-black tracking-widest uppercase text-lg">Procesando Datos...</h2>
+        <p class="text-slate-500 font-medium text-xs mt-2">Pacto por la Transición Energética Justa</p>
+    </div>
+
+    <!-- Menú Lateral -->
+    <aside class="w-64 bg-white border-r border-slate-200 h-full flex flex-col flex-shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)] relative z-20">
+        <!-- Logo -->
+        <div class="p-6 border-b border-slate-100 flex items-center justify-center">
+            <img src="https://drive.google.com/uc?export=view&id=1l4uMxSlrE-dkiYtP4P_mzUlSyAGjix4m" alt="MinEnergía" class="h-14 object-contain" onerror="this.src='https://via.placeholder.com/150x60?text=Energía+Logo'">
+        </div>
+        
+        <!-- Navegación -->
+        <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+            <div onclick="switchView('global')" id="nav-global" class="nav-item active flex items-center gap-3 px-4 py-3 rounded-xl font-bold">
+                <i class="fa-solid fa-house text-lg w-5 text-center"></i>
+                <span>Resumen Global</span>
+            </div>
+            <div onclick="switchView('mesas')" id="nav-mesas" class="nav-item text-slate-600 flex items-center gap-3 px-4 py-3 rounded-xl font-bold">
+                <i class="fa-solid fa-users-viewfinder text-lg w-5 text-center"></i>
+                <span>Mesas Estratégicas</span>
+            </div>
+            <div onclick="switchView('compromisos')" id="nav-compromisos" class="nav-item text-slate-600 flex items-center gap-3 px-4 py-3 rounded-xl font-bold">
+                <i class="fa-solid fa-handshake-angle text-lg w-5 text-center"></i>
+                <span>Compromisos</span>
+            </div>
+        </nav>
+
+        <!-- Bloque de Ayuda Inferior -->
+        <div class="p-4 bg-slate-50 m-4 rounded-xl border border-slate-200 shadow-sm">
+            <h4 class="font-black text-[10px] uppercase text-ptej-dark mb-1 tracking-wider">¿Qué es este tablero?</h4>
+            <p class="text-[10px] text-slate-500 leading-relaxed font-medium mb-3">Herramienta para el seguimiento del Plan Operativo del Pacto, que consolida avances, compromisos y acciones de las Mesas Estratégicas.</p>
+        </div>
+    </aside>
+
+    <!-- Área Principal -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden bg-[#F4F7F6]">
+        
+        <!-- Header -->
+        <header class="bg-white border-b border-slate-200 px-8 py-5 flex justify-between items-center z-10 shadow-sm flex-shrink-0">
+            <div>
+                <h1 class="text-2xl font-black text-ptej-dark tracking-tight uppercase">PACTO POR LA TRANSICIÓN ENERGÉTICA JUSTA</h1>
+                <p class="text-slate-500 font-semibold tracking-widest text-xs uppercase mt-1">Tablero de Gestión y Seguimiento</p>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="text-right">
+                    <span class="block text-[10px] font-bold text-slate-400 uppercase">Última actualización</span>
+                    <span id="txt-fecha-actualizacion" class="text-xs font-black text-slate-700"><i class="fa-regular fa-calendar mr-1"></i> --</span>
+                </div>
+                <div class="h-8 w-px bg-slate-200 mx-2"></div>
+                <div class="bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-center">
+                    <span class="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Periodo</span>
+                    <span class="text-xs font-bold text-slate-700">2023 - 2026</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Contenedor Scrollable de Vistas -->
+        <div class="flex-1 overflow-y-auto p-6 md:p-8 w-full relative">
+            
+            <!-- VISTA: RESUMEN GLOBAL -->
+            <div id="view-global" class="space-y-6 animate-fade-in w-full max-w-[1600px] mx-auto">
+                
+                <!-- Fila 1: KPIs Principales -->
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+                        <span class="text-[10px] font-black text-ptej-dark uppercase tracking-widest mb-2">Avance Global del Pacto</span>
+                        <div class="flex items-end gap-2">
+                            <span id="kpi-global-real" class="text-4xl font-black text-ptej-green leading-none">--%</span>
+                        </div>
+                        <span class="text-xs font-semibold text-slate-500 mt-2">Esperado: <strong id="kpi-global-esp" class="text-slate-800">--%</strong></span>
+                    </div>
+                    
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col items-center justify-center text-center">
+                        <span class="text-[10px] font-black text-[#1D4ED8] uppercase tracking-widest mb-1">Compromisos PTEJ</span>
+                        <span id="kpi-compromisos" class="text-4xl font-black text-[#1D4ED8] leading-none my-2">9</span>
+                        <div class="flex gap-2 text-[10px] font-bold text-slate-500 bg-slate-50 px-2 py-1 rounded">
+                            <span>Real: <strong id="kpi-comp-real" class="text-slate-700">--%</strong></span>
+                            <span>Esp: <strong id="kpi-comp-esp" class="text-slate-700">--%</strong></span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col items-center justify-center text-center">
+                        <span class="text-[10px] font-black text-ptej-orange uppercase tracking-widest mb-1">Macroacciones</span>
+                        <span id="kpi-macroacciones" class="text-4xl font-black text-ptej-orange leading-none my-2">37</span>
+                        <span id="kpi-tareas-hijas" class="text-[10px] font-semibold text-slate-500 bg-slate-50 px-2 py-1 rounded">-- Tareas en ejecución</span>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col items-center justify-center text-center">
+                        <span class="text-[10px] font-black text-[#F5B041] uppercase tracking-widest mb-1">Acciones Estratégicas</span>
+                        <span id="kpi-acciones" class="text-4xl font-black text-[#F5B041] leading-none my-2">760</span>
+                        <span class="text-[10px] font-semibold text-slate-500 bg-slate-50 px-2 py-1 rounded">Consolidadas</span>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col items-center justify-center text-center hover:bg-slate-50 transition-colors cursor-pointer" onclick="switchView('mesas')">
+                        <span class="text-[10px] font-black text-[#8E44AD] uppercase tracking-widest mb-1">Mesas Estratégicas</span>
+                        <span id="kpi-mesas" class="text-4xl font-black text-[#8E44AD] leading-none my-2">4</span>
+                        <span class="text-[10px] font-semibold text-slate-500 bg-slate-50 px-2 py-1 rounded">Activas</span>
+                    </div>
+                </div>
+
+                <!-- Fila 2: Mesas (Ancho Completo) -->
+                <div class="w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col">
+                    <h3 class="text-xs font-black uppercase text-slate-700 tracking-wider mb-4">Avance por Mesas Estratégicas</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 flex-1" id="grid-mesas-kpis">
+                        <!-- Inyectado por JS -->
+                    </div>
+                </div>
+
+                <!-- Fila 3: Tendencia (Ancho Completo) -->
+                <div class="w-full bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 class="text-xs font-black uppercase text-slate-700 tracking-wider mb-4 border-l-4 border-ptej-green pl-2">Tendencia de Avance Global (2023 - 2026)</h3>
+                    <div id="chart-line-tendencia" class="w-full h-[300px]"></div>
+                </div>
+
+                <!-- Fila 4: Próximas Tareas y Documentos -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Próximas tareas -->
+                    <div class="md:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                        <h3 class="text-xs font-black uppercase text-ptej-dark tracking-wider mb-4 border-l-4 border-ptej-orange pl-2">Próximas Tareas (Iniciadas Recientemente)</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="contenedor-tareas">
+                            <!-- Inyectado por JS -->
+                        </div>
+                    </div>
+
+                    <!-- Documentos Repositorio -->
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col justify-center items-center text-center">
+                        <div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 mb-4 border border-slate-100">
+                            <i class="fa-regular fa-folder-open text-3xl"></i>
+                        </div>
+                        <h3 class="text-sm font-black uppercase text-ptej-dark tracking-wider mb-2">Repositorio de Soportes</h3>
+                        <p class="text-[11px] text-slate-500 font-medium mb-4">Consulte los documentos técnicos, actas y evidencias que respaldan el avance reportado.</p>
+                        <a href="#" class="w-full block bg-slate-50 hover:bg-ptej-dark hover:text-white transition-colors text-ptej-dark font-bold text-xs py-3 rounded-xl border border-slate-200">
+                            Ir al Repositorio <i class="fa-solid fa-arrow-up-right-from-square ml-1"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <footer class="text-center py-4">
+                    <p class="text-[10px] text-slate-400 font-bold tracking-[0.2em] uppercase">Ministerio de Minas y Energía - Pacto por la Transición Energética Justa</p>
+                </footer>
+            </div>
+
+            <!-- VISTA: DETALLE (MESAS O COMPROMISOS) -->
+            <div id="view-detalle" class="hidden animate-fade-in w-full max-w-[1400px] mx-auto pb-10">
+                <div class="flex items-center gap-4 mb-6">
+                    <button onclick="switchView('global')" class="bg-white text-slate-600 hover:text-ptej-dark px-4 py-2.5 rounded-xl font-bold text-xs shadow-sm border border-slate-200 flex items-center gap-2 transition-colors">
+                        <i class="fa-solid fa-arrow-left"></i> Volver
+                    </button>
+                    <div>
+                        <h2 id="detalle-titulo" class="text-xl font-black uppercase tracking-tight text-ptej-dark">Detalle</h2>
+                        <p id="detalle-subtitulo" class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Navegación Interactiva</p>
+                    </div>
+                </div>
+
+                <!-- Contenedor de Acordeones -->
+                <div id="contenedor-acordeones" class="space-y-4">
+                    <!-- Inyectado por JS -->
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // --- FUENTES DE DATOS GLOBALES ---
         const URL_PROJECT = `https://docs.google.com/spreadsheets/d/1CWZlW4Ij8KhhYqPJdMKozk_bAHXmRQlq/gviz/tq?tqx=out:json`;
         const URL_ACCIONES = `https://docs.google.com/spreadsheets/d/1lnrQTF5pxSkaNZia1Jkl1XsNkPHImP8Ktb2zu_uDF0A/gviz/tq?tqx=out:json`;
 
-        // DICCIONARIO DE NOMBRES DE COMPROMISOS
+        const NOMBRES_MESAS = {
+            '2.1': { nombre: "Gobernanza Étnica y Territorial", icon: "fa-users" },
+            '2.2': { nombre: "Apoyo a Trámites Ambientales", icon: "fa-leaf" },
+            '2.3': { nombre: "Comunidades Energéticas", icon: "fa-solar-panel" },
+            '2.4': { nombre: "Oportunidades de Desarrollo", icon: "fa-chart-line" }
+        };
+
         const NOMBRES_COMPROMISOS = {
-            '3.1': { 
-                corto: "1. Relacionamiento y Derechos Humanos",
-                completo: "1. Fortalecer los procesos de relacionamiento entre empresa-estado-comunidades con fundamento en los derechos humanos, la debida diligencia, la participación efectiva y el respeto mutuo." 
-            },
-            '3.2': { 
-                corto: "2. Inversión para el cierre de brechas sociales",
-                completo: "2. Promover que la inversión de los proyectos contribuya a cerrar brechas sociales e impulse el desarrollo de la región." 
-            },
-            '3.3': { 
-                corto: "3. Coordinación y articulación interinstitucional",
-                completo: "3. Impulsar acciones de coordinación y articulación interinstitucional: Ministerio de Interior, DANCP, Ministerio de Minas y Energía, Ministerio de Ambiente y Desarrollo Sostenible, Ministerio de Defensa Nacional, ANLA, Corpoguajira, la Gobernación y las alcaldías municipales; las alianzas Público-Privada; y la Cooperación Internacional, priorizando proyectos: agua, educación, infraestructura, empleo, economía local, entre otros para mejorar las condiciones de vida de los pobladores." 
-            },
-            '3.4': { 
-                corto: "4. Diálogo para construcción de acuerdos",
-                completo: "4. Privilegiar el diálogo como el principal instrumento para la construcción de acuerdos, la resolución de diferencias y conflictos por encima de otros mecanismos y/o acciones. En tal sentido, se promueve la participación y el diálogo genuino entre las partes para la sustentabilidad de la vida; y la garantía de derechos de las partes." 
-            },
-            '3.5': { 
-                corto: "5. Respuesta institucional efectiva",
-                completo: "5. Disponer de mecanismos, procedimientos y acciones que aseguren la respuesta institucional oportuna y efectiva para la gestión de las conflictividades y el impulso de los proyectos de desarrollo en la región." 
-            },
-            '3.6': { 
-                corto: "6. Participación en energías renovables",
-                completo: "6. Impulsar que las comunidades participen en los proyectos de energías renovables para que sean sostenibles y justos: apoyo a iniciativas de las comunidades, la participación en beneficios, entre otros." 
-            },
-            '3.7': { 
-                corto: "7. Protocolos de ingreso al territorio Wayuu",
-                completo: "7. Fortalecer los protocolos de ingreso al territorio Wayuu y garantizar su cumplimiento por parte del Estado: Ministerio de Interior, DANCP, Ministerio de Minas y Energía, Ministerio de Ambiente, Ministerio de Defensa, de tal forma que las empresas cuenten con lineamientos sobre el respeto de usos y costumbres de las comunidades étnicas del territorio." 
-            },
-            '3.8': { 
-                corto: "8. Fortalecimiento de entes territoriales",
-                completo: "8. Fortalecer las capacidades de los entes territoriales y mejorar la información disponible en las Entidades Territoriales y el Ministerio del Interior para facilitar la toma de decisiones en los procesos de consulta previa, el licenciamiento ambiental y la ejecución de proyectos de inversión social." 
-            },
-            '3.9': { 
-                corto: "9. DISEÑO Y ADOPCIÓN DEL PLAN OPERATIVO DEL PACTO",
-                completo: "9. Diseño y adopción del Plan Operativo para materializar el Pacto y su contenido, asegurando las líneas estratégicas de Derechos, Viabilidad de Proyectos, Diálogo Vinculante y Reactivación Económica." 
-            }
+            '3.1': "Relacionamiento y DDHH",
+            '3.2': "Cierre de brechas sociales",
+            '3.3': "Articulación interinstitucional",
+            '3.4': "Diálogo para acuerdos",
+            '3.5': "Respuesta institucional efectiva",
+            '3.6': "Participación en renovables",
+            '3.7': "Protocolos territorio Wayuu",
+            '3.8': "Fortalecimiento entes territoriales",
+            '3.9': "Adopción del plan operativo"
         };
 
-        const STYLE_CONFIG = {
-            '2.1': { svg: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5.06 11.53l-3.34 3.34a2 2 0 01-2.83 0l-3.34-3.34a2 2 0 010-2.83c.78-.78 2.05-.78 2.83 0l1.1 1.1 1.1-1.1c.78-.78 2.05-.78 2.83 0a2 2 0 010 2.83z" /></svg>', color: 'bg-[#003366]', text: 'text-[#003366]', light: 'bg-slate-100', borderClass: 'border-slate-200' },
-            '2.2': { svg: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm-2 16l-4-4h2.5v-3h3v3H16l-4 4zm1-9V3.5L18.5 9H13z"/></svg>', color: 'bg-[#003366]', text: 'text-[#003366]', light: 'bg-slate-100', borderClass: 'border-slate-200' },
-            '2.3': { svg: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M12 3L2 12h3v8h14v-8h3L12 3zm0 13c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>', color: 'bg-[#003366]', text: 'text-[#003366]', light: 'bg-slate-100', borderClass: 'border-slate-200' },
-            '2.4': { svg: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 17.08l1.5 1.41z"/></svg>', color: 'bg-[#003366]', text: 'text-[#003366]', light: 'bg-slate-100', borderClass: 'border-slate-200' }
-        };
-
-        // VARIABLES GLOBALES ESTADO
-        let currentData = {}; 
-        let SUB_ACTIVITIES = {}; 
-        let FLAT_DATA = {}; 
-        let accionesMap = {}; 
+        // Estado y Datos
+        let FLAT_DATA = {};
+        let currentData = {};
+        let SUB_ACTIVITIES = {};
+        let accionesMap = {};
+        let activeView = 'global';
+        let charts = {}; 
         
-        let expandedWbsNodes = {};
-        let expandedComponents = {};
+        let accordionsState = {}; // Guarda estado del bloque principal (Mesa / Compromiso)
+        let treeExpandedNodes = {}; // Guarda estado del árbol de tareas interno
 
-        // Variables de UX (Filtros, Sort, Tabs, Drawer)
-        let currentTab = 'all'; 
-        let currentFilter = 'all'; 
-        let sortConfig = { key: null, dir: 'asc' };
-        let activeDrawerKey = null;
-
-        function showLoader(show) {
-            const loader = document.getElementById('loader');
-            if (loader) {
-                loader.style.opacity = show ? '1' : '0';
-                loader.style.pointerEvents = show ? 'all' : 'none';
-            }
-        }
-
+        // Utilidades de Fechas y Números
         function parseValue(cell) {
             if (!cell) return 0;
-            let val = 0;
-            if (typeof cell.v === 'number') {
-                val = cell.v;
-            } else if (cell.f || typeof cell.v === 'string') {
-                const text = (cell.f || cell.v).toString();
-                val = parseFloat(text.replace('%', '').replace(',', '.').trim());
-            }
+            let val = typeof cell.v === 'number' ? cell.v : parseFloat((cell.f || cell.v || '0').toString().replace('%', '').replace(',', '.'));
             if (isNaN(val)) return 0;
-            if (val > 0 && val <= 1.1) return val * 100;
-            return val;
+            return val > 0 && val <= 1.1 ? val * 100 : val;
         }
 
-        function extractRealDate(cell) {
+        function extractDate(cell) {
             if (!cell) return null;
-            let str = cell.f || cell.v;
+            let str = (cell.f || cell.v || '').toString().trim();
             if (!str) return null;
-            str = str.toString().trim();
             
             if (str.startsWith('Date(')) {
                 const match = str.match(/Date\((\d+),\s*(\d+),\s*(\d+)/);
@@ -444,7 +299,6 @@
             }
 
             str = str.split(/\s+\d{1,2}:\d{2}/)[0].trim();
-
             const numMatch = str.match(/(\d{1,2})[\/\-\s]+(\d{1,2})[\/\-\s]+(\d{2,4})/);
             if (numMatch) {
                 let y = parseInt(numMatch[3]);
@@ -452,683 +306,465 @@
                 return new Date(y, parseInt(numMatch[2]) - 1, parseInt(numMatch[1]));
             }
 
-            const textMatch = str.match(/(\d{1,2})[\s\-\/]+(?:de\s+)?([a-zA-Záéíóú]+)[\s\-\/]+(?:de\s+)?(\d{2,4})/i);
-            if (textMatch) {
-                let d = parseInt(textMatch[1]);
-                let mStr = textMatch[2].toLowerCase().substring(0, 3);
-                const monthNamesStr = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
-                let m = monthNamesStr.indexOf(mStr);
-                let y = parseInt(textMatch[3]);
-                if (y < 100) y += 2000;
-                if (m !== -1) return new Date(y, m, d);
-            }
-
             const parsed = new Date(str);
-            if (!isNaN(parsed.getTime())) return parsed;
-            return null;
+            return !isNaN(parsed.getTime()) ? parsed : null;
         }
 
-        function formatDateShort(dateStr) {
-            if (!dateStr || dateStr === '-') return '--';
-            let dateObj = (dateStr instanceof Date) ? dateStr : extractRealDate({v: dateStr.toString()});
-            if (!dateObj) {
-                const parsed = new Date(dateStr.toString());
-                if (!isNaN(parsed.getTime())) dateObj = parsed;
-            }
+        function formatShortDate(dateObj, rawStr) {
             if (dateObj && !isNaN(dateObj.getTime())) {
-                const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-                return `${dateObj.getDate().toString().padStart(2, '0')}-${monthNames[dateObj.getMonth()]}-${dateObj.getFullYear()}`;
+                const m = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+                return `${dateObj.getDate().toString().padStart(2, '0')}-${m[dateObj.getMonth()]}-${dateObj.getFullYear()}`;
             }
-            let cleanStr = dateStr.toString().replace(/^(lun|mar|mié|mie|jue|vie|sáb|sab|dom)\.?\s+/i, '').trim();
-            return cleanStr.split(/\s+\d{1,2}:\d{2}/)[0].trim() || '--';
-        }
-
-        function getTimeProgress(startDate, endDate) {
-            if (!startDate || !endDate || isNaN(startDate) || isNaN(endDate)) return null;
-            const now = new Date();
-            if (now < startDate) return 0;
-            if (now > endDate) return 100;
-            const total = endDate.getTime() - startDate.getTime();
-            const elapsed = now.getTime() - startDate.getTime();
-            return Math.round((elapsed / total) * 100);
-        }
-
-        function buildAccionesMap(rows) {
-            accionesMap = {};
-            rows.forEach(r => {
-                if (!r.c) return;
-                let rowText = "";
-                let possibleCounts = [];
-                r.c.forEach(cell => {
-                    if (!cell || cell.v === null) return;
-                    if (typeof cell.v === 'string') rowText += " " + cell.v.toLowerCase();
-                    else if (typeof cell.v === 'number') {
-                        if (cell.v > 0 && cell.v < 5000 && cell.v !== 2024 && cell.v !== 2025 && cell.v !== 2026) {
-                            possibleCounts.push(cell.v);
-                        }
-                    }
-                });
-                if (possibleCounts.length === 0) return;
-                const count = possibleCounts[0]; 
-                let foundKey = null;
-                if (rowText.includes('mesa 1')) foundKey = '2.1';
-                else if (rowText.includes('mesa 2')) foundKey = '2.2';
-                else if (rowText.includes('mesa 3')) foundKey = '2.3';
-                else if (rowText.includes('mesa 4')) foundKey = '2.4';
-                else {
-                    const maMatch = rowText.match(/\bma\s*(\d+)\b/);
-                    if (maMatch) {
-                        const maNum = maMatch[1];
-                        for (let edt in FLAT_DATA) {
-                            if (FLAT_DATA[edt].desc.toLowerCase().includes(`ma ${maNum}`) || FLAT_DATA[edt].desc.toLowerCase().includes(`ma${maNum}`) || FLAT_DATA[edt].desc.toLowerCase().includes(`macroacción ${maNum}`)) {
-                                foundKey = edt; break;
-                            }
-                        }
-                    }
-                }
-                if (!foundKey) {
-                     for (let edt in FLAT_DATA) {
-                         if (FLAT_DATA[edt].desc.toLowerCase().trim().length > 10 && rowText.includes(FLAT_DATA[edt].desc.toLowerCase().trim())) {
-                             foundKey = edt; break;
-                         }
-                     }
-                }
-                if (foundKey) accionesMap[foundKey] = (accionesMap[foundKey] || 0) + count;
-            });
-        }
-
-        function buildDynamicWbsTree(rows) {
-            const flatMap = {};
-            
-            rows.forEach(r => {
-                if (!r.c) return;
-                const edtRaw = r.c[0]?.v;
-                if (edtRaw === undefined || edtRaw === null) return;
-                const edt = edtRaw.toString().trim();
-                if (!edt) return;
-
-                const nombre = r.c[1]?.v || 'Sin Nombre';
-                const real = parseValue(r.c[3]);
-                const esperado = parseValue(r.c[4]);
-                const comienzoDate = extractRealDate(r.c[6]);
-                const finDate = extractRealDate(r.c[7]);
-                const comienzoRaw = r.c[6]?.f || r.c[6]?.v || '';
-                const finRaw = r.c[7]?.f || r.c[7]?.v || '';
-                const responsable = r.c[8]?.v || '';
-
-                flatMap[edt] = {
-                    code: edt,
-                    desc: nombre, 
-                    comp: real,   
-                    esp: esperado, 
-                    inicioDate: comienzoDate,
-                    finDate: finDate,
-                    inicioRaw: comienzoRaw,
-                    finRaw: finRaw,
-                    responsable: responsable,
-                    children: []
-                };
-            });
-
-            FLAT_DATA = flatMap;
-            currentData = {};
-            SUB_ACTIVITIES = {};
-
-            const allEdts = Object.keys(flatMap).sort((a, b) => {
-                return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
-            });
-
-            // Agrupar hijos y padres
-            allEdts.forEach(edt => {
-                const item = flatMap[edt];
-                const parts = edt.split('.');
-
-                if (parts.length === 1 || parts.length === 2) {
-                    currentData[edt] = {
-                        nombre: item.desc,
-                        real: item.comp,
-                        esperado: item.esp,
-                        inicioDate: item.inicioDate,
-                        finDate: item.finDate,
-                        inicioRaw: item.inicioRaw,
-                        finRaw: item.finRaw
-                    };
-                    if (parts.length === 2) SUB_ACTIVITIES[edt] = [];
-                }
-                else {
-                    const parentEdt = parts.slice(0, -1).join('.');
-                    if (flatMap[parentEdt]) flatMap[parentEdt].children.push(item);
-                }
-            });
-
-            allEdts.forEach(edt => {
-                const parts = edt.split('.');
-                if (parts.length === 2) {
-                    SUB_ACTIVITIES[edt] = flatMap[edt].children || [];
-                }
-            });
-        }
-
-        function updateConnectionBadge(online) {
-            const badge = document.getElementById('connection-badge');
-            if (badge) {
-                if (online) {
-                    badge.className = "bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 shadow-sm";
-                    badge.innerHTML = `<i class="fa-solid fa-circle text-[8px] animate-pulse text-emerald-500"></i> Online`;
-                } else {
-                    badge.className = "bg-amber-50 text-amber-700 border border-amber-200 px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 shadow-sm";
-                    badge.innerHTML = `<i class="fa-solid fa-cloud-arrow-down text-[10px] text-amber-500"></i> Error`;
-                }
+            if (rawStr) {
+                let clean = rawStr.toString().split(/\s+\d{1,2}:\d{2}/)[0].trim();
+                return clean || '--';
             }
+            return '--';
         }
 
-        async function init() {
-            showLoader(true);
-            setDynamicDate();
+        function updateCurrentDate() {
+            const date = new Date();
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            const dateStr = date.toLocaleDateString('es-CO', options);
+            const el = document.getElementById('txt-fecha-actualizacion');
+            if (el) el.innerHTML = `<i class="fa-regular fa-calendar mr-1"></i> ${dateStr}`;
+        }
+
+        // --- EXTRACCIÓN DE DATOS ---
+        async function loadData() {
             try {
-                const [resProject, resAcciones] = await Promise.all([
-                    fetch(URL_PROJECT).catch(e => null),
-                    fetch(URL_ACCIONES).catch(e => null)
+                const [resProj, resAcc] = await Promise.all([
+                    fetch(URL_PROJECT).then(r => r.ok ? r.text() : '').catch(() => ''),
+                    fetch(URL_ACCIONES).then(r => r.ok ? r.text() : '').catch(() => '')
                 ]);
-                
-                if (resProject && resProject.ok) {
-                    const text1 = await resProject.text();
-                    const json1 = JSON.parse(text1.substring(text1.indexOf('{'), text1.lastIndexOf('}') + 1));
-                    buildDynamicWbsTree(json1.table.rows);
-                } else { throw new Error("Error Cronograma"); }
-                
-                if (resAcciones && resAcciones.ok) {
-                    const text2 = await resAcciones.text();
-                    const json2 = JSON.parse(text2.substring(text2.indexOf('{'), text2.lastIndexOf('}') + 1));
-                    buildAccionesMap(json2.table.rows);
-                }
 
-                if (FLAT_DATA) {
-                    [4, 3, 2].forEach(level => {
+                if (resProj && resProj.includes('google.visualization.Query.setResponse')) {
+                    const jsonStr = resProj.substring(resProj.indexOf('{'), resProj.lastIndexOf('}') + 1);
+                    buildTree(JSON.parse(jsonStr).table.rows);
+                }
+                
+                if (resAcc && resAcc.includes('google.visualization.Query.setResponse')) {
+                    const jsonStr = resAcc.substring(resAcc.indexOf('{'), resAcc.lastIndexOf('}') + 1);
+                    buildAcciones(JSON.parse(jsonStr).table.rows);
+                }
+                
+                if (Object.keys(FLAT_DATA).length > 0) {
+                    [4, 3, 2].forEach(lvl => {
                         Object.keys(FLAT_DATA).forEach(edt => {
-                            const parts = edt.split('.');
-                            if (parts.length === level - 1) { 
+                            if (edt.split('.').length === lvl - 1) {
                                 let sum = 0;
                                 Object.keys(accionesMap).forEach(k => {
-                                    if (k.startsWith(edt + '.') && k.split('.').length === level) sum += accionesMap[k];
+                                    if (k.startsWith(edt + '.') && k.split('.').length === lvl) sum += accionesMap[k];
                                 });
                                 if (sum > 0) accionesMap[edt] = sum;
                             }
                         });
                     });
                 }
-                updateConnectionBadge(true);
+                
+                const loader = document.getElementById('loader');
+                if (loader) {
+                    loader.style.opacity = '0';
+                    setTimeout(() => loader.style.display = 'none', 500);
+                }
+                
+                updateCurrentDate();
+                renderGlobalView();
             } catch (e) {
-                console.error("Fallo de conexión.", e);
-                updateConnectionBadge(false);
-            } finally {
-                renderUI();
-                showLoader(false);
-            }
-        }
-
-        function setDynamicDate() {
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/Bogota' };
-            const today = new Date();
-            const formatter = new Intl.DateTimeFormat('es-CO', options);
-            let formattedDate = formatter.format(today);
-            formattedDate = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
-            document.getElementById('update-date').innerText = formattedDate;
-        }
-
-        function setTab(tabName) {
-            currentTab = tabName;
-            const tabs = ['all', 'mesas', 'compromisos'];
-            tabs.forEach(t => {
-                const btn = document.getElementById(`tab-btn-${t}`);
-                if (!btn) return;
-                if (t === tabName) {
-                    btn.className = "px-4 py-2 rounded-lg text-xs font-bold bg-white shadow-sm text-[#003366] border border-slate-200 transition-all whitespace-nowrap";
-                } else {
-                    btn.className = "px-4 py-2 rounded-lg text-xs font-bold text-slate-500 hover:bg-white hover:text-slate-800 transition-all whitespace-nowrap";
+                console.error("Error cargando datos:", e);
+                const loader = document.getElementById('loader');
+                if (loader) {
+                    loader.innerHTML = '<h2 class="text-red-500 font-bold">Error de Conexión</h2><p class="text-sm mt-2">No se pudieron obtener los datos de la fuente.</p>';
                 }
-            });
-            
-            document.getElementById('section-mesas').style.display = (tabName === 'all' || tabName === 'mesas') ? 'block' : 'none';
-            document.getElementById('section-compromisos').style.display = (tabName === 'all' || tabName === 'compromisos') ? 'block' : 'none';
-        }
-
-        function setFilter(filterType) {
-            currentFilter = filterType;
-            ['all', 'critico', 'alerta', 'aldia'].forEach(f => {
-                const btn = document.getElementById(`filter-btn-${f}`);
-                if (!btn) return;
-                if (f === filterType) {
-                    btn.classList.add('ring-2', 'ring-offset-1', 'ring-slate-300');
-                    btn.classList.remove('opacity-60');
-                } else {
-                    btn.classList.remove('ring-2', 'ring-offset-1', 'ring-slate-300');
-                    btn.classList.add('opacity-60');
-                }
-            });
-            renderUI();
-        }
-
-        function setSort(key) {
-            if (sortConfig.key === key) {
-                sortConfig.dir = sortConfig.dir === 'asc' ? 'desc' : 'asc';
-            } else {
-                sortConfig.key = key;
-                sortConfig.dir = 'desc'; 
             }
-            renderUI();
         }
 
-        function renderUI() {
-            // Actualizar KPIs Globales (Pacto 2)
-            if (currentData['2']) {
-                const h2 = getHealthStatus(currentData['2'].real, currentData['2'].esperado);
-                document.getElementById('kpi-real-2').innerText = `${Math.round(currentData['2'].real)}%`;
-                document.getElementById('kpi-plan-2').innerText = `${Math.round(currentData['2'].esperado)}%`;
-                document.getElementById('kpi-bar-2').style.width = `${currentData['2'].real}%`;
-                
-                const statusBadge2 = document.getElementById('kpi-status-2');
-                statusBadge2.className = `px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider shadow-sm border ${h2.lightBg} ${h2.textColor} ${h2.borderClass}`;
-                statusBadge2.innerHTML = `<span class="flex items-center gap-1">${h2.icon} ${h2.text}</span>`;
-                
-                const acc2 = accionesMap['2'] || 0;
-                const badge2 = document.getElementById('kpi-acciones-2');
-                if (badge2 && acc2 > 0) badge2.innerHTML = `<span class="flex items-center gap-1.5 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-md text-[10px] font-extrabold tracking-widest border border-blue-200 shadow-sm"><i class="fa-solid fa-list-check text-blue-500"></i> ${acc2} ACCIONES</span>`;
-
-                const inicio2 = document.getElementById('kpi-inicio-2');
-                const fin2 = document.getElementById('kpi-fin-2');
-                const fechaIni2 = currentData['2'].inicioDate || currentData['2'].inicioRaw;
-                const fechaFin2 = currentData['2'].finDate || currentData['2'].finRaw;
-
-                if(inicio2 && fechaIni2) inicio2.innerHTML = `<i class="fa-regular fa-calendar mr-1"></i>INICIO: ${formatDateShort(fechaIni2)}`;
-                if(fin2 && fechaFin2) fin2.innerHTML = `<i class="fa-regular fa-calendar-check mr-1"></i>FIN: ${formatDateShort(fechaFin2)}`;
-            }
-
-            // Actualizar KPIs Compromisos (EDT 3)
-            if (currentData['3']) {
-                const real3 = document.getElementById('kpi-real-3');
-                const plan3 = document.getElementById('kpi-plan-3');
-                const inicio3 = document.getElementById('kpi-inicio-3');
-                const fin3 = document.getElementById('kpi-fin-3');
-                const fechaIni3 = currentData['3'].inicioDate || currentData['3'].inicioRaw;
-                const fechaFin3 = currentData['3'].finDate || currentData['3'].finRaw;
-                
-                if(real3) real3.innerText = `${Math.round(currentData['3'].real)}%`;
-                if(plan3) plan3.innerText = `${Math.round(currentData['3'].esperado)}%`;
-                if(inicio3 && fechaIni3) inicio3.innerHTML = `<i class="fa-regular fa-calendar mr-1"></i>INICIO: ${formatDateShort(fechaIni3)}`;
-                if(fin3 && fechaFin3) fin3.innerHTML = `<i class="fa-regular fa-calendar-check mr-1"></i>FIN: ${formatDateShort(fechaFin3)}`;
-            }
-
-            renderItems('group-2', ['2.1', '2.2', '2.3', '2.4']);
-            renderCompromisos('compromisos-grid', ['3.1', '3.2', '3.3', '3.4', '3.5', '3.6', '3.7', '3.8', '3.9']);
-            
-            if (activeDrawerKey) renderDrawerContent();
-        }
-
-        function getHealthStatus(real, esperado) {
-            const gap = esperado - real;
-            if (gap <= 0) return { text: 'AL DÍA', colorClass: 'bg-emerald-500', textColor: 'text-emerald-600', lightBg: 'bg-emerald-50', borderClass: 'border-emerald-500/20', icon: '🟢' };
-            if (gap <= 10) return { text: 'ALERTA LEVE', colorClass: 'bg-amber-500', textColor: 'text-amber-600', lightBg: 'bg-amber-50', borderClass: 'border-amber-500/20', icon: '🟡' };
-            return { text: 'CRÍTICO', colorClass: 'bg-rose-500', textColor: 'text-rose-600', lightBg: 'bg-rose-50', borderClass: 'border-rose-500/20', icon: '🔴' };
-        }
-
-        function getSortIcon(key) {
-            if (sortConfig.key !== key) return '<i class="fa-solid fa-sort ml-1 text-slate-300"></i>';
-            return sortConfig.dir === 'asc' ? '<i class="fa-solid fa-sort-up ml-1 text-[#003366]"></i>' : '<i class="fa-solid fa-sort-down ml-1 text-[#003366]"></i>';
-        }
-
-        function getWbsStatusBadge(real, esperado) {
-            const gap = esperado - real;
-            if (gap <= 0) return `<span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-md text-[10px] font-black"><span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>AL DÍA</span>`;
-            if (gap <= 10) return `<span class="inline-flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-0.5 rounded-md text-[10px] font-black"><span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>ALERTA LEVE</span>`;
-            return `<span class="inline-flex items-center gap-1 bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-0.5 rounded-md text-[10px] font-black"><span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span>CRÍTICO</span>`;
-        }
-
-        function buildTreeRows(items, depth = 0, parentExpanded = true, componentKey) {
-            let rowsHtml = '';
-            if (!items || items.length === 0) return rowsHtml;
-            
-            let listToRender = [...items];
-            if (currentFilter !== 'all') {
-                listToRender = listToRender.filter(item => {
-                    let h = getHealthStatus(Math.round(item.comp), Math.round(item.esp));
-                    if (currentFilter === 'critico') return h.text.includes('CRÍTICO');
-                    if (currentFilter === 'alerta') return h.text.includes('ALERTA LEVE');
-                    if (currentFilter === 'aldia') return h.text.includes('AL DÍA');
-                    return true;
-                });
-            }
-
-            if (sortConfig.key) {
-                listToRender.sort((a, b) => {
-                    let vA, vB;
-                    if (sortConfig.key === 'comp') { vA = a.comp; vB = b.comp; }
-                    if (sortConfig.key === 'esp') { vA = a.esp; vB = b.esp; }
-                    if (sortConfig.key === 'inicio') { vA = a.inicioDate ? a.inicioDate.getTime() : 0; vB = b.inicioDate ? b.inicioDate.getTime() : 0; }
-                    if (sortConfig.key === 'fin') { vA = a.finDate ? a.finDate.getTime() : 0; vB = b.finDate ? b.finDate.getTime() : 0; }
-                    if (sortConfig.key === 'estado') { vA = a.esp - a.comp; vB = b.esp - b.comp; } 
-                    
-                    if (vA < vB) return sortConfig.dir === 'asc' ? -1 : 1;
-                    if (vA > vB) return sortConfig.dir === 'asc' ? 1 : -1;
-                    return 0;
-                });
-            }
-
-            listToRender.forEach((item) => {
-                const hasChildren = item.children && item.children.length > 0;
-                const nodeKey = `${item.code.replace(/\./g, '-')}`;
-                if (expandedWbsNodes[nodeKey] === undefined) expandedWbsNodes[nodeKey] = false; 
-                
-                const isExpanded = expandedWbsNodes[nodeKey];
-                let realPercent = Math.round(item.comp);
-                let planPercent = Math.round(item.esp);
-                const statusBadge = getWbsStatusBadge(realPercent, planPercent);
-                    
-                let indentClass = depth === 0 ? 'pl-4' : (depth === 1 ? 'pl-10' : 'pl-16');
-                let textClass = depth === 0 ? 'font-bold text-slate-900 text-[11px]' : 'font-normal text-slate-600 text-[10px]';
-                let bgClass = depth === 0 ? 'bg-slate-50/45' : 'bg-white';
-                
-                const numAcciones = accionesMap[item.code] || 0;
-                let actionBadge = numAcciones > 0 ? `<span class="inline-block align-middle ml-2 bg-slate-100 text-slate-600 border border-slate-200 text-[9px] px-1.5 py-0.5 rounded-md font-extrabold uppercase tracking-wider">${numAcciones} ACCIONES</span>` : '';
-
-                const chevronIcon = hasChildren 
-                    ? `<i class="fa-solid ${isExpanded ? 'fa-chevron-down text-[#003366]' : 'fa-chevron-right text-slate-400'} text-[10px] mr-2 flex-shrink-0 transition-transform"></i>` 
-                    : `<span class="w-4 inline-block"></span>`;
-                    
-                const clickAction = hasChildren ? `onclick="toggleWbsNode('${nodeKey}', '${componentKey}')"` : '';
-                    
-                if (parentExpanded) {
-                    rowsHtml += `
-                        <tr class="hover:bg-slate-100/50 transition-colors ${bgClass} border-b border-slate-100/50">
-                            <td class="p-3 ${indentClass} flex items-start gap-1.5 select-none min-w-[350px]" ${clickAction} style="cursor: ${hasChildren ? 'pointer' : 'default'}">
-                                <div class="mt-0.5">${chevronIcon}</div>
-                                <span class="leading-relaxed ${textClass}">${item.desc} ${actionBadge}</span>
-                            </td>
-                            <td class="p-3 text-center align-middle whitespace-nowrap">${statusBadge}</td>
-                            <td class="p-3 text-center align-middle font-extrabold text-[#003366] text-xs whitespace-nowrap">${realPercent}%</td>
-                            <td class="p-3 text-center align-middle font-semibold whitespace-nowrap text-slate-500 text-xs">${planPercent}%</td>
-                            <td class="p-3 text-center align-middle text-slate-500 whitespace-nowrap text-[10px]">${formatDateShort(item.inicioDate || item.inicioRaw)}</td>
-                            <td class="p-3 text-center align-middle text-slate-500 whitespace-nowrap text-[10px]">${formatDateShort(item.finDate || item.finRaw)}</td>
-                            <td class="p-3 text-center align-middle text-slate-600 font-medium whitespace-nowrap min-w-[150px] break-words text-[10px]">${item.responsable || '-'}</td>
-                        </tr>
-                    `;
-                }
-                
-                if (hasChildren) {
-                    rowsHtml += buildTreeRows(item.children, depth + 1, parentExpanded && isExpanded, componentKey);
-                }
-            });
-            return rowsHtml;
-        }
-
-        function getTableHeaderHtml() {
-            return `
-                <tr>
-                    <th class="p-3 pl-4 min-w-[350px]">Macroacciones Asociadas</th>
-                    <th class="p-3 text-center cursor-pointer hover:bg-slate-200 transition-colors" onclick="setSort('estado')">Estado ${getSortIcon('estado')}</th>
-                    <th class="p-3 text-center cursor-pointer hover:bg-slate-200 transition-colors min-w-[70px]" onclick="setSort('comp')">% Comp. ${getSortIcon('comp')}</th>
-                    <th class="p-3 text-center cursor-pointer hover:bg-slate-200 transition-colors" onclick="setSort('esp')">% Esp. ${getSortIcon('esp')}</th>
-                    <th class="p-3 text-center cursor-pointer hover:bg-slate-200 transition-colors" onclick="setSort('inicio')">Inicio ${getSortIcon('inicio')}</th>
-                    <th class="p-3 text-center cursor-pointer hover:bg-slate-200 transition-colors" onclick="setSort('fin')">Fin ${getSortIcon('fin')}</th>
-                    <th class="p-3 text-center min-w-[150px]">Responsable</th>
-                </tr>
-            `;
-        }
-
-        function renderItems(containerId, keys) {
-            const container = document.getElementById(containerId);
-            if (!container) return;
-            container.innerHTML = '';
-
-            keys.forEach((k, index) => {
-                const data = currentData[k];
-                if (!data) return;
-
-                const style = STYLE_CONFIG[k] || {
-                    svg: '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg>',
-                    color: 'bg-slate-500', text: 'text-slate-600', light: 'bg-slate-50', borderClass: 'border-slate-200'
+        function buildTree(rows) {
+            rows.forEach(r => {
+                if (!r.c || !r.c[0]?.v) return;
+                const edt = r.c[0].v.toString().trim();
+                FLAT_DATA[edt] = {
+                    code: edt,
+                    desc: r.c[1]?.v || 'Sin Nombre',
+                    real: parseValue(r.c[3]),
+                    esperado: parseValue(r.c[4]),
+                    inicioDate: extractDate(r.c[6]),
+                    finDate: extractDate(r.c[7]),
+                    inicioRaw: r.c[6]?.f || r.c[6]?.v || '',
+                    finRaw: r.c[7]?.f || r.c[7]?.v || '',
+                    responsable: r.c[8]?.v || '',
+                    children: []
                 };
+            });
 
-                const health = getHealthStatus(Math.round(data.real), Math.round(data.esperado));
-                const subActivitiesList = SUB_ACTIVITIES[k] || [];
-                const subActivitiesRows = buildTreeRows(subActivitiesList, 0, true, k);
-                const isMainExpanded = expandedComponents[k] === true;
+            // Agrupar
+            Object.keys(FLAT_DATA).sort().forEach(edt => {
+                const parts = edt.split('.');
+                const item = FLAT_DATA[edt];
+                
+                if (parts.length <= 2) {
+                    currentData[edt] = { ...item };
+                    if (parts.length === 2) SUB_ACTIVITIES[edt] = [];
+                } else {
+                    const parentEdt = parts.slice(0, -1).join('.');
+                    if (FLAT_DATA[parentEdt]) FLAT_DATA[parentEdt].children.push(item);
+                }
+            });
 
-                if (currentFilter !== 'all' && (!subActivitiesRows || subActivitiesRows === '')) return;
-
-                const numAcciones = accionesMap[k] || 0;
-                const badgeAccionesHtml = numAcciones > 0 ? `<span class="inline-flex items-center ml-2 ${style.light} ${style.text} text-[10px] px-2 py-0.5 rounded-md font-black tracking-widest border ${style.borderClass} shadow-sm"><i class="fa-solid fa-list-check mr-1.5"></i> ${numAcciones} ACCIONES</span>` : '';
-
-                const html = `
-                    <div class="animate-fade-in hover:bg-slate-50/40 p-4 rounded-2xl border ${health.borderClass} transition-all duration-300 relative group" style="animation-delay: ${index * 70}ms" data-edt-item="${k}">
-                        <div class="flex flex-col space-y-3.5">
-                            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-                                <div class="flex items-start space-x-3.5">
-                                    <div class="icon-container w-10 h-10 rounded-xl flex items-center justify-center ${style.light} ${style.text} shadow-sm border border-black/5 flex-shrink-0 text-lg mt-0.5">
-                                        ${style.svg}
-                                    </div>
-                                    <div class="flex flex-col justify-center min-h-[40px]">
-                                        <div class="flex items-center gap-2 flex-wrap">
-                                            <h4 class="text-sm font-extrabold text-slate-800 leading-tight group-hover:text-blue-700 transition-colors uppercase">
-                                                ${data.nombre}
-                                            </h4>
-                                            ${badgeAccionesHtml}
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="flex items-center space-x-3 flex-shrink-0 w-full md:w-auto justify-end">
-                                    <div class="flex px-2.5 py-1 rounded-md ${health.lightBg} border ${health.borderClass} items-center gap-1.5 shadow-sm">
-                                        <span class="text-xs leading-none">${health.icon}</span>
-                                        <span class="text-[10px] font-black ${health.textColor} uppercase tracking-wider leading-none">${health.text}</span>
-                                    </div>
-                                    <div class="flex items-center space-x-2.5 bg-slate-50/80 border border-slate-100/80 px-3 py-1.5 rounded-xl">
-                                        <div class="text-right">
-                                            <span class="${style.text} font-black text-lg leading-none block">${Math.round(data.real)}%</span>
-                                            <span class="text-[9px] font-extrabold text-slate-400 block mt-0.5 uppercase">REAL</span>
-                                        </div>
-                                        <div class="h-6 w-[1px] bg-slate-200"></div>
-                                        <div class="text-right">
-                                            <span class="text-slate-600 font-bold text-base leading-none block">${Math.round(data.esperado)}%</span>
-                                            <span class="text-[9px] font-extrabold text-slate-400 block mt-0.5 uppercase">ESP</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="progress-bar-bg relative bg-slate-100 rounded-full h-2 w-full overflow-hidden border border-slate-200/50">
-                                <div class="progress-bar-fill absolute top-0 left-0 h-full rounded-full ${style.color} shadow-inner" style="width: ${data.real}%; z-index: 2"></div>
-                                <div class="absolute top-0 left-0 h-full bg-slate-200" style="width: ${data.esperado}%; z-index: 1"></div>
-                            </div>
-                            
-                            <div class="flex justify-end items-center pt-1.5 text-[10px] text-slate-400">
-                                <button onclick="toggleMainComponent('${k}')" class="text-[#003366] hover:text-[#002244] font-extrabold uppercase tracking-wider flex items-center gap-1.5 text-[10px] transition-all bg-slate-100 hover:bg-slate-200/80 px-3 py-1.5 rounded-lg border border-slate-200/50 shadow-sm">
-                                    <span>Consultar Detalle</span>
-                                    <i id="chevron-${k.replace('.', '-')}" class="fa-solid fa-chevron-down text-[10px] transition-transform duration-350 ${isMainExpanded ? 'rotate-180' : ''}"></i>
-                                </button>
-                            </div>
-
-                            <div id="activities-panel-${k.replace('.', '-')}" class="collapsible-activities w-full ${isMainExpanded ? 'open mt-4' : ''}">
-                                <div class="w-full overflow-x-auto rounded-xl border border-slate-200 shadow-sm bg-white custom-scrollbar">
-                                    <table class="w-full text-left text-xs min-w-[900px]">
-                                        <thead class="bg-slate-100 text-slate-700 font-extrabold uppercase text-[10px] tracking-wider border-b border-slate-200">
-                                            ${getTableHeaderHtml()}
-                                        </thead>
-                                        <tbody class="divide-y divide-slate-100">
-                                            ${subActivitiesRows || `<tr><td colspan="7" class="p-4 text-center text-slate-400 italic font-semibold">No hay resultados para los filtros actuales.</td></tr>`}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                container.insertAdjacentHTML('beforeend', html);
+            Object.keys(FLAT_DATA).forEach(edt => {
+                if (edt.split('.').length === 2) {
+                    SUB_ACTIVITIES[edt] = FLAT_DATA[edt].children || [];
+                }
             });
         }
 
-        function renderCompromisos(containerId, keys) {
-            const container = document.getElementById(containerId);
-            if (!container) return;
-            container.innerHTML = '';
-
-            const palette = ['#008080', '#2E4053', '#D35400', '#2471A3', '#117A65', '#9C640C', '#283747', '#A04000'];
-
-            keys.forEach((k, index) => {
-                const data = currentData[k];
-                if (!data) return;
-
-                const subActivitiesList = SUB_ACTIVITIES[k] || [];
-                const subActivitiesRows = buildTreeRows(subActivitiesList, 0, true, k);
+        function buildAcciones(rows) {
+            rows.forEach(r => {
+                if (!r.c) return;
+                let text = "", counts = [];
+                r.c.forEach(c => {
+                    if (!c || c.v == null) return;
+                    if (typeof c.v === 'string') text += " " + c.v.toLowerCase();
+                    else if (typeof c.v === 'number' && c.v > 0 && c.v < 5000) counts.push(c.v);
+                });
+                if (!counts.length) return;
                 
-                if (currentFilter !== 'all' && (!subActivitiesRows || subActivitiesRows === '')) return;
-
-                const ringColor = palette[index % palette.length];
-                const infoCompromiso = NOMBRES_COMPROMISOS[k] || { corto: data.nombre, completo: data.nombre };
-
-                const html = `
-                    <div class="col-span-1 bg-white rounded-3xl p-6 border border-slate-200 shadow-sm transition-all duration-300 flex flex-col items-center relative overflow-hidden group hover:shadow-md cursor-pointer hover:border-slate-300 animate-fade-in" onclick="openDrawer('${k}')" style="animation-delay: ${index * 50}ms">
-                        <h3 class="text-xs font-black text-slate-700 uppercase text-center h-16 flex items-center justify-center mb-4 group-hover:text-[#003366] transition-colors leading-snug line-clamp-3" title="${infoCompromiso.completo}">
-                            ${infoCompromiso.corto}
-                        </h3>
-                        
-                        <div class="relative w-32 h-32 rounded-full flex items-center justify-center transition-transform duration-300 group-hover:scale-105 shadow-sm flex-shrink-0" style="background: conic-gradient(${ringColor} ${data.real}%, #f1f5f9 0);">
-                            <div class="absolute w-24 h-24 bg-white rounded-full flex flex-col items-center justify-center shadow-[inset_0_2px_4px_rgba(0,0,0,0.06)]">
-                                <span class="text-3xl font-black leading-none" style="color: ${ringColor}">${Math.round(data.real)}%</span>
-                            </div>
-                        </div>
-
-                        <div class="mt-5 text-center w-full">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Avance Esperado</span>
-                            <span class="text-lg font-black text-slate-700">${Math.round(data.esperado)}%</span>
-                            <button class="mt-4 w-full text-[#003366] text-[10px] font-extrabold uppercase tracking-wider bg-slate-50 py-2.5 rounded-xl border border-slate-200 transition-colors flex items-center justify-center gap-2 shadow-sm group-hover:bg-[#003366] group-hover:text-white">
-                                Ver Detalle <i class="fa-solid fa-arrow-right text-[10px]"></i>
-                            </button>
-                        </div>
-                    </div>
-                `;
-                container.insertAdjacentHTML('beforeend', html);
+                let foundKey = null;
+                const maMatch = text.match(/\bma\s*(\d+)\b/);
+                if (maMatch) {
+                    let search = `ma ${maMatch[1]}`;
+                    foundKey = Object.keys(FLAT_DATA).find(k => FLAT_DATA[k].desc.toLowerCase().includes(search));
+                }
+                if (foundKey) accionesMap[foundKey] = (accionesMap[foundKey] || 0) + counts[0];
             });
         }
 
-        function openDrawer(key) {
-            activeDrawerKey = key;
-            renderDrawerContent();
-            document.getElementById('drawer-overlay').classList.add('open');
-            document.getElementById('drawer-panel').classList.add('open');
-            document.body.style.overflow = 'hidden';
+        // --- CONTEO DE TAREAS (HOJAS DEL EDT 2) ---
+        function countLeafTasks(nodeList) {
+            let count = 0;
+            nodeList.forEach(n => {
+                if (n.children && n.children.length > 0) {
+                    count += countLeafTasks(n.children);
+                } else {
+                    count++;
+                }
+            });
+            return count;
         }
 
-        function closeDrawer() {
-            activeDrawerKey = null;
-            document.getElementById('drawer-overlay').classList.remove('open');
-            document.getElementById('drawer-panel').classList.remove('open');
-            document.body.style.overflow = '';
-        }
+        // --- RENDERIZADO GLOBAL ---
+        function renderGlobalView() {
+            // 1. KPIs Globales
+            const root = currentData['2'] || { real: 0, esperado: 0 };
+            document.getElementById('kpi-global-real').innerText = `${Math.round(root.real)}%`;
+            document.getElementById('kpi-global-esp').innerText = `${Math.round(root.esperado)}%`;
+            
+            // 2. KPI Compromisos (EDT 3)
+            const root3 = currentData['3'] || { real: 0, esperado: 0 };
+            document.getElementById('kpi-comp-real').innerText = `${Math.round(root3.real)}%`;
+            document.getElementById('kpi-comp-esp').innerText = `${Math.round(root3.esperado)}%`;
+            
+            // 3. KPI Macroacciones (EDT 2) y Conteo
+            let numHijasEDT2 = 0;
+            ['2.1', '2.2', '2.3', '2.4'].forEach(k => {
+                if (SUB_ACTIVITIES[k]) numHijasEDT2 += countLeafTasks(SUB_ACTIVITIES[k]);
+            });
+            document.getElementById('kpi-tareas-hijas').innerText = `${numHijasEDT2} Tareas en ejecución`;
 
-        function renderDrawerContent() {
-            if (!activeDrawerKey) return;
-            const k = activeDrawerKey;
-            const data = currentData[k];
-            if (!data) return;
-
-            const keys = ['3.1', '3.2', '3.3', '3.4', '3.5', '3.6', '3.7', '3.8', '3.9'];
-            const index = keys.indexOf(k);
-            const palette = ['#008080', '#2E4053', '#D35400', '#2471A3', '#117A65', '#9C640C', '#283747', '#A04000'];
-            const ringColor = palette[index % palette.length] || '#003366';
-
-            const health = getHealthStatus(Math.round(data.real), Math.round(data.esperado));
-            const subActivitiesRows = buildTreeRows(SUB_ACTIVITIES[k], 0, true, k);
-
-            const infoCompromiso = NOMBRES_COMPROMISOS[k] || { corto: data.nombre, completo: data.nombre };
-            document.getElementById('drawer-title').innerText = infoCompromiso.corto;
-
-            const html = `
-                <div class="flex flex-col md:flex-row gap-8 mb-8 bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
-                    <div class="flex flex-col items-center justify-center md:border-r border-slate-100 md:pr-8 w-full md:w-1/3">
-                        <div class="relative w-32 h-32 rounded-full flex items-center justify-center shadow-sm flex-shrink-0" style="background: conic-gradient(${ringColor} ${data.real}%, #f1f5f9 0);">
-                            <div class="absolute w-24 h-24 bg-white rounded-full flex flex-col items-center justify-center shadow-[inset_0_2px_4px_rgba(0,0,0,0.06)]">
-                                <span class="text-3xl font-black leading-none" style="color: ${ringColor}">${Math.round(data.real)}%</span>
-                            </div>
+            // 4. Tarjetas de Mesas
+            let mesasHtml = '';
+            ['2.1', '2.2', '2.3', '2.4'].forEach(k => {
+                if (!currentData[k]) return;
+                const d = currentData[k];
+                const info = NOMBRES_MESAS[k];
+                mesasHtml += `
+                    <div class="bg-slate-50 border border-slate-100 p-4 rounded-xl flex flex-col justify-between hover:bg-white hover:shadow-md transition-all cursor-pointer" onclick="switchView('mesas')">
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="w-10 h-10 rounded-full bg-ptej-green-light text-ptej-green flex items-center justify-center flex-shrink-0"><i class="fa-solid ${info.icon} text-sm"></i></div>
+                            <span class="text-[10px] font-black uppercase text-ptej-dark leading-tight">Mesa ${k.split('.')[1]}<br><span class="text-slate-500 font-bold">${info.nombre}</span></span>
                         </div>
-                        <div class="mt-4 flex flex-col items-center">
-                            <span class="px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-wider ${health.lightBg} ${health.textColor} border ${health.borderClass} flex items-center gap-1.5 shadow-sm w-max">
-                                ${health.icon} ESTADO: ${health.text}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="flex flex-col justify-center w-full md:w-2/3 gap-4">
-                        <div class="mb-2 border-b border-slate-100 pb-4">
-                            <h3 class="text-sm font-black text-slate-800 uppercase leading-snug border-l-4 pl-3" style="border-left-color: ${ringColor};">
-                                ${infoCompromiso.completo}
-                            </h3>
-                        </div>
-                        <div class="bg-slate-50 p-5 rounded-xl border border-slate-100 w-full flex justify-between items-center">
-                            <span class="text-xs font-bold text-slate-500 uppercase tracking-widest block">Avance Esperado</span>
-                            <span class="text-3xl font-black text-slate-700 leading-none">${Math.round(data.esperado)}%</span>
-                        </div>
-                        <div class="flex flex-col sm:flex-row gap-4 text-xs font-bold text-slate-500 uppercase tracking-widest">
-                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 flex-1 flex items-center justify-center gap-2">
-                                <i class="fa-regular fa-calendar text-slate-400"></i>
-                                <span>Inicio: <strong class="text-slate-700">${formatDateShort(data.inicioDate || data.inicioRaw)}</strong></span>
-                            </div>
-                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 flex-1 flex items-center justify-center gap-2">
-                                <i class="fa-regular fa-calendar-check text-slate-400"></i>
-                                <span>Fin: <strong class="text-slate-700">${formatDateShort(data.finDate || data.finRaw)}</strong></span>
-                            </div>
+                        <div class="flex justify-between items-end border-t border-slate-200/60 pt-2 mt-auto">
+                            <span class="text-3xl font-black text-ptej-green leading-none">${Math.round(d.real)}%</span>
+                            <span class="text-[10px] font-bold text-slate-500 bg-white px-2 py-1 rounded shadow-sm">Esp: ${Math.round(d.esperado)}%</span>
                         </div>
                     </div>
-                </div>
-                
-                <h4 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-                    <i class="fa-solid fa-table-list text-slate-400"></i> Tabla de Detalles
-                </h4>
-                <div class="w-full overflow-x-auto rounded-xl border border-slate-200 shadow-sm bg-white custom-scrollbar">
-                    <table class="w-full text-left text-xs min-w-[900px]">
-                        <thead class="bg-slate-100 text-slate-700 font-extrabold uppercase text-[10px] tracking-wider border-b border-slate-200 sticky top-0 z-10 shadow-sm">
-                            ${getTableHeaderHtml()}
-                        </thead>
-                        <tbody class="divide-y divide-slate-100">
-                            ${subActivitiesRows || `<tr><td colspan="7" class="p-4 text-center text-slate-400 italic font-semibold">No hay resultados para los filtros actuales.</td></tr>`}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-            document.getElementById('drawer-content').innerHTML = html;
+                `;
+            });
+            document.getElementById('grid-mesas-kpis').innerHTML = mesasHtml;
+
+            // 5. Gráfico de Tendencia
+            renderTendencia(root);
+            
+            // 6. Próximas Tareas
+            renderProximasTareas();
         }
 
-        function toggleMainComponent(key) {
-            expandedComponents[key] = !expandedComponents[key];
-            renderUI();
-        }
+        // --- APEXCHARTS FUNCIONES ---
+        function renderTendencia(node) {
+            if (charts['tendencia']) charts['tendencia'].destroy();
+            
+            // Puntos MS Project (2 por año)
+            const labels = ['Jun 2023', 'Dic 2023', 'Jun 2024', 'Dic 2024', 'Jun 2025', 'Dic 2025', 'Jun 2026', 'Dic 2026'];
+            const points = [
+                new Date(2023, 5, 30).getTime(), new Date(2023, 11, 31).getTime(),
+                new Date(2024, 5, 30).getTime(), new Date(2024, 11, 31).getTime(),
+                new Date(2025, 5, 30).getTime(), new Date(2025, 11, 31).getTime(),
+                new Date(2026, 5, 30).getTime(), new Date(2026, 11, 31).getTime()
+            ];
 
-        function toggleWbsNode(nodeKey, componentKey) {
-            expandedWbsNodes[nodeKey] = !expandedWbsNodes[nodeKey];
-            renderUI(); 
-        }
-
-        function openPdfModal() {
-            const modal = document.getElementById('pdf-modal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            document.body.style.overflow = 'hidden'; 
-        }
-
-        function closePdfModal() {
-            const modal = document.getElementById('pdf-modal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-            document.body.style.overflow = ''; 
-        }
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                closePdfModal();
-                closeDrawer();
+            let esperados = [];
+            if (node.inicioDate && node.finDate) {
+                const s = node.inicioDate.getTime();
+                const e = node.finDate.getTime();
+                const t = e - s;
+                if (t > 0) {
+                    esperados = points.map(pt => {
+                        if (pt < s) return 0;
+                        if (pt > e) return 100;
+                        return Math.round(((pt - s) / t) * 100);
+                    });
+                } else esperados = [0,0,0,0,0,0,0,0];
+            } else {
+                esperados = [12, 25, 37, 50, 62, 75, 87, 100]; // Fallback si no hay fechas
             }
-        });
 
-        window.onload = init;
+            const options = {
+                series: [{ name: 'Avance Esperado', data: esperados }],
+                chart: { type: 'area', height: 300, toolbar: { show: false }, fontFamily: 'Inter' },
+                stroke: { width: 3, curve: 'smooth' },
+                fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 100] }},
+                markers: { size: 6, colors: ['#D35400'], strokeColors: '#fff', strokeWidth: 2, hover: { size: 8 } },
+                colors: ['#197042'],
+                xaxis: { categories: labels, labels: { style: { fontSize: '11px', fontWeight: 600 } } },
+                yaxis: { min: 0, max: 100, labels: { style: { fontSize: '11px' }, formatter: val => val + '%' } },
+                grid: { strokeDashArray: 4, padding: { left: 10, right: 10 } },
+                dataLabels: { enabled: true, offsetY: -10, style: { fontSize: '11px', colors: ['#06403D'] }, background: { enabled: true, foreColor: '#06403D', padding: 4, borderRadius: 2, borderWidth: 0, opacity: 0.8 } }
+            };
+            charts['tendencia'] = new ApexCharts(document.querySelector("#chart-line-tendencia"), options);
+            charts['tendencia'].render();
+        }
+
+        // --- PRÓXIMAS TAREAS ---
+        function getLeafTasks(items, parentName, now) {
+            let leaves = [];
+            if (!items) return leaves;
+            items.forEach(item => {
+                if (item.children && item.children.length > 0) {
+                    leaves = leaves.concat(getLeafTasks(item.children, parentName, now));
+                } else {
+                    if (item.inicioDate && item.inicioDate <= now) {
+                        leaves.push({...item, parent: parentName});
+                    }
+                }
+            });
+            return leaves;
+        }
+
+        function renderProximasTareas() {
+            const now = new Date();
+            
+            // Recolectar tareas hijas de último nivel ya iniciadas
+            let tasksMesa1 = getLeafTasks(SUB_ACTIVITIES['2.1'], NOMBRES_MESAS['2.1'].nombre, now);
+            let tasksMesa2 = getLeafTasks(SUB_ACTIVITIES['2.2'], NOMBRES_MESAS['2.2'].nombre, now);
+
+            // Ordenar por inicio más reciente y tomar 2 de cada mesa
+            tasksMesa1.sort((a, b) => b.inicioDate.getTime() - a.inicioDate.getTime());
+            tasksMesa2.sort((a, b) => b.inicioDate.getTime() - a.inicioDate.getTime());
+            
+            let tasks = [...tasksMesa1.slice(0, 2), ...tasksMesa2.slice(0, 2)];
+            // Ordenar la vista combinada
+            tasks.sort((a, b) => b.inicioDate.getTime() - a.inicioDate.getTime());
+
+            const container = document.getElementById('contenedor-tareas');
+            if(tasks.length === 0) {
+                container.innerHTML = `<div class="col-span-2 text-center text-xs text-slate-400 py-4">No hay tareas iniciadas recientemente.</div>`;
+                return;
+            }
+
+            let html = '';
+            tasks.forEach(t => {
+                const isCritico = (t.esp || t.esperado || 0) - (t.comp || t.real || 0) > 10;
+                html += `
+                    <div class="bg-slate-50 rounded-xl p-4 border ${isCritico ? 'border-rose-200 border-l-4 border-l-rose-500' : 'border-slate-100'} hover:shadow-md transition-shadow">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-[9px] font-black uppercase text-slate-400 bg-white px-2 py-0.5 rounded border border-slate-200">${t.parent}</span>
+                            <span class="text-[10px] font-bold ${isCritico ? 'text-rose-600' : 'text-ptej-green'}">${Math.round(t.comp || t.real || 0)}% / ${Math.round(t.esp || t.esperado || 0)}%</span>
+                        </div>
+                        <h4 class="text-[11px] font-bold text-ptej-dark leading-snug line-clamp-2" title="${t.desc}">${t.desc}</h4>
+                        <div class="mt-3 flex items-center gap-3 text-[10px] text-slate-500 font-semibold">
+                            <span><i class="fa-solid fa-play text-slate-400 mr-1"></i> ${formatShortDate(t.inicioDate, t.inicioRaw)}</span>
+                            <span><i class="fa-solid fa-flag-checkered text-slate-400 mr-1"></i> ${formatShortDate(t.finDate, t.finRaw)}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        // --- SISTEMA DE VISTAS Y DRILL-DOWN ---
+        function switchView(viewName) {
+            activeView = viewName;
+            
+            // Actualizar Nav Sidebar
+            ['global', 'mesas', 'compromisos'].forEach(v => {
+                const el = document.getElementById(`nav-${v}`);
+                if (v === viewName) {
+                    el.classList.add('active'); el.classList.remove('text-slate-600');
+                } else {
+                    el.classList.remove('active'); el.classList.add('text-slate-600');
+                }
+            });
+
+            // Toggle Vistas
+            if (viewName === 'global') {
+                document.getElementById('view-global').classList.remove('hidden');
+                document.getElementById('view-detalle').classList.add('hidden');
+                renderGlobalView(); // Refresca gráficos
+            } else {
+                document.getElementById('view-global').classList.add('hidden');
+                document.getElementById('view-detalle').classList.remove('hidden');
+                renderDetalle(viewName);
+            }
+        }
+
+        function renderDetalle(tipo) {
+            const titulo = document.getElementById('detalle-titulo');
+            const cont = document.getElementById('contenedor-acordeones');
+            cont.innerHTML = '';
+
+            let keys = [];
+            if (tipo === 'mesas') {
+                titulo.innerText = "Mesas Estratégicas";
+                keys = ['2.1', '2.2', '2.3', '2.4'];
+            } else {
+                titulo.innerText = "Compromisos del Pacto";
+                keys = ['3.1', '3.2', '3.3', '3.4', '3.5', '3.6', '3.7', '3.8', '3.9'];
+            }
+
+            keys.forEach(k => {
+                if (!currentData[k]) return;
+                const node = currentData[k];
+                const nombre = tipo === 'mesas' ? `Mesa ${k.split('.')[1]}: ${NOMBRES_MESAS[k].nombre}` : `${k} - ${NOMBRES_COMPROMISOS[k]}`;
+                const isOpen = accordionsState[k] || false;
+                
+                // Generar Árbol de Tareas Interno
+                const rowsHtml = buildTreeRows(SUB_ACTIVITIES[k], 0, true);
+
+                const fInicio = formatShortDate(node.inicioDate, node.inicioRaw);
+                const fFin = formatShortDate(node.finDate, node.finRaw);
+
+                const html = `
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-4">
+                        <div class="p-4 bg-slate-50 cursor-pointer flex justify-between items-center hover:bg-slate-100 transition-colors" onclick="toggleAccordion('${k}')">
+                            <div class="flex items-center gap-4 w-full">
+                                <div class="w-10 h-10 rounded-lg bg-ptej-dark text-white flex items-center justify-center font-black text-xs flex-shrink-0">${Math.round(node.real)}%</div>
+                                <div class="flex-1">
+                                    <h3 class="text-xs font-black uppercase text-ptej-dark tracking-wide">${nombre}</h3>
+                                    <p class="text-[10px] text-slate-500 font-bold mt-1">Avance Esperado: ${Math.round(node.esperado)}% | Fechas: <span class="text-slate-700">${fInicio} a ${fFin}</span></p>
+                                </div>
+                            </div>
+                            <i id="icon-acc-${k.replace('.','-')}" class="fa-solid fa-chevron-${isOpen ? 'up' : 'down'} text-slate-400 px-4 transition-transform"></i>
+                        </div>
+                        <div id="content-acc-${k.replace('.','-')}" class="collapsible-content ${isOpen ? 'open' : ''}">
+                            <div class="p-0 overflow-x-auto w-full custom-scrollbar">
+                                <table class="w-full text-left min-w-[900px]">
+                                    <thead class="bg-white border-b border-slate-200 text-[10px] uppercase font-black tracking-widest text-slate-400">
+                                        <tr>
+                                            <th class="p-3 pl-6 w-[40%]">Descripción (Macroacciones y Acciones)</th>
+                                            <th class="p-3 text-center w-[8%]">Real</th>
+                                            <th class="p-3 text-center w-[8%]">Esperado</th>
+                                            <th class="p-3 text-center w-[10%]">Inicio</th>
+                                            <th class="p-3 text-center w-[10%]">Fin</th>
+                                            <th class="p-3 w-[24%]">Responsable</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 bg-white">
+                                        ${rowsHtml || `<tr><td colspan="6" class="p-4 text-center text-[11px] text-slate-400">No hay datos estructurados.</td></tr>`}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                cont.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        // Renderiza el árbol interactivo de la tabla
+        function buildTreeRows(items, depth, parentExpanded = true) {
+            let html = '';
+            if (!items || items.length === 0 || !parentExpanded) return html;
+
+            // Ordenar macroacciones de forma alfanumérica/lógica
+            items.sort((a, b) => a.code.localeCompare(b.code, undefined, {numeric: true}));
+
+            items.forEach(item => {
+                const hasChildren = item.children && item.children.length > 0;
+                // Por defecto las macroacciones (depth 0) están contraídas, a menos que se indiquen abiertas
+                const isOpen = treeExpandedNodes[item.code] || false;
+                
+                const padding = depth === 0 ? 'pl-6' : (depth === 1 ? 'pl-10' : 'pl-16');
+                const fontClass = depth === 0 ? 'font-black text-ptej-dark' : 'font-semibold text-slate-700';
+                const rowClass = hasChildren ? 'cursor-pointer hover:bg-slate-50' : 'hover:bg-slate-50';
+                
+                const icon = hasChildren 
+                    ? `<div class="w-5 h-5 flex items-center justify-center bg-slate-100 hover:bg-slate-200 rounded mr-2 flex-shrink-0 transition-colors"><i class="fa-solid fa-chevron-${isOpen ? 'down' : 'right'} text-ptej-dark text-[10px]"></i></div>` 
+                    : `<div class="w-5 h-5 flex items-center justify-center mr-2 flex-shrink-0"><i class="fa-solid fa-minus text-slate-300 text-[10px]"></i></div>`;
+
+                // Formateo Seguro de Fechas (Si la celda no era fecha válida, se intenta limpiar el texto crudo)
+                const fInicio = formatShortDate(item.inicioDate, item.inicioRaw);
+                const fFin = formatShortDate(item.finDate, item.finRaw);
+
+                html += `
+                    <tr class="${rowClass} transition-colors border-b border-slate-100 bg-white">
+                        <td class="p-3 ${padding} ${fontClass} text-[11px] min-w-[350px]" ${hasChildren ? `onclick="toggleTreeNode(event, '${item.code}')"` : ''}>
+                            <div class="flex items-center">
+                                ${icon} <span class="leading-tight line-clamp-2" title="${item.desc}">${item.desc}</span>
+                            </div>
+                        </td>
+                        <td class="p-3 text-center font-black text-ptej-green text-xs">${Math.round(item.comp || item.real || 0)}%</td>
+                        <td class="p-3 text-center font-bold text-slate-500 text-xs">${Math.round(item.esp || item.esperado || 0)}%</td>
+                        <td class="p-3 text-center text-slate-500 text-[10px] whitespace-nowrap">${fInicio}</td>
+                        <td class="p-3 text-center text-slate-500 text-[10px] whitespace-nowrap">${fFin}</td>
+                        <td class="p-3 text-slate-500 text-[10px] truncate max-w-[200px]" title="${item.responsable}">${item.responsable || '-'}</td>
+                    </tr>
+                `;
+
+                if (hasChildren && isOpen) {
+                    html += buildTreeRows(item.children, depth + 1, true);
+                }
+            });
+            return html;
+        }
+
+        // Control del acordeón principal
+        function toggleAccordion(key) {
+            accordionsState[key] = !accordionsState[key];
+            const content = document.getElementById(`content-acc-${key.replace('.','-')}`);
+            const icon = document.getElementById(`icon-acc-${key.replace('.','-')}`);
+            
+            if (accordionsState[key]) {
+                content.classList.add('open');
+                icon.classList.remove('fa-chevron-down'); icon.classList.add('fa-chevron-up');
+            } else {
+                content.classList.remove('open');
+                icon.classList.remove('fa-chevron-up'); icon.classList.add('fa-chevron-down');
+            }
+        }
+
+        // Control del árbol interno de tareas
+        function toggleTreeNode(event, code) {
+            if(event) event.stopPropagation();
+            treeExpandedNodes[code] = !treeExpandedNodes[code];
+            renderDetalle(activeView);
+        }
+
+        // --- INICIALIZACIÓN SEGURA ---
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadData);
+        } else {
+            loadData();
+        }
     </script>
 </body>
 </html>
