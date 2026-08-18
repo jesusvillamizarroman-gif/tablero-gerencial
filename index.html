@@ -1,4 +1,146 @@
-<!-- ... existing code ... -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pacto por la Transición Energética Justa - Tablero</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome para Iconos -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- ApexCharts -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'ptej-dark': '#06403D',
+                        'ptej-green': '#197042',
+                        'ptej-green-light': '#E8F5E9',
+                        'ptej-orange': '#D35400',
+                        'ptej-gray': '#F4F7F6'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { background-color: #F4F7F6; color: #1e293b; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Animaciones */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        
+        .nav-item.active { background-color: #06403D; color: white; }
+        .nav-item { transition: all 0.2s ease; cursor: pointer; }
+        .nav-item:hover:not(.active) { background-color: #E8F5E9; color: #06403D; }
+
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-in-out, opacity 0.3s ease;
+            opacity: 0;
+        }
+        .collapsible-content.open {
+            max-height: 8000px;
+            opacity: 1;
+        }
+
+        /* Loading Overlay */
+        #loader {
+            position: fixed; inset: 0; background: rgba(255,255,255,0.95); z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: opacity 0.5s ease;
+        }
+        .spinner {
+            width: 50px; height: 50px; border: 5px solid #E8F5E9; border-top: 5px solid #197042;
+            border-radius: 50%; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden text-sm selection:bg-green-200">
+
+    <!-- Loader -->
+    <div id="loader">
+        <div class="spinner mb-4"></div>
+        <h2 class="text-ptej-dark font-black tracking-widest uppercase text-lg">Procesando Datos...</h2>
+        <p class="text-slate-500 font-medium text-xs mt-2">Pacto por la Transición Energética Justa</p>
+    </div>
+
+    <!-- Menú Lateral -->
+    <aside class="w-64 bg-white border-r border-slate-200 h-full flex flex-col flex-shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)] relative z-20">
+        <!-- Logo -->
+        <div class="p-6 border-b border-slate-100 flex items-center justify-center">
+            <img src="https://drive.google.com/uc?export=view&id=1l4uMxSlrE-dkiYtP4P_mzUlSyAGjix4m" alt="MinEnergía" class="h-14 object-contain" onerror="this.src='https://via.placeholder.com/150x60?text=Energía+Logo'">
+        </div>
+        
+        <!-- Navegación -->
+        <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+            <div onclick="switchView('global')" id="nav-global" class="nav-item active flex items-center gap-3 px-4 py-3 rounded-xl font-bold">
+                <i class="fa-solid fa-house text-lg w-5 text-center"></i>
+                <span>Resumen Global</span>
+            </div>
+            <div onclick="switchView('mesas')" id="nav-mesas" class="nav-item text-slate-600 flex items-center gap-3 px-4 py-3 rounded-xl font-bold">
+                <i class="fa-solid fa-users-viewfinder text-lg w-5 text-center"></i>
+                <span>Mesas Estratégicas</span>
+            </div>
+            <div onclick="switchView('compromisos')" id="nav-compromisos" class="nav-item text-slate-600 flex items-center gap-3 px-4 py-3 rounded-xl font-bold">
+                <i class="fa-solid fa-handshake-angle text-lg w-5 text-center"></i>
+                <span>Compromisos</span>
+            </div>
+        </nav>
+
+        <!-- Bloque de Ayuda Inferior -->
+        <div class="p-4 bg-slate-50 m-4 rounded-xl border border-slate-200 shadow-sm">
+            <h4 class="font-black text-[10px] uppercase text-ptej-dark mb-1 tracking-wider">¿Qué es este tablero?</h4>
+            <p class="text-[10px] text-slate-500 leading-relaxed font-medium mb-3">Herramienta para el seguimiento del Plan Operativo del Pacto, que consolida avances, compromisos y acciones de las Mesas Estratégicas.</p>
+        </div>
+    </aside>
+
+    <!-- Área Principal -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden bg-[#F4F7F6]">
+        
+        <!-- Header -->
+        <header class="bg-white border-b border-slate-200 px-8 py-5 flex justify-between items-center z-10 shadow-sm flex-shrink-0">
+            <div>
+                <h1 class="text-2xl font-black text-ptej-dark tracking-tight uppercase">PACTO POR LA TRANSICIÓN ENERGÉTICA JUSTA</h1>
+                <p class="text-slate-500 font-semibold tracking-widest text-xs uppercase mt-1">Tablero de Gestión y Seguimiento</p>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="text-right">
+                    <span class="block text-[10px] font-bold text-slate-400 uppercase">Última actualización</span>
+                    <span id="txt-fecha-actualizacion" class="text-xs font-black text-slate-700"><i class="fa-regular fa-calendar mr-1"></i> --</span>
+                </div>
+                <div class="h-8 w-px bg-slate-200 mx-2"></div>
+                <div class="bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-center">
+                    <span class="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Periodo</span>
+                    <span class="text-xs font-bold text-slate-700">2023 - 2026</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Contenedor Scrollable de Vistas -->
+        <div class="flex-1 overflow-y-auto p-6 md:p-8 w-full relative">
+            
             <!-- VISTA: RESUMEN GLOBAL -->
             <div id="view-global" class="space-y-6 animate-fade-in w-full max-w-[1600px] mx-auto">
                 
@@ -46,102 +188,320 @@
                 </div>
 
                 <!-- Fila 2: Mesas (Ancho Completo) -->
-<!-- ... existing code ... -->
+                <div class="w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col">
+                    <h3 class="text-xs font-black uppercase text-slate-700 tracking-wider mb-4">Avance por Mesas Estratégicas</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 flex-1" id="grid-mesas-kpis">
+                        <!-- Inyectado por JS -->
+                    </div>
+                </div>
+
+                <!-- Fila 3: Tendencia (Ancho Completo) -->
+                <div class="w-full bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 class="text-xs font-black uppercase text-slate-700 tracking-wider mb-4 border-l-4 border-ptej-green pl-2">Tendencia de Avance Global (2023 - 2026)</h3>
+                    <div id="chart-line-tendencia" class="w-full h-[300px]"></div>
+                </div>
+
                 <!-- Fila 4: Próximas Tareas y Documentos -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <!-- Próximas tareas -->
                     <div class="md:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-                        <h3 id="titulo-proximas-tareas" class="text-xs font-black uppercase text-ptej-dark tracking-wider mb-4 border-l-4 border-ptej-orange pl-2">Próximas Tareas (A Iniciar / Recientes)</h3>
+                        <h3 id="titulo-proximas-tareas" class="text-xs font-black uppercase text-ptej-dark tracking-wider mb-4 border-l-4 border-ptej-orange pl-2">Próximas Tareas (A Iniciar)</h3>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="contenedor-tareas">
                             <!-- Inyectado por JS -->
                         </div>
                     </div>
 
                     <!-- Documentos Repositorio -->
-<!-- ... existing code ... -->
-                            <i id="icon-acc-${k.replace('.','-')}" class="fa-solid fa-chevron-${isOpen ? 'up' : 'down'} text-slate-400 px-4 transition-transform"></i>
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col justify-center items-center text-center">
+                        <div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 mb-4 border border-slate-100">
+                            <i class="fa-regular fa-folder-open text-3xl"></i>
                         </div>
-                        <div id="content-acc-${k.replace('.','-')}" class="collapsible-content ${isOpen ? 'open' : ''}">
-                            <div class="p-0 overflow-x-auto w-full custom-scrollbar">
-                                <table class="w-full text-left min-w-[900px]">
-                                    <thead class="bg-white border-b border-slate-200 text-[10px] uppercase font-black tracking-widest text-slate-400">
-                                        <tr>
-                                            <th class="p-3 pl-6 w-[35%]">Descripción (Macroacciones y Acciones)</th>
-                                            <th class="p-3 text-center w-[10%]">Estado</th>
-                                            <th class="p-3 text-center w-[8%]">Real</th>
-                                            <th class="p-3 text-center w-[8%]">Esperado</th>
-                                            <th class="p-3 text-center w-[12%]">Inicio</th>
-                                            <th class="p-3 text-center w-[12%]">Fin</th>
-                                            <th class="p-3 w-[15%]">Responsable</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-slate-100 bg-white">
-                                        ${rowsHtml || `<tr><td colspan="7" class="p-4 text-center text-[11px] text-slate-400">No hay datos estructurados.</td></tr>`}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                        <h3 class="text-sm font-black uppercase text-ptej-dark tracking-wider mb-2">Repositorio de Soportes</h3>
+                        <p class="text-[11px] text-slate-500 font-medium mb-4">Consulte los documentos técnicos, actas y evidencias que respaldan el avance reportado.</p>
+                        <a href="#" class="w-full block bg-slate-50 hover:bg-ptej-dark hover:text-white transition-colors text-ptej-dark font-bold text-xs py-3 rounded-xl border border-slate-200">
+                            Ir al Repositorio <i class="fa-solid fa-arrow-up-right-from-square ml-1"></i>
+                        </a>
                     </div>
-<!-- ... existing code ... -->
-        // Renderiza el árbol interactivo de la tabla
-        function buildTreeRows(items, depth, parentExpanded = true) {
-            let html = '';
-            if (!items || items.length === 0 || !parentExpanded) return html;
-
-            // Ordenar macroacciones de forma alfanumérica/lógica
-            items.sort((a, b) => a.code.localeCompare(b.code, undefined, {numeric: true}));
-
-            items.forEach(item => {
-                const hasChildren = item.children && item.children.length > 0;
-                // Por defecto las macroacciones (depth 0) están contraídas, a menos que se indiquen abiertas
-                const isOpen = treeExpandedNodes[item.code] || false;
+                </div>
                 
-                const padding = depth === 0 ? 'pl-6' : (depth === 1 ? 'pl-10' : 'pl-16');
-                const fontClass = depth === 0 ? 'font-black text-ptej-dark' : 'font-semibold text-slate-700';
-                const rowClass = hasChildren ? 'cursor-pointer hover:bg-slate-50' : 'hover:bg-slate-50';
-                
-                const icon = hasChildren 
-                    ? `<div class="w-5 h-5 flex items-center justify-center bg-slate-100 hover:bg-slate-200 rounded mr-2 flex-shrink-0 transition-colors"><i class="fa-solid fa-chevron-${isOpen ? 'down' : 'right'} text-ptej-dark text-[10px]"></i></div>` 
-                    : `<div class="w-5 h-5 flex items-center justify-center mr-2 flex-shrink-0"><i class="fa-solid fa-minus text-slate-300 text-[10px]"></i></div>`;
+                <footer class="text-center py-4">
+                    <p class="text-[10px] text-slate-400 font-bold tracking-[0.2em] uppercase">Ministerio de Minas y Energía - Pacto por la Transición Energética Justa</p>
+                </footer>
+            </div>
 
-                // Formateo Seguro de Fechas (Si la celda no era fecha válida, se intenta limpiar el texto crudo)
-                const fInicio = formatShortDate(item.inicioDate, item.inicioRaw);
-                const fFin = formatShortDate(item.finDate, item.finRaw);
+            <!-- VISTA: DETALLE (MESAS O COMPROMISOS) -->
+            <div id="view-detalle" class="hidden animate-fade-in w-full max-w-[1400px] mx-auto pb-10">
+                <div class="flex items-center gap-4 mb-6">
+                    <button onclick="switchView('global')" class="bg-white text-slate-600 hover:text-ptej-dark px-4 py-2.5 rounded-xl font-bold text-xs shadow-sm border border-slate-200 flex items-center gap-2 transition-colors">
+                        <i class="fa-solid fa-arrow-left"></i> Volver
+                    </button>
+                    <div>
+                        <h2 id="detalle-titulo" class="text-xl font-black uppercase tracking-tight text-ptej-dark">Detalle</h2>
+                        <p id="detalle-subtitulo" class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Navegación Interactiva</p>
+                    </div>
+                </div>
 
-                // Sistema de Alertas
-                const realVal = Math.round(item.comp || item.real || 0);
-                const espVal = Math.round(item.esp || item.esperado || 0);
-                const gap = espVal - realVal;
-                let estadoHtml = '';
-                if (gap <= 0) estadoHtml = '<span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest whitespace-nowrap"><i class="fa-solid fa-circle text-[8px] mr-1"></i>Al Día</span>';
-                else if (gap <= 10) estadoHtml = '<span class="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest whitespace-nowrap"><i class="fa-solid fa-triangle-exclamation text-[8px] mr-1"></i>Alerta Leve</span>';
-                else estadoHtml = '<span class="bg-rose-50 text-rose-700 border border-rose-200 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest whitespace-nowrap"><i class="fa-solid fa-circle-xmark text-[8px] mr-1"></i>Crítico</span>';
+                <!-- Contenedor de Acordeones -->
+                <div id="contenedor-acordeones" class="space-y-4">
+                    <!-- Inyectado por JS -->
+                </div>
+            </div>
 
-                html += `
-                    <tr class="${rowClass} transition-colors border-b border-slate-100 bg-white">
-                        <td class="p-3 ${padding} ${fontClass} text-[11px] min-w-[350px]" ${hasChildren ? `onclick="toggleTreeNode(event, '${item.code}')"` : ''}>
-                            <div class="flex items-center">
-                                ${icon} <span class="leading-tight line-clamp-2" title="${item.desc}">${item.desc}</span>
-                            </div>
-                        </td>
-                        <td class="p-3 text-center">${estadoHtml}</td>
-                        <td class="p-3 text-center font-black text-ptej-green text-xs">${realVal}%</td>
-                        <td class="p-3 text-center font-bold text-slate-500 text-xs">${espVal}%</td>
-                        <td class="p-3 text-center text-slate-500 text-[10px] whitespace-nowrap">${fInicio}</td>
-                        <td class="p-3 text-center text-slate-500 text-[10px] whitespace-nowrap">${fFin}</td>
-                        <td class="p-3 text-slate-500 text-[10px] truncate max-w-[200px]" title="${item.responsable}">${item.responsable || '-'}</td>
-                    </tr>
-                `;
+        </div>
+    </main>
 
-                if (hasChildren && isOpen) {
-                    html += buildTreeRows(item.children, depth + 1, true);
-                }
-            });
-            return html;
+    <script>
+        // --- FUENTES DE DATOS GLOBALES ---
+        const URL_PROJECT = `https://docs.google.com/spreadsheets/d/1CWZlW4Ij8KhhYqPJdMKozk_bAHXmRQlq/gviz/tq?tqx=out:json`;
+        const URL_ACCIONES = `https://docs.google.com/spreadsheets/d/1lnrQTF5pxSkaNZia1Jkl1XsNkPHImP8Ktb2zu_uDF0A/gviz/tq?tqx=out:json`;
+
+        const NOMBRES_MESAS = {
+            '2.1': { nombre: "Gobernanza Étnica y Territorial", icon: "fa-users" },
+            '2.2': { nombre: "Apoyo a Trámites Ambientales", icon: "fa-leaf" },
+            '2.3': { nombre: "Comunidades Energéticas", icon: "fa-solar-panel" },
+            '2.4': { nombre: "Oportunidades de Desarrollo", icon: "fa-chart-line" }
+        };
+
+        const NOMBRES_COMPROMISOS = {
+            '3.1': "Relacionamiento y DDHH",
+            '3.2': "Cierre de brechas sociales",
+            '3.3': "Articulación interinstitucional",
+            '3.4': "Diálogo para acuerdos",
+            '3.5': "Respuesta institucional efectiva",
+            '3.6': "Participación en renovables",
+            '3.7': "Protocolos territorio Wayuu",
+            '3.8': "Fortalecimiento entes territoriales",
+            '3.9': "Adopción del plan operativo"
+        };
+
+        // Estado y Datos
+        let FLAT_DATA = {};
+        let currentData = {};
+        let SUB_ACTIVITIES = {};
+        let activeView = 'global';
+        let charts = {}; 
+        
+        let accordionsState = {}; // Guarda estado del bloque principal (Mesa / Compromiso)
+        let treeExpandedNodes = {}; // Guarda estado del árbol de tareas interno
+
+        function parseValue(cell) {
+            if (!cell) return 0;
+            let val = typeof cell.v === 'number' ? cell.v : parseFloat((cell.f || cell.v || '0').toString().replace('%', '').replace(',', '.'));
+            if (isNaN(val)) return 0;
+            return val > 0 && val <= 1.1 ? val * 100 : val;
         }
 
-        // Control del acordeón principal
-<!-- ... existing code ... -->
+        function extractDate(cell) {
+            if (!cell) return null;
+            let str = (cell.f || cell.v || '').toString().trim();
+            if (!str) return null;
+            
+            if (str.startsWith('Date(')) {
+                const match = str.match(/Date\((\d+),\s*(\d+),\s*(\d+)/);
+                if (match) return new Date(parseInt(match[1]), parseInt(match[2]), parseInt(match[3]));
+            }
+
+            str = str.split(/\s+\d{1,2}:\d{2}/)[0].trim();
+            const numMatch = str.match(/(\d{1,2})[\/\-\s]+(\d{1,2})[\/\-\s]+(\d{2,4})/);
+            if (numMatch) {
+                let y = parseInt(numMatch[3]);
+                if (y < 100) y += 2000;
+                return new Date(y, parseInt(numMatch[2]) - 1, parseInt(numMatch[1]));
+            }
+
+            const parsed = new Date(str);
+            return !isNaN(parsed.getTime()) ? parsed : null;
+        }
+
+        function formatShortDate(dateObj, rawStr) {
+            if (dateObj && !isNaN(dateObj.getTime())) {
+                const m = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+                return `${dateObj.getDate().toString().padStart(2, '0')}-${m[dateObj.getMonth()]}-${dateObj.getFullYear()}`;
+            }
+            if (rawStr) {
+                // Remove day of week and times to enforce simple format visually where possible
+                let clean = rawStr.toString().split(/\s+\d{1,2}:\d{2}/)[0].trim();
+                clean = clean.replace(/^(lun|mar|mié|mie|jue|vie|sáb|sab|dom)\.?\s+/i, '').trim();
+                return clean || '--';
+            }
+            return '--';
+        }
+
+        function updateCurrentDate() {
+            const date = new Date();
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            const dateStr = date.toLocaleDateString('es-CO', options);
+            const el = document.getElementById('txt-fecha-actualizacion');
+            if (el) el.innerHTML = `<i class="fa-regular fa-calendar mr-1"></i> ${dateStr}`;
+        }
+
+        // --- EXTRACCIÓN DE DATOS ---
+        async function loadData() {
+            try {
+                const [resProj] = await Promise.all([
+                    fetch(URL_PROJECT).then(r => r.ok ? r.text() : '').catch(() => '')
+                ]);
+
+                if (resProj && resProj.includes('google.visualization.Query.setResponse')) {
+                    const jsonStr = resProj.substring(resProj.indexOf('{'), resProj.lastIndexOf('}') + 1);
+                    buildTree(JSON.parse(jsonStr).table.rows);
+                }
+                
+                const loader = document.getElementById('loader');
+                if (loader) {
+                    loader.style.opacity = '0';
+                    setTimeout(() => loader.style.display = 'none', 500);
+                }
+                
+                updateCurrentDate();
+                renderGlobalView();
+            } catch (e) {
+                console.error("Error cargando datos:", e);
+                const loader = document.getElementById('loader');
+                if (loader) {
+                    loader.innerHTML = '<h2 class="text-red-500 font-bold">Error de Conexión</h2><p class="text-sm mt-2">No se pudieron obtener los datos de la fuente.</p>';
+                }
+            }
+        }
+
+        function buildTree(rows) {
+            rows.forEach(r => {
+                if (!r.c || !r.c[0]?.v) return;
+                const edt = r.c[0].v.toString().trim();
+                FLAT_DATA[edt] = {
+                    code: edt,
+                    desc: r.c[1]?.v || 'Sin Nombre',
+                    real: parseValue(r.c[3]),
+                    esperado: parseValue(r.c[4]),
+                    inicioDate: extractDate(r.c[6]),
+                    finDate: extractDate(r.c[7]),
+                    inicioRaw: r.c[6]?.f || r.c[6]?.v || '',
+                    finRaw: r.c[7]?.f || r.c[7]?.v || '',
+                    responsable: r.c[8]?.v || '',
+                    children: []
+                };
+            });
+
+            // Agrupar
+            Object.keys(FLAT_DATA).sort().forEach(edt => {
+                const parts = edt.split('.');
+                const item = FLAT_DATA[edt];
+                
+                if (parts.length <= 2) {
+                    currentData[edt] = { ...item };
+                    if (parts.length === 2) SUB_ACTIVITIES[edt] = [];
+                } else {
+                    const parentEdt = parts.slice(0, -1).join('.');
+                    if (FLAT_DATA[parentEdt]) FLAT_DATA[parentEdt].children.push(item);
+                }
+            });
+
+            Object.keys(FLAT_DATA).forEach(edt => {
+                if (edt.split('.').length === 2) {
+                    SUB_ACTIVITIES[edt] = FLAT_DATA[edt].children || [];
+                }
+            });
+        }
+
+        // --- CONTEO DE TAREAS (HOJAS DEL EDT 2) ---
+        function countLeafTasks(nodeList) {
+            let count = 0;
+            nodeList.forEach(n => {
+                if (n.children && n.children.length > 0) {
+                    count += countLeafTasks(n.children);
+                } else {
+                    count++;
+                }
+            });
+            return count;
+        }
+
+        // --- RENDERIZADO GLOBAL ---
+        function renderGlobalView() {
+            // 1. KPIs Globales
+            const root = currentData['2'] || { real: 0, esperado: 0 };
+            document.getElementById('kpi-global-real').innerText = `${Math.round(root.real)}%`;
+            document.getElementById('kpi-global-esp').innerText = `${Math.round(root.esperado)}%`;
+            
+            // 2. KPI Compromisos (EDT 3)
+            const root3 = currentData['3'] || { real: 0, esperado: 0 };
+            document.getElementById('kpi-comp-real').innerText = `${Math.round(root3.real)}%`;
+            document.getElementById('kpi-comp-esp').innerText = `${Math.round(root3.esperado)}%`;
+            
+            // 3. KPI Macroacciones (EDT 2) y Conteo
+            let numHijasEDT2 = 0;
+            ['2.1', '2.2', '2.3', '2.4'].forEach(k => {
+                if (SUB_ACTIVITIES[k]) numHijasEDT2 += countLeafTasks(SUB_ACTIVITIES[k]);
+            });
+            document.getElementById('kpi-tareas-hijas').innerText = `${numHijasEDT2} Tareas en ejecución`;
+
+            // 4. Tarjetas de Mesas
+            let mesasHtml = '';
+            ['2.1', '2.2', '2.3', '2.4'].forEach(k => {
+                if (!currentData[k]) return;
+                const d = currentData[k];
+                const info = NOMBRES_MESAS[k];
+                mesasHtml += `
+                    <div class="bg-slate-50 border border-slate-100 p-4 rounded-xl flex flex-col justify-between hover:bg-white hover:shadow-md transition-all cursor-pointer" onclick="switchView('mesas')">
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="w-10 h-10 rounded-full bg-ptej-green-light text-ptej-green flex items-center justify-center flex-shrink-0"><i class="fa-solid ${info.icon} text-sm"></i></div>
+                            <span class="text-[10px] font-black uppercase text-ptej-dark leading-tight">Mesa ${k.split('.')[1]}<br><span class="text-slate-500 font-bold">${info.nombre}</span></span>
+                        </div>
+                        <div class="flex justify-between items-end border-t border-slate-200/60 pt-2 mt-auto">
+                            <span class="text-3xl font-black text-ptej-green leading-none">${Math.round(d.real)}%</span>
+                            <span class="text-[10px] font-bold text-slate-500 bg-white px-2 py-1 rounded shadow-sm">Esp: ${Math.round(d.esperado)}%</span>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('grid-mesas-kpis').innerHTML = mesasHtml;
+
+            // 5. Gráfico de Tendencia
+            renderTendencia(root);
+            
+            // 6. Próximas Tareas
+            renderProximasTareas();
+        }
+
+        // --- APEXCHARTS FUNCIONES ---
+        function renderTendencia(node) {
+            if (charts['tendencia']) charts['tendencia'].destroy();
+            
+            // Puntos MS Project (2 por año)
+            const labels = ['Jun 2023', 'Dic 2023', 'Jun 2024', 'Dic 2024', 'Jun 2025', 'Dic 2025', 'Jun 2026', 'Dic 2026'];
+            const points = [
+                new Date(2023, 5, 30).getTime(), new Date(2023, 11, 31).getTime(),
+                new Date(2024, 5, 30).getTime(), new Date(2024, 11, 31).getTime(),
+                new Date(2025, 5, 30).getTime(), new Date(2025, 11, 31).getTime(),
+                new Date(2026, 5, 30).getTime(), new Date(2026, 11, 31).getTime()
+            ];
+
+            let esperados = [];
+            if (node.inicioDate && node.finDate) {
+                const s = node.inicioDate.getTime();
+                const e = node.finDate.getTime();
+                const t = e - s;
+                if (t > 0) {
+                    esperados = points.map(pt => {
+                        if (pt < s) return 0;
+                        if (pt > e) return 100;
+                        return Math.round(((pt - s) / t) * 100);
+                    });
+                } else esperados = [0,0,0,0,0,0,0,0];
+            } else {
+                esperados = [12, 25, 37, 50, 62, 75, 87, 100]; // Fallback si no hay fechas
+            }
+
+            const options = {
+                series: [{ name: 'Avance Esperado', data: esperados }],
+                chart: { type: 'area', height: 300, toolbar: { show: false }, fontFamily: 'Inter' },
+                stroke: { width: 3, curve: 'smooth' },
+                fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 100] }},
+                markers: { size: 6, colors: ['#D35400'], strokeColors: '#fff', strokeWidth: 2, hover: { size: 8 } },
+                colors: ['#197042'],
+                xaxis: { categories: labels, labels: { style: { fontSize: '11px', fontWeight: 600 } } },
+                yaxis: { min: 0, max: 100, labels: { style: { fontSize: '11px' }, formatter: val => val + '%' } },
+                grid: { strokeDashArray: 4, padding: { left: 10, right: 10 } },
                 dataLabels: { enabled: true, offsetY: -10, style: { fontSize: '11px', colors: ['#06403D'] }, background: { enabled: true, foreColor: '#06403D', padding: 4, borderRadius: 2, borderWidth: 0, opacity: 0.8 } }
             };
             charts['tendencia'] = new ApexCharts(document.querySelector("#chart-line-tendencia"), options);
@@ -149,14 +509,14 @@
         }
 
         // --- PRÓXIMAS TAREAS ---
-        function getLeafTasks(items, mesaId) {
+        function getLeafTasks(items) {
             let leaves = [];
             if (!items) return leaves;
             items.forEach(item => {
                 if (item.children && item.children.length > 0) {
-                    leaves = leaves.concat(getLeafTasks(item.children, mesaId));
+                    leaves = leaves.concat(getLeafTasks(item.children));
                 } else {
-                    leaves.push({...item, mesaId: mesaId});
+                    leaves.push({...item});
                 }
             });
             return leaves;
@@ -169,7 +529,9 @@
             // Recolectar tareas de Mesa 1 y 2
             ['2.1', '2.2'].forEach(m => {
                 if(SUB_ACTIVITIES[m]) {
-                    allLeafTasks = allLeafTasks.concat(getLeafTasks(SUB_ACTIVITIES[m], m));
+                    let mLeaves = getLeafTasks(SUB_ACTIVITIES[m]);
+                    mLeaves.forEach(t => t.mesaId = m); // Para forzar selección de 2 por mesa
+                    allLeafTasks = allLeafTasks.concat(mLeaves);
                 }
             });
 
@@ -187,7 +549,7 @@
                 let m2 = futureTasks.filter(t => t.mesaId === '2.2').slice(0, 2);
                 selectedTasks = [...m1, ...m2];
 
-                // Si no completamos 4, llenamos con las que sigan
+                // Si no completamos 4, llenamos con las que sigan en el futuro
                 if(selectedTasks.length < 4) {
                     const diff = 4 - selectedTasks.length;
                     const others = futureTasks.filter(t => !selectedTasks.includes(t)).slice(0, diff);
@@ -251,4 +613,180 @@
         }
 
         // --- SISTEMA DE VISTAS Y DRILL-DOWN ---
-<!-- ... existing code ... -->
+        function switchView(viewName) {
+            activeView = viewName;
+            
+            // Actualizar Nav Sidebar
+            ['global', 'mesas', 'compromisos'].forEach(v => {
+                const el = document.getElementById(`nav-${v}`);
+                if (v === viewName) {
+                    el.classList.add('active'); el.classList.remove('text-slate-600');
+                } else {
+                    el.classList.remove('active'); el.classList.add('text-slate-600');
+                }
+            });
+
+            // Toggle Vistas
+            if (viewName === 'global') {
+                document.getElementById('view-global').classList.remove('hidden');
+                document.getElementById('view-detalle').classList.add('hidden');
+                renderGlobalView(); // Refresca gráficos
+            } else {
+                document.getElementById('view-global').classList.add('hidden');
+                document.getElementById('view-detalle').classList.remove('hidden');
+                renderDetalle(viewName);
+            }
+        }
+
+        function renderDetalle(tipo) {
+            const titulo = document.getElementById('detalle-titulo');
+            const cont = document.getElementById('contenedor-acordeones');
+            cont.innerHTML = '';
+
+            let keys = [];
+            if (tipo === 'mesas') {
+                titulo.innerText = "Mesas Estratégicas";
+                keys = ['2.1', '2.2', '2.3', '2.4'];
+            } else {
+                titulo.innerText = "Compromisos del Pacto";
+                keys = ['3.1', '3.2', '3.3', '3.4', '3.5', '3.6', '3.7', '3.8', '3.9'];
+            }
+
+            keys.forEach(k => {
+                if (!currentData[k]) return;
+                const node = currentData[k];
+                const nombre = tipo === 'mesas' ? `Mesa ${k.split('.')[1]}: ${NOMBRES_MESAS[k].nombre}` : `${k} - ${NOMBRES_COMPROMISOS[k]}`;
+                const isOpen = accordionsState[k] || false;
+                
+                // Generar Árbol de Tareas Interno
+                const rowsHtml = buildTreeRows(SUB_ACTIVITIES[k], 0, true);
+
+                const fInicio = formatShortDate(node.inicioDate, node.inicioRaw);
+                const fFin = formatShortDate(node.finDate, node.finRaw);
+
+                const html = `
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-4">
+                        <div class="p-4 bg-slate-50 cursor-pointer flex justify-between items-center hover:bg-slate-100 transition-colors" onclick="toggleAccordion('${k}')">
+                            <div class="flex items-center gap-4 w-full">
+                                <div class="w-10 h-10 rounded-lg bg-ptej-dark text-white flex items-center justify-center font-black text-xs flex-shrink-0">${Math.round(node.real)}%</div>
+                                <div class="flex-1">
+                                    <h3 class="text-xs font-black uppercase text-ptej-dark tracking-wide">${nombre}</h3>
+                                    <p class="text-[10px] text-slate-500 font-bold mt-1">Avance Esperado: ${Math.round(node.esperado)}% | Fechas: <span class="text-slate-700">${fInicio} a ${fFin}</span></p>
+                                </div>
+                            </div>
+                            <i id="icon-acc-${k.replace('.','-')}" class="fa-solid fa-chevron-${isOpen ? 'up' : 'down'} text-slate-400 px-4 transition-transform"></i>
+                        </div>
+                        <div id="content-acc-${k.replace('.','-')}" class="collapsible-content ${isOpen ? 'open' : ''}">
+                            <div class="p-0 overflow-x-auto w-full custom-scrollbar">
+                                <table class="w-full text-left min-w-[900px]">
+                                    <thead class="bg-white border-b border-slate-200 text-[10px] uppercase font-black tracking-widest text-slate-400">
+                                        <tr>
+                                            <th class="p-3 pl-6 w-[35%]">Descripción (Macroacciones y Acciones)</th>
+                                            <th class="p-3 text-center w-[10%]">Estado</th>
+                                            <th class="p-3 text-center w-[8%]">Real</th>
+                                            <th class="p-3 text-center w-[8%]">Esperado</th>
+                                            <th class="p-3 text-center w-[12%]">Inicio</th>
+                                            <th class="p-3 text-center w-[12%]">Fin</th>
+                                            <th class="p-3 w-[15%]">Responsable</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 bg-white">
+                                        ${rowsHtml || `<tr><td colspan="7" class="p-4 text-center text-[11px] text-slate-400">No hay datos estructurados.</td></tr>`}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                cont.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        // Renderiza el árbol interactivo de la tabla
+        function buildTreeRows(items, depth, parentExpanded = true) {
+            let html = '';
+            if (!items || items.length === 0 || !parentExpanded) return html;
+
+            // Ordenar macroacciones de forma alfanumérica/lógica
+            items.sort((a, b) => a.code.localeCompare(b.code, undefined, {numeric: true}));
+
+            items.forEach(item => {
+                const hasChildren = item.children && item.children.length > 0;
+                // Por defecto las macroacciones (depth 0) están contraídas, a menos que se indiquen abiertas
+                const isOpen = treeExpandedNodes[item.code] || false;
+                
+                const padding = depth === 0 ? 'pl-6' : (depth === 1 ? 'pl-10' : 'pl-16');
+                const fontClass = depth === 0 ? 'font-black text-ptej-dark' : 'font-semibold text-slate-700';
+                const rowClass = hasChildren ? 'cursor-pointer hover:bg-slate-50' : 'hover:bg-slate-50';
+                
+                const icon = hasChildren 
+                    ? `<div class="w-5 h-5 flex items-center justify-center bg-slate-100 hover:bg-slate-200 rounded mr-2 flex-shrink-0 transition-colors"><i class="fa-solid fa-chevron-${isOpen ? 'down' : 'right'} text-ptej-dark text-[10px]"></i></div>` 
+                    : `<div class="w-5 h-5 flex items-center justify-center mr-2 flex-shrink-0"><i class="fa-solid fa-minus text-slate-300 text-[10px]"></i></div>`;
+
+                // Formateo Seguro de Fechas (Si la celda no era fecha válida, se intenta limpiar el texto crudo)
+                const fInicio = formatShortDate(item.inicioDate, item.inicioRaw);
+                const fFin = formatShortDate(item.finDate, item.finRaw);
+
+                // Sistema de Alertas
+                const realVal = Math.round(item.comp || item.real || 0);
+                const espVal = Math.round(item.esp || item.esperado || 0);
+                const gap = espVal - realVal;
+                let estadoHtml = '';
+                if (gap <= 0) estadoHtml = '<span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest whitespace-nowrap"><i class="fa-solid fa-circle text-[8px] mr-1"></i>Al Día</span>';
+                else if (gap <= 10) estadoHtml = '<span class="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest whitespace-nowrap"><i class="fa-solid fa-triangle-exclamation text-[8px] mr-1"></i>Alerta Leve</span>';
+                else estadoHtml = '<span class="bg-rose-50 text-rose-700 border border-rose-200 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest whitespace-nowrap"><i class="fa-solid fa-circle-xmark text-[8px] mr-1"></i>Crítico</span>';
+
+                html += `
+                    <tr class="${rowClass} transition-colors border-b border-slate-100 bg-white">
+                        <td class="p-3 ${padding} ${fontClass} text-[11px] min-w-[350px]" ${hasChildren ? `onclick="toggleTreeNode(event, '${item.code}')"` : ''}>
+                            <div class="flex items-center">
+                                ${icon} <span class="leading-tight line-clamp-2" title="${item.desc}">${item.desc}</span>
+                            </div>
+                        </td>
+                        <td class="p-3 text-center">${estadoHtml}</td>
+                        <td class="p-3 text-center font-black text-ptej-green text-xs">${realVal}%</td>
+                        <td class="p-3 text-center font-bold text-slate-500 text-xs">${espVal}%</td>
+                        <td class="p-3 text-center text-slate-500 text-[10px] whitespace-nowrap">${fInicio}</td>
+                        <td class="p-3 text-center text-slate-500 text-[10px] whitespace-nowrap">${fFin}</td>
+                        <td class="p-3 text-slate-500 text-[10px] truncate max-w-[200px]" title="${item.responsable}">${item.responsable || '-'}</td>
+                    </tr>
+                `;
+
+                if (hasChildren && isOpen) {
+                    html += buildTreeRows(item.children, depth + 1, true);
+                }
+            });
+            return html;
+        }
+
+        // Control del acordeón principal
+        function toggleAccordion(key) {
+            accordionsState[key] = !accordionsState[key];
+            const content = document.getElementById(`content-acc-${key.replace('.','-')}`);
+            const icon = document.getElementById(`icon-acc-${key.replace('.','-')}`);
+            
+            if (accordionsState[key]) {
+                content.classList.add('open');
+                icon.classList.remove('fa-chevron-down'); icon.classList.add('fa-chevron-up');
+            } else {
+                content.classList.remove('open');
+                icon.classList.remove('fa-chevron-up'); icon.classList.add('fa-chevron-down');
+            }
+        }
+
+        // Control del árbol interno de tareas
+        function toggleTreeNode(event, code) {
+            if(event) event.stopPropagation();
+            treeExpandedNodes[code] = !treeExpandedNodes[code];
+            renderDetalle(activeView);
+        }
+
+        // --- INICIALIZACIÓN SEGURA ---
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadData);
+        } else {
+            loadData();
+        }
+    </script>
+</body>
+</html>
