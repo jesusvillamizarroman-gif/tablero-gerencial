@@ -88,9 +88,9 @@
 
     <!-- Menú Lateral -->
     <aside class="w-64 bg-white border-r border-slate-200 h-full flex flex-col flex-shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)] relative z-20">
-        <!-- Logo -->
+        <!-- Logo (URL Corregida para Drive) -->
         <div class="p-6 border-b border-slate-100 flex items-center justify-center">
-            <img src="https://drive.google.com/uc?export=view&id=1l4uMxSlrE-dkiYtP4P_mzUlSyAGjix4m" alt="MinEnergía" class="h-14 object-contain" onerror="this.src='https://via.placeholder.com/150x60?text=Energía+Logo'">
+            <img src="https://lh3.googleusercontent.com/d/1l4uMxSlrE-dkiYtP4P_mzUlSyAGjix4m" alt="MinEnergía" class="h-14 object-contain" onerror="this.src='https://drive.google.com/uc?export=view&id=1l4uMxSlrE-dkiYtP4P_mzUlSyAGjix4m'; this.onerror=null;">
         </div>
         
         <!-- Navegación -->
@@ -242,7 +242,8 @@
                                 <i class="fa-solid fa-file-pdf"></i> Ver PDF de Compromisos
                             </button>
                         </div>
-                        <p id="detalle-subtitulo" class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Navegación Interactiva</p>
+                        <!-- Este contenedor se llenará dinámicamente -->
+                        <div id="detalle-subtitulo"></div>
                     </div>
                 </div>
 
@@ -277,7 +278,6 @@
     <script>
         // --- FUENTES DE DATOS GLOBALES ---
         const URL_PROJECT = `https://docs.google.com/spreadsheets/d/1CWZlW4Ij8KhhYqPJdMKozk_bAHXmRQlq/gviz/tq?tqx=out:json`;
-        const URL_ACCIONES = `https://docs.google.com/spreadsheets/d/1lnrQTF5pxSkaNZia1Jkl1XsNkPHImP8Ktb2zu_uDF0A/gviz/tq?tqx=out:json`;
 
         const NOMBRES_MESAS = {
             '2.1': { nombre: "Gobernanza Étnica y Territorial", icon: "fa-users" },
@@ -305,8 +305,8 @@
         let activeView = 'global';
         let charts = {}; 
         
-        let accordionsState = {}; // Guarda estado del bloque principal (Mesa / Compromiso)
-        let treeExpandedNodes = {}; // Guarda estado del árbol de tareas interno
+        let accordionsState = {}; 
+        let treeExpandedNodes = {}; 
 
         function parseValue(cell) {
             if (!cell) return 0;
@@ -317,46 +317,86 @@
 
         function extractDate(cell) {
             if (!cell) return null;
-            let str = (cell.f || cell.v || '').toString().trim();
+            let str = (cell.f !== undefined ? cell.f : cell.v);
+            if (str === null || str === undefined) return null;
+            str = str.toString().trim();
             if (!str) return null;
-            
+
+            // 1. Limpieza inicial: Google Sheets formato directo Date(YYYY,M,D)
             if (str.startsWith('Date(')) {
                 const match = str.match(/Date\((\d+),\s*(\d+),\s*(\d+)/);
-                if (match) return new Date(parseInt(match[1]), parseInt(match[2]), parseInt(match[3]));
+                if (match) {
+                    return new Date(parseInt(match[1]), parseInt(match[2]), parseInt(match[3]));
+                }
             }
 
+            // 2. Limpieza de basura en texto (ej. "lun. 30/05/2026 12:00")
+            str = str.replace(/^(lun|mar|mié|mie|jue|vie|sáb|sab|dom)[a-z]*[\.,]?\s*/i, '').trim();
             str = str.split(/\s+\d{1,2}:\d{2}/)[0].trim();
-            const numMatch = str.match(/(\d{1,2})[\/\-\s]+(\d{1,2})[\/\-\s]+(\d{2,4})/);
+
+            // 3. Extracción Formato YYYY-MM-DD
+            const isoMatch = str.match(/^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})/);
+            if (isoMatch) {
+                return new Date(parseInt(isoMatch[1]), parseInt(isoMatch[2]) - 1, parseInt(isoMatch[3]));
+            }
+
+            // 4. Extracción Formato DD/MM/YYYY o DD-MM-YYYY
+            const numMatch = str.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/);
             if (numMatch) {
                 let y = parseInt(numMatch[3]);
                 if (y < 100) y += 2000;
                 return new Date(y, parseInt(numMatch[2]) - 1, parseInt(numMatch[1]));
             }
 
+            // 5. Extracción de Fechas tipo texto (30-may-2026 o 30 may 2026)
+            const textMatch = str.toLowerCase().match(/^(\d{1,2})[\/\-\s]+([a-z]{3})[a-z]*[\/\-\s]+(\d{2,4})/);
+            if (textMatch) {
+                const mNames = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+                let mIdx = mNames.indexOf(textMatch[2]);
+                if (mIdx !== -1) {
+                    let y = parseInt(textMatch[3]);
+                    if (y < 100) y += 2000;
+                    return new Date(y, mIdx, parseInt(textMatch[1]));
+                }
+            }
+
+            // 6. Intento final (Fallback de Javascript)
             const parsed = new Date(str);
-            return !isNaN(parsed.getTime()) ? parsed : null;
+            if (!isNaN(parsed.getTime())) return parsed;
+
+            return null; // Retorna nulo si es definitivamente ilegible como fecha
         }
 
-        // Formateador Estricto de Fechas con Guiones
+        // Formateador Unificado de Fechas -> DD-Mmm-YYYY (ej: 30-May-2026)
         function formatShortDate(dateObj, rawStr) {
-            if (dateObj && !isNaN(dateObj.getTime())) {
+            let validDate = dateObj;
+
+            // Si el dateObj falla de entrada, forzamos la extracción directamente desde el texto (rawStr)
+            if (!validDate || isNaN(validDate.getTime())) {
+                if (rawStr) {
+                    validDate = extractDate({ v: rawStr, f: rawStr });
+                }
+            }
+
+            // Si ahora sí logramos una fecha estructurada, aplicamos el formato obligatorio 30-May-2026
+            if (validDate && !isNaN(validDate.getTime())) {
                 const m = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-                return `${dateObj.getDate().toString().padStart(2, '0')}-${m[dateObj.getMonth()]}-${dateObj.getFullYear()}`;
+                let dd = validDate.getDate().toString().padStart(2, '0');
+                let mm = m[validDate.getMonth()];
+                let yyyy = validDate.getFullYear();
+                return `${dd}-${mm}-${yyyy}`;
             }
-            if (rawStr) {
-                let clean = rawStr.toString().split(/\s+\d{1,2}:\d{2}/)[0].trim();
-                clean = clean.replace(/^(lun|mar|mié|mie|jue|vie|sáb|sab|dom)\.?\s+/i, '').trim();
-                clean = clean.replace(/\//g, '-'); // Forzar guiones en lugar de barras
-                return clean || '--';
-            }
-            return '--';
+
+            // Salvavidas: si la fecha de excel era por ejemplo "TBD" o texto no convertible,
+            // devolvemos ese texto para no dejar la celda en blanco. Si está vacío, guiones.
+            if (!rawStr || rawStr.toString().trim() === '') return '--';
+            return rawStr;
         }
 
         function updateCurrentDate() {
             const date = new Date();
-            const dateStr = formatShortDate(date); // Uso del formato unificado
             const el = document.getElementById('txt-fecha-actualizacion');
-            if (el) el.innerHTML = `<i class="fa-regular fa-calendar mr-1"></i> ${dateStr}`;
+            if (el) el.innerHTML = `<i class="fa-regular fa-calendar mr-1"></i> ${formatShortDate(date)}`;
         }
 
         // --- EXTRACCIÓN DE DATOS ---
@@ -427,7 +467,6 @@
             });
         }
 
-        // --- CONTEO DE TAREAS (HOJAS DEL EDT 2) ---
         function countLeafTasks(nodeList) {
             let count = 0;
             nodeList.forEach(n => {
@@ -442,24 +481,20 @@
 
         // --- RENDERIZADO GLOBAL ---
         function renderGlobalView() {
-            // 1. KPIs Globales
             const root = currentData['2'] || { real: 0, esperado: 0 };
             document.getElementById('kpi-global-real').innerText = `${Math.round(root.real)}%`;
             document.getElementById('kpi-global-esp').innerText = `${Math.round(root.esperado)}%`;
             
-            // 2. KPI Compromisos (EDT 3)
             const root3 = currentData['3'] || { real: 0, esperado: 0 };
             document.getElementById('kpi-comp-real').innerText = `${Math.round(root3.real)}%`;
             document.getElementById('kpi-comp-esp').innerText = `${Math.round(root3.esperado)}%`;
             
-            // 3. KPI Macroacciones (EDT 2) y Conteo
             let numHijasEDT2 = 0;
             ['2.1', '2.2', '2.3', '2.4'].forEach(k => {
                 if (SUB_ACTIVITIES[k]) numHijasEDT2 += countLeafTasks(SUB_ACTIVITIES[k]);
             });
             document.getElementById('kpi-tareas-hijas').innerText = `${numHijasEDT2} Tareas en ejecución`;
 
-            // 4. Tarjetas de Mesas
             let mesasHtml = '';
             ['2.1', '2.2', '2.3', '2.4'].forEach(k => {
                 if (!currentData[k]) return;
@@ -480,10 +515,7 @@
             });
             document.getElementById('grid-mesas-kpis').innerHTML = mesasHtml;
 
-            // 5. Gráfico de Tendencia
             renderTendencia(root);
-            
-            // 6. Próximas Tareas
             renderProximasTareas();
         }
 
@@ -492,29 +524,25 @@
             if (charts['tendencia']) charts['tendencia'].destroy();
             
             const now = new Date();
-            const m = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-            const todayLabel = `${now.getDate().toString().padStart(2, '0')}-${m[now.getMonth()]}-${now.getFullYear().toString().slice(-2)} (Hoy)`;
-
-            // Puntos MS Project fijos + El punto de "Hoy" intercalado
+            
+            // Reemplazo de labels quemados por el formateador global
             let timePoints = [
-                { label: 'Jun 2023', time: new Date(2023, 5, 30).getTime() },
-                { label: 'Dic 2023', time: new Date(2023, 11, 31).getTime() },
-                { label: 'Jun 2024', time: new Date(2024, 5, 30).getTime() },
-                { label: 'Dic 2024', time: new Date(2024, 11, 31).getTime() },
-                { label: 'Jun 2025', time: new Date(2025, 5, 30).getTime() },
-                { label: 'Dic 2025', time: new Date(2025, 11, 31).getTime() },
-                { label: 'Jun 2026', time: new Date(2026, 5, 30).getTime() },
-                { label: 'Dic 2026', time: new Date(2026, 11, 31).getTime() },
-                { label: todayLabel, time: now.getTime(), isToday: true }
+                { time: new Date(2023, 5, 30) },
+                { time: new Date(2023, 11, 31) },
+                { time: new Date(2024, 5, 30) },
+                { time: new Date(2024, 11, 31) },
+                { time: new Date(2025, 5, 30) },
+                { time: new Date(2025, 11, 31) },
+                { time: new Date(2026, 5, 30) },
+                { time: new Date(2026, 11, 31) },
+                { time: now, isToday: true }
             ];
 
-            // Ordenamos todo cronológicamente
-            timePoints.sort((a, b) => a.time - b.time);
+            timePoints.sort((a, b) => a.time.getTime() - b.time.getTime());
 
             let esperados = [];
             let reales = [];
 
-            // Identificar min y max reales desde los hijos en caso de que el nodo padre no tenga fechas completas en el Sheet
             let s = node.inicioDate ? node.inicioDate.getTime() : null;
             let e = node.finDate ? node.finDate.getTime() : null;
 
@@ -533,21 +561,18 @@
             const t = (s && e) ? e - s : 0;
             
             timePoints.forEach((pt, index) => {
-                // Lógica de "Avance Esperado"
+                const ptTime = pt.time.getTime();
+                
                 if (pt.isToday && node.esperado !== undefined) {
-                    // Si es el punto de "Hoy", NO interpolamos. Tomamos exactamente el dato del Excel.
                     esperados.push(Math.round(node.esperado));
                 } else if (t > 0) {
-                    // Interpolación para el resto del tiempo pasado o futuro
-                    if (pt.time < s) esperados.push(0);
-                    else if (pt.time > e) esperados.push(100);
-                    else esperados.push(Math.round(((pt.time - s) / t) * 100));
+                    if (ptTime < s) esperados.push(0);
+                    else if (ptTime > e) esperados.push(100);
+                    else esperados.push(Math.round(((ptTime - s) / t) * 100));
                 } else {
-                    // Fallback extremo
                     esperados.push(Math.round((index / (timePoints.length - 1)) * 100));
                 }
 
-                // Lógica de "Avance Real" (Solo llenamos el punto si es la fecha de Hoy)
                 if (pt.isToday) {
                     reales.push(Math.round(node.real || 0));
                 } else {
@@ -555,7 +580,8 @@
                 }
             });
 
-            const labels = timePoints.map(pt => pt.label);
+            // Generación de etiquetas con el nuevo formato estricto
+            const labels = timePoints.map(pt => formatShortDate(pt.time) + (pt.isToday ? ' (Hoy)' : ''));
 
             const options = {
                 series: [
@@ -563,31 +589,15 @@
                     { name: 'Avance Real (Hoy)', type: 'line', data: reales }
                 ],
                 chart: { height: 300, toolbar: { show: false }, fontFamily: 'Inter' },
-                stroke: { 
-                    width: [3, 0], // El '0' evita líneas cruzadas raras para los nulls del real
-                    curve: 'smooth' 
-                },
+                stroke: { width: [3, 0], curve: 'smooth' },
                 fill: { 
                     type: ['gradient', 'solid'], 
                     gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 100] }
                 },
-                markers: { 
-                    size: [6, 8], 
-                    colors: ['#D35400', '#06403D'], 
-                    strokeColors: '#fff', 
-                    strokeWidth: 2, 
-                    hover: { size: 8 } 
-                },
+                markers: { size: [6, 8], colors: ['#D35400', '#06403D'], strokeColors: '#fff', strokeWidth: 2, hover: { size: 8 } },
                 colors: ['#197042', '#06403D'],
-                xaxis: { 
-                    categories: labels, 
-                    labels: { style: { fontSize: '10px', fontWeight: 600 } } 
-                },
-                yaxis: { 
-                    min: 0, 
-                    max: 100, 
-                    labels: { style: { fontSize: '11px' }, formatter: val => val + '%' } 
-                },
+                xaxis: { categories: labels, labels: { style: { fontSize: '10px', fontWeight: 600 } } },
+                yaxis: { min: 0, max: 100, labels: { style: { fontSize: '11px' }, formatter: val => val + '%' } },
                 grid: { strokeDashArray: 4, padding: { left: 10, right: 10 } },
                 dataLabels: { 
                     enabled: true, 
@@ -595,15 +605,11 @@
                     style: { fontSize: '11px', fontWeight: 'bold' }, 
                     background: { enabled: true, padding: 4, borderRadius: 2, borderWidth: 0, opacity: 0.85, dropShadow: { enabled: false } },
                     formatter: function (val) {
-                        // Limpia los números de la gráfica general para que los nulls no aparezcan
                         if (val === null || val === undefined || isNaN(val)) return '';
                         return val + '%';
                     }
                 },
-                tooltip: {
-                    // Eliminamos el texto/cuadro que aparece al hacer hover
-                    enabled: false
-                }
+                tooltip: { enabled: false }
             };
             charts['tendencia'] = new ApexCharts(document.querySelector("#chart-line-tendencia"), options);
             charts['tendencia'].render();
@@ -614,10 +620,9 @@
             let leaves = [];
             if (!items) return leaves;
             items.forEach(item => {
-                // Rastrear la descripción de la Macroacción (Nivel 3: ej 2.1.1)
                 let nextParent = currentParentDesc;
                 if (item.code && item.code.split('.').length === 3) {
-                    nextParent = item.desc; // Guardamos el nombre de la macroacción
+                    nextParent = item.desc;
                 }
 
                 if (item.children && item.children.length > 0) {
@@ -633,44 +638,34 @@
             const now = new Date();
             let allLeafTasks = [];
 
-            // Recolectar tareas de Mesa 1 y 2
             ['2.1', '2.2'].forEach(m => {
                 if(SUB_ACTIVITIES[m]) {
                     let mLeaves = getLeafTasks(SUB_ACTIVITIES[m]);
-                    mLeaves.forEach(t => t.mesaId = m); // Para forzar selección de 2 por mesa
+                    mLeaves.forEach(t => t.mesaId = m); 
                     allLeafTasks = allLeafTasks.concat(mLeaves);
                 }
             });
 
-            // 1. Buscar tareas que NO han iniciado (inicioDate > now)
             let futureTasks = allLeafTasks.filter(t => t.inicioDate && t.inicioDate > now);
             let selectedTasks = [];
             let isCompletedMode = false;
 
             if (futureTasks.length > 0) {
-                // Ordenar por inicio más cercano
                 futureTasks.sort((a, b) => a.inicioDate.getTime() - b.inicioDate.getTime());
-                
-                // Tomar 2 de la mesa 1 y 2 de la mesa 2
                 let m1 = futureTasks.filter(t => t.mesaId === '2.1').slice(0, 2);
                 let m2 = futureTasks.filter(t => t.mesaId === '2.2').slice(0, 2);
                 selectedTasks = [...m1, ...m2];
 
-                // Si no completamos 4, llenamos con las que sigan en el futuro
                 if(selectedTasks.length < 4) {
                     const diff = 4 - selectedTasks.length;
                     const others = futureTasks.filter(t => !selectedTasks.includes(t)).slice(0, diff);
                     selectedTasks = [...selectedTasks, ...others];
                 }
             } else {
-                // 2. Si no hay futuras, buscar últimas completadas (real >= 100)
                 isCompletedMode = true;
                 let completedTasks = allLeafTasks.filter(t => (t.comp || t.real || 0) >= 100 && t.finDate);
-                
-                // Ordenar por fecha de fin más reciente (descendente)
                 completedTasks.sort((a, b) => b.finDate.getTime() - a.finDate.getTime());
 
-                // Tomar 2 de la mesa 1 y 2 de la mesa 2
                 let m1 = completedTasks.filter(t => t.mesaId === '2.1').slice(0, 2);
                 let m2 = completedTasks.filter(t => t.mesaId === '2.2').slice(0, 2);
                 selectedTasks = [...m1, ...m2];
@@ -682,7 +677,6 @@
                 }
             }
 
-            // Cambiar el título para indicar el contexto
             const titulo = document.getElementById('titulo-proximas-tareas');
             if(titulo) {
                 titulo.innerText = isCompletedMode ? "Últimas Tareas Completadas" : "Próximas Tareas (A Iniciar)";
@@ -702,7 +696,6 @@
                 let estadoColor = gap <= 0 ? 'text-emerald-600' : (gap <= 10 ? 'text-amber-600' : 'text-rose-600');
                 let bordeColor = gap <= 0 ? 'border-emerald-200 border-l-4 border-l-emerald-500' : (gap <= 10 ? 'border-amber-200 border-l-4 border-l-amber-500' : 'border-rose-200 border-l-4 border-l-rose-500');
 
-                // Mostrar el nombre de la macroacción a la que pertenece
                 html += `
                     <div class="bg-white rounded-xl p-4 border ${bordeColor} shadow-sm hover:shadow-md transition-shadow">
                         <div class="flex justify-between items-start mb-2">
@@ -724,9 +717,9 @@
         function switchView(viewName) {
             activeView = viewName;
             
-            // Actualizar Nav Sidebar
             ['global', 'mesas', 'compromisos'].forEach(v => {
                 const el = document.getElementById(`nav-${v}`);
+                if(!el) return;
                 if (v === viewName) {
                     el.classList.add('active'); el.classList.remove('text-slate-600');
                 } else {
@@ -734,21 +727,17 @@
                 }
             });
 
-            // Mostrar botón PDF si estamos en Compromisos
             const btnPdf = document.getElementById('btn-pdf-compromisos');
             if (viewName === 'compromisos') {
-                btnPdf.classList.remove('hidden');
-                btnPdf.classList.add('flex');
+                btnPdf.classList.remove('hidden'); btnPdf.classList.add('flex');
             } else {
-                btnPdf.classList.add('hidden');
-                btnPdf.classList.remove('flex');
+                btnPdf.classList.add('hidden'); btnPdf.classList.remove('flex');
             }
 
-            // Toggle Vistas
             if (viewName === 'global') {
                 document.getElementById('view-global').classList.remove('hidden');
                 document.getElementById('view-detalle').classList.add('hidden');
-                renderGlobalView(); // Refresca gráficos
+                renderGlobalView(); 
             } else {
                 document.getElementById('view-global').classList.add('hidden');
                 document.getElementById('view-detalle').classList.remove('hidden');
@@ -758,26 +747,42 @@
 
         function renderDetalle(tipo) {
             const titulo = document.getElementById('detalle-titulo');
+            const subtitulo = document.getElementById('detalle-subtitulo');
             const cont = document.getElementById('contenedor-acordeones');
             cont.innerHTML = '';
 
             let keys = [];
+            
+            // Reemplazo e Inyección dinámica de Subtítulo (Gestión EDT 3)
             if (tipo === 'mesas') {
                 titulo.innerText = "Mesas Estratégicas";
+                subtitulo.innerHTML = '<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Navegación Interactiva</p>';
                 keys = ['2.1', '2.2', '2.3', '2.4'];
             } else {
                 titulo.innerText = "Compromisos del Pacto";
+                const node3 = currentData['3'] || { real: 0, esperado: 0, inicioDate: null, finDate: null };
+                const fInicio = formatShortDate(node3.inicioDate, node3.inicioRaw);
+                const fFin = formatShortDate(node3.finDate, node3.finRaw);
+                
+                subtitulo.innerHTML = `
+                    <div class="mt-3 inline-flex flex-wrap items-center gap-3 bg-ptej-green-light border border-ptej-green/20 px-4 py-2 rounded-lg shadow-sm">
+                        <span class="text-[10px] text-ptej-dark font-black uppercase tracking-widest">Gestión General:</span>
+                        <span class="text-xs font-black text-ptej-green"><i class="fa-solid fa-chart-line mr-1"></i> Real: ${Math.round(node3.real)}%</span>
+                        <span class="text-slate-300">|</span>
+                        <span class="text-xs font-bold text-slate-600"><i class="fa-regular fa-circle-dot mr-1"></i> Esperado: ${Math.round(node3.esperado)}%</span>
+                        <span class="text-slate-300">|</span>
+                        <span class="text-xs font-bold text-slate-600"><i class="fa-regular fa-calendar-days mr-1"></i> ${fInicio} a ${fFin}</span>
+                    </div>
+                `;
                 keys = ['3.1', '3.2', '3.3', '3.4', '3.5', '3.6', '3.7', '3.8', '3.9'];
             }
 
             keys.forEach(k => {
                 if (!currentData[k]) return;
                 const node = currentData[k];
-                // Lógica de títulos limpios: elimina el 3.X de los compromisos
                 const nombre = tipo === 'mesas' ? `Mesa ${k.split('.')[1]}: ${NOMBRES_MESAS[k].nombre}` : `Compromiso ${k.split('.')[1]}: ${NOMBRES_COMPROMISOS[k]}`;
                 const isOpen = accordionsState[k] || false;
                 
-                // Generar Árbol de Tareas Interno
                 const rowsHtml = buildTreeRows(SUB_ACTIVITIES[k], 0, true);
 
                 const fInicio = formatShortDate(node.inicioDate, node.inicioRaw);
@@ -821,17 +826,14 @@
             });
         }
 
-        // Renderiza el árbol interactivo de la tabla
         function buildTreeRows(items, depth, parentExpanded = true) {
             let html = '';
             if (!items || items.length === 0 || !parentExpanded) return html;
 
-            // Ordenar macroacciones de forma alfanumérica/lógica
             items.sort((a, b) => a.code.localeCompare(b.code, undefined, {numeric: true}));
 
             items.forEach(item => {
                 const hasChildren = item.children && item.children.length > 0;
-                // Por defecto las macroacciones (depth 0) están contraídas, a menos que se indiquen abiertas
                 const isOpen = treeExpandedNodes[item.code] || false;
                 
                 const padding = depth === 0 ? 'pl-6' : (depth === 1 ? 'pl-10' : 'pl-16');
@@ -842,11 +844,9 @@
                     ? `<div class="w-5 h-5 flex items-center justify-center bg-slate-100 hover:bg-slate-200 rounded mr-2 flex-shrink-0 transition-colors"><i class="fa-solid fa-chevron-${isOpen ? 'down' : 'right'} text-ptej-dark text-[10px]"></i></div>` 
                     : `<div class="w-5 h-5 flex items-center justify-center mr-2 flex-shrink-0"><i class="fa-solid fa-minus text-slate-300 text-[10px]"></i></div>`;
 
-                // Formateo Seguro de Fechas (Si la celda no era fecha válida, se intenta limpiar el texto crudo)
                 const fInicio = formatShortDate(item.inicioDate, item.inicioRaw);
                 const fFin = formatShortDate(item.finDate, item.finRaw);
 
-                // Sistema de Alertas
                 const realVal = Math.round(item.comp || item.real || 0);
                 const espVal = Math.round(item.esp || item.esperado || 0);
                 const gap = espVal - realVal;
@@ -878,7 +878,6 @@
             return html;
         }
 
-        // Control del acordeón principal
         function toggleAccordion(key) {
             accordionsState[key] = !accordionsState[key];
             const content = document.getElementById(`content-acc-${key.replace('.','-')}`);
@@ -893,14 +892,12 @@
             }
         }
 
-        // Control del árbol interno de tareas
         function toggleTreeNode(event, code) {
             if(event) event.stopPropagation();
             treeExpandedNodes[code] = !treeExpandedNodes[code];
             renderDetalle(activeView);
         }
 
-        // Modal PDF
         function openPdfModal() {
             document.getElementById('pdf-modal').classList.remove('hidden');
             document.getElementById('pdf-modal').classList.add('flex');
@@ -911,7 +908,6 @@
             document.getElementById('pdf-modal').classList.remove('flex');
         }
 
-        // --- INICIALIZACIÓN SEGURA ---
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', loadData);
         } else {
