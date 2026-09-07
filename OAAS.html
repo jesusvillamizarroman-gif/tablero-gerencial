@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -56,19 +56,13 @@
             opacity: 0;
         }
         .collapsible-activities.open {
-            max-height: 5000px; /* Suficiente para expandir */
+            max-height: 5000px; 
             opacity: 1;
             overflow-y: visible;
         }
-        
-        .logo-minenergia {
-            width: auto;
-            max-height: 55px; /* Ajusta la altura máxima para que quepa bien */
-            object-fit: contain;
-        }
     </style>
 </head>
-<body class="flex h-screen w-screen" id="dashboard-body">
+<body class="flex flex-col h-screen w-screen" id="dashboard-body">
 
     <div id="loader" class="fixed inset-0 bg-white z-[100] flex flex-col justify-center items-center">
         <div class="relative w-12 h-12 mb-4">
@@ -81,33 +75,27 @@
         </p>
     </div>
 
-    <aside class="w-[220px] bg-white border-r border-slate-200 flex flex-col h-full z-20 flex-shrink-0 transition-all">
-        <div class="h-[100px] flex items-center justify-center border-b border-slate-100 px-4">
-            <div class="flex flex-col items-center">
-                <img src="https://drive.google.com/thumbnail?id=1l4uMxSlrE-dkiYtP4P_mzUlSyAGjix4m" alt="Logo Ministerio de Minas y Energía" class="logo-minenergia" onerror="this.onerror=null; this.src='https://placehold.co/180x50/ffffff/0a1930?text=MinEnerg%C3%ADa';">
+    <header class="bg-white border-b border-slate-200 flex-shrink-0 z-20">
+        <!-- Fila Principal: Logo, Título y Botón Exportar -->
+        <div class="h-[90px] px-8 flex justify-between items-center">
+            <div class="flex items-center gap-6">
+                <!-- Logo -->
+                <img src="https://drive.google.com/thumbnail?id=1l4uMxSlrE-dkiYtP4P_mzUlSyAGjix4m" alt="Logo MinEnergía" class="h-[50px] w-auto object-contain" onerror="this.onerror=null; this.src='https://placehold.co/180x50/ffffff/0a1930?text=MinEnerg%C3%ADa';">
+                
+                <div class="h-10 w-[1px] bg-slate-200"></div>
+                
+                <!-- Títulos -->
+                <div>
+                    <h1 class="text-[20px] font-black text-brand-blue tracking-tight uppercase leading-none mb-1.5">
+                        Oficina de Asuntos Ambientales y Sociales
+                    </h1>
+                    <p class="text-slate-500 text-[11px] font-semibold tracking-wider uppercase">
+                        Seguimiento Ejecutivo • Gerencia Guajira
+                    </p>
+                </div>
             </div>
-        </div>
-
-        <nav class="p-3 flex-1 space-y-1.5 overflow-y-auto mt-2">
-            <button onclick="switchTab('resumen')" id="btn-tab-resumen" class="w-full flex items-center gap-3 px-3 py-2.5 bg-brand-blue text-white rounded-lg font-semibold text-[12px] shadow-sm transition-colors text-left">
-                <i class="fa-solid fa-house w-4 text-center"></i> Resumen Global
-            </button>
-            <button onclick="switchTab('lineas')" id="btn-tab-lineas" class="w-full flex items-center gap-3 px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-brand-blue rounded-lg font-medium text-[12px] transition-colors text-left">
-                <i class="fa-solid fa-table-list w-4 text-center text-slate-400"></i> Líneas Estratégicas
-            </button>
-        </nav>
-    </aside>
-
-    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
-        <header class="bg-white border-b border-slate-200 h-[100px] px-8 flex justify-between items-center z-10 flex-shrink-0">
-            <div>
-                <h1 class="text-[20px] font-black text-brand-blue tracking-tight uppercase leading-none mb-1.5">
-                    Oficina de Asuntos Ambientales y Sociales
-                </h1>
-                <p class="text-slate-500 text-[11px] font-semibold tracking-wider uppercase">
-                    Seguimiento Ejecutivo • Gerencia Guajira
-                </p>
-            </div>
+            
+            <!-- Acciones -->
             <div class="flex items-center gap-6">
                 <div class="flex flex-col text-right">
                     <span class="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-1">Última actualización</span>
@@ -121,139 +109,143 @@
                     <i class="fa-solid fa-download"></i> Exportar
                 </button>
             </div>
-        </header>
+        </div>
+        
+        <!-- Fila de Navegación Horizontal (Pestañas) -->
+        <nav class="px-8 flex gap-8 border-t border-slate-100 bg-slate-50/30">
+            <button onclick="switchTab('resumen')" id="btn-tab-resumen" class="nav-btn py-3.5 border-b-2 border-brand-blue text-brand-blue font-bold text-[12px] flex items-center gap-2 transition-colors">
+                <i class="fa-solid fa-house"></i> Resumen Global
+            </button>
+            <button onclick="switchTab('lineas')" id="btn-tab-lineas" class="nav-btn py-3.5 border-b-2 border-transparent text-slate-500 hover:text-brand-blue font-semibold text-[12px] flex items-center gap-2 transition-colors">
+                <i class="fa-solid fa-table-list"></i> Líneas Estratégicas
+            </button>
+        </nav>
+    </header>
 
-        <div class="flex-1 overflow-y-auto p-8 w-full" id="dashboard-content">
-            <div class="max-w-[1500px] mx-auto space-y-6">
+    <main class="flex-1 overflow-y-auto p-8 w-full relative" id="dashboard-content">
+        <div class="max-w-[1500px] mx-auto space-y-6">
+            
+            <div id="tab-resumen" class="tab-content active space-y-6">
                 
-                <div id="tab-resumen" class="tab-content active space-y-6">
+                <!-- KPI PRINCIPAL UNIFICADO -->
+                <div class="bg-brand-blue rounded-2xl p-6 text-white shadow-card flex flex-col md:flex-row items-center gap-6 border border-[#1e3a8a] relative overflow-hidden">
                     
-                    <!-- KPI PRINCIPAL UNIFICADO (Avance + Tareas) -->
-                    <div class="bg-brand-blue rounded-2xl p-6 text-white shadow-card flex flex-col md:flex-row items-center gap-6 border border-[#1e3a8a] relative overflow-hidden">
-                        
-                        <!-- Bloque Izquierdo: Avance -->
-                        <div class="w-full md:w-[40%] border-b md:border-b-0 md:border-r border-blue-800 pb-4 md:pb-0 md:pr-6 flex flex-col">
-                            <div class="flex justify-between items-start mb-2">
-                                <span class="text-xs font-bold uppercase tracking-wide text-blue-100">Avance Global OAAS</span>
-                                <div id="kpi-global-status" class="bg-brand-green/20 text-brand-green px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase border border-brand-green/30">
-                                    AL DÍA
-                                </div>
-                            </div>
-                            <div class="flex items-end gap-3 my-2">
-                                <span id="kpi-global-real" class="text-5xl font-black tracking-tighter leading-none">--%</span>
-                                <span class="text-[11px] text-blue-200 font-medium mb-1">Esperado: <strong id="kpi-global-esp" class="text-white">--%</strong></span>
-                            </div>
-                            <div class="mt-2 w-full bg-[#1e3a8a] h-2.5 rounded-full overflow-hidden relative shadow-inner">
-                                <div id="kpi-global-bar" class="bg-brand-green h-full rounded-full transition-all duration-1000" style="width: 0%"></div>
-                                <div id="kpi-global-esp-marker" class="absolute top-0 bottom-0 w-[2px] bg-white opacity-90 shadow-[0_0_4px_rgba(0,0,0,0.5)]" style="left: 0%"></div>
+                    <!-- Bloque Izquierdo: Avance -->
+                    <div class="w-full md:w-[40%] border-b md:border-b-0 md:border-r border-blue-800 pb-4 md:pb-0 md:pr-6 flex flex-col">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-xs font-bold uppercase tracking-wide text-blue-100">Avance Global OAAS</span>
+                            <div id="kpi-global-status" class="bg-brand-green/20 text-brand-green px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase border border-brand-green/30">
+                                AL DÍA
                             </div>
                         </div>
-
-                        <!-- Bloque Derecho: Estado de Tareas (Unificado horizontalmente) -->
-                        <div class="w-full md:w-[60%] flex flex-col justify-center">
-                            <div class="flex items-center gap-2 mb-3">
-                                <i class="fa-solid fa-list-check text-xs text-blue-300"></i>
-                                <span class="text-[10px] font-bold uppercase tracking-wider text-blue-200">Estado de las Actividades o Tareas</span>
-                            </div>
-                            
-                            <!-- Tareas en una sola línea -->
-                            <div class="flex items-center justify-between bg-blue-900/40 py-3 px-4 rounded-xl border border-blue-800/50">
-                                <div class="flex flex-col items-center flex-1">
-                                    <div class="flex items-center gap-1.5 mb-1"><div class="w-2 h-2 rounded-full bg-brand-red"></div><span class="text-[9px] text-blue-200 font-bold uppercase tracking-wide">Críticas</span></div>
-                                    <span id="kpi-actividades-critico" class="text-2xl font-black text-brand-red leading-none">--</span>
-                                </div>
-                                <div class="w-px h-8 bg-blue-800/60"></div>
-                                <div class="flex flex-col items-center flex-1">
-                                    <div class="flex items-center gap-1.5 mb-1"><div class="w-2 h-2 rounded-full bg-brand-yellow"></div><span class="text-[9px] text-blue-200 font-bold uppercase tracking-wide">Alerta</span></div>
-                                    <span id="kpi-actividades-alerta" class="text-2xl font-black text-brand-yellow leading-none">--</span>
-                                </div>
-                                <div class="w-px h-8 bg-blue-800/60"></div>
-                                <div class="flex flex-col items-center flex-1">
-                                    <div class="flex items-center gap-1.5 mb-1"><div class="w-2 h-2 rounded-full bg-brand-green"></div><span class="text-[9px] text-blue-200 font-bold uppercase tracking-wide">Al día</span></div>
-                                    <span id="kpi-actividades-aldia" class="text-2xl font-black text-brand-green leading-none">--</span>
-                                </div>
-                                <div class="w-px h-8 bg-blue-800/60"></div>
-                                <div class="flex flex-col items-center flex-1">
-                                    <div class="flex items-center gap-1.5 mb-1"><i class="fa-solid fa-hashtag text-[9px] text-blue-400"></i><span class="text-[9px] text-white font-bold uppercase tracking-wide">Total</span></div>
-                                    <span id="kpi-actividades-total" class="text-2xl font-black text-white leading-none">--</span>
-                                </div>
-                            </div>
+                        <div class="flex items-end gap-3 my-2">
+                            <span id="kpi-global-real" class="text-5xl font-black tracking-tighter leading-none">--%</span>
+                            <span class="text-[11px] text-blue-200 font-medium mb-1">Esperado: <strong id="kpi-global-esp" class="text-white">--%</strong></span>
+                        </div>
+                        <div class="mt-2 w-full bg-[#1e3a8a] h-2.5 rounded-full overflow-hidden relative shadow-inner">
+                            <div id="kpi-global-bar" class="bg-brand-green h-full rounded-full transition-all duration-1000" style="width: 0%"></div>
+                            <div id="kpi-global-esp-marker" class="absolute top-0 bottom-0 w-[2px] bg-white opacity-90 shadow-[0_0_4px_rgba(0,0,0,0.5)]" style="left: 0%"></div>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
-                        
-                        <!-- Resumen de Líneas con Tareas -->
-                        <div class="xl:col-span-5 bg-white rounded-2xl p-6 border border-slate-200 shadow-card flex flex-col min-h-[350px]">
-                            <div class="flex items-center gap-2 text-slate-500 mb-4">
-                                <i class="fa-solid fa-layer-group text-sm text-brand-blue"></i>
-                                <span class="text-[12px] font-bold uppercase tracking-wider text-brand-blue">Resumen Ejecutivo de Líneas</span>
-                            </div>
-                            <div class="overflow-x-auto flex-1">
-                                <table class="w-full text-left">
-                                    <thead>
-                                        <tr class="border-b border-slate-200 text-[9px] uppercase tracking-wider text-slate-400 font-bold">
-                                            <th class="pb-2 font-semibold">Línea Estratégica</th>
-                                            <th class="pb-2 font-semibold text-center">Estado Tareas</th>
-                                            <th class="pb-2 font-semibold text-center">% Real / Esp.</th>
-                                            <th class="pb-2 font-semibold text-right">Estado</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="kpi-lineas-table" class="divide-y divide-slate-50">
-                                        <!-- Inyectado por JS -->
-                                    </tbody>
-                                </table>
-                            </div>
+                    <!-- Bloque Derecho: Estado de Tareas -->
+                    <div class="w-full md:w-[60%] flex flex-col justify-center">
+                        <div class="flex items-center gap-2 mb-3">
+                            <i class="fa-solid fa-list-check text-xs text-blue-300"></i>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-blue-200">Estado de las Actividades o Tareas</span>
                         </div>
-
-                        <!-- Gráfica de Tendencia Mejorada -->
-                        <div class="xl:col-span-7 bg-white rounded-2xl shadow-card border border-slate-200 p-6 flex flex-col min-h-[350px]">
-                            <div class="flex items-center gap-3 mb-2">
-                                <div class="w-1.5 h-6 bg-[#1e7b45] rounded-full"></div>
-                                <h2 class="text-[13px] font-black text-brand-blue uppercase tracking-wide">Tendencia de Avance Global (2026)</h2>
+                        
+                        <div class="flex items-center justify-between bg-blue-900/40 py-3 px-4 rounded-xl border border-blue-800/50">
+                            <div class="flex flex-col items-center flex-1">
+                                <div class="flex items-center gap-1.5 mb-1"><div class="w-2 h-2 rounded-full bg-brand-red"></div><span class="text-[9px] text-blue-200 font-bold uppercase tracking-wide">Críticas</span></div>
+                                <span id="kpi-actividades-critico" class="text-2xl font-black text-brand-red leading-none">--</span>
                             </div>
-                            
-                            <div class="w-full flex-1 relative min-h-[250px] mt-4">
-                                <canvas id="chart-tendencia"></canvas>
+                            <div class="w-px h-8 bg-blue-800/60"></div>
+                            <div class="flex flex-col items-center flex-1">
+                                <div class="flex items-center gap-1.5 mb-1"><div class="w-2 h-2 rounded-full bg-brand-yellow"></div><span class="text-[9px] text-blue-200 font-bold uppercase tracking-wide">Alerta</span></div>
+                                <span id="kpi-actividades-alerta" class="text-2xl font-black text-brand-yellow leading-none">--</span>
                             </div>
-                            
-                            <!-- Leyenda Gráfica -->
-                            <div class="flex justify-center items-center gap-8 mt-4 text-[11px] font-medium text-slate-600 border-t border-slate-100 pt-3">
-                                <div class="flex items-center gap-2">
-                                    <span class="w-3.5 h-3.5 rounded-full bg-[#1e7b45]"></span>
-                                    Avance Esperado
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <span class="w-3.5 h-3.5 rounded-full bg-brand-blue"></span>
-                                    Avance Real (Hoy)
-                                </div>
+                            <div class="w-px h-8 bg-blue-800/60"></div>
+                            <div class="flex flex-col items-center flex-1">
+                                <div class="flex items-center gap-1.5 mb-1"><div class="w-2 h-2 rounded-full bg-brand-green"></div><span class="text-[9px] text-blue-200 font-bold uppercase tracking-wide">Al día</span></div>
+                                <span id="kpi-actividades-aldia" class="text-2xl font-black text-brand-green leading-none">--</span>
+                            </div>
+                            <div class="w-px h-8 bg-blue-800/60"></div>
+                            <div class="flex flex-col items-center flex-1">
+                                <div class="flex items-center gap-1.5 mb-1"><i class="fa-solid fa-hashtag text-[9px] text-blue-400"></i><span class="text-[9px] text-white font-bold uppercase tracking-wide">Total</span></div>
+                                <span id="kpi-actividades-total" class="text-2xl font-black text-white leading-none">--</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div id="tab-lineas" class="tab-content">
-                    <div class="mb-5 flex flex-col gap-1">
-                        <h2 class="text-xl font-black text-brand-blue uppercase tracking-tight">Líneas Estratégicas</h2>
-                        <!-- Subtítulo eliminado -->
+                <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+                    
+                    <!-- Resumen Ejecutivo de Líneas -->
+                    <div class="xl:col-span-5 bg-white rounded-2xl p-6 border border-slate-200 shadow-card flex flex-col min-h-[350px]">
+                        <div class="flex items-center gap-2 text-slate-500 mb-4">
+                            <i class="fa-solid fa-layer-group text-sm text-brand-blue"></i>
+                            <span class="text-[12px] font-bold uppercase tracking-wider text-brand-blue">Resumen Ejecutivo de Líneas</span>
+                        </div>
+                        <div class="overflow-x-auto flex-1">
+                            <table class="w-full text-left">
+                                <thead>
+                                    <tr class="border-b border-slate-200 text-[9px] uppercase tracking-wider text-slate-400 font-bold">
+                                        <th class="pb-2 font-semibold">Línea Estratégica</th>
+                                        <th class="pb-2 font-semibold text-center">Estado Tareas</th>
+                                        <th class="pb-2 font-semibold text-center">% Real / Esp.</th>
+                                        <th class="pb-2 font-semibold text-right">Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="kpi-lineas-table" class="divide-y divide-slate-50">
+                                    <!-- Inyectado por JS -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
-                    <!-- Contenedor dinámico donde se inyectan las tarjetas estilo Hitos_3 -->
-                    <div id="lineas-cards-container" class="space-y-6">
-                        <!-- JS Inyecta las tarjetas aquí -->
+                    <!-- Gráfica de Tendencia -->
+                    <div class="xl:col-span-7 bg-white rounded-2xl shadow-card border border-slate-200 p-6 flex flex-col min-h-[350px]">
+                        <div class="flex items-center gap-3 mb-2">
+                            <div class="w-1.5 h-6 bg-[#1e7b45] rounded-full"></div>
+                            <h2 class="text-[13px] font-black text-brand-blue uppercase tracking-wide">Tendencia de Avance Global (2026)</h2>
+                        </div>
+                        
+                        <div class="w-full flex-1 relative min-h-[250px] mt-4">
+                            <canvas id="chart-tendencia"></canvas>
+                        </div>
+                        
+                        <!-- Leyenda Gráfica -->
+                        <div class="flex justify-center items-center gap-8 mt-4 text-[11px] font-medium text-slate-600 border-t border-slate-100 pt-3">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3.5 h-3.5 rounded-full bg-[#1e7b45]"></span>
+                                Avance Esperado
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-3.5 h-3.5 rounded-full bg-brand-blue"></span>
+                                Avance Real (Hoy)
+                            </div>
+                        </div>
                     </div>
                 </div>
-
             </div>
+
+            <div id="tab-lineas" class="tab-content">
+                <!-- Contenedor dinámico donde se inyectan las tarjetas -->
+                <div id="lineas-cards-container" class="space-y-6">
+                    <!-- JS Inyecta las tarjetas aquí -->
+                </div>
+            </div>
+
         </div>
     </main>
 
     <script>
         const URL_PROJECT = `https://docs.google.com/spreadsheets/d/1CWZlW4Ij8KhhYqPJdMKozk_bAHXmRQlq/gviz/tq?tqx=out:json`;
         
-        // Configuraciones visuales para las Líneas (1.1 a 1.4) - Iconos ajustados
+        // Configuraciones visuales para las Líneas (1.1 a 1.4)
         const LINEAS_CONFIG = {
-            '1.1': { icon: '<i class="fa-solid fa-users-gear"></i>', colorBg: 'bg-blue-50', colorText: 'text-brand-blue', nameFallback: 'Fortalecimiento de Gobernanza Étnica' },
+            '1.1': { icon: '<i class="fa-solid fa-users"></i>', colorBg: 'bg-blue-50', colorText: 'text-brand-blue', nameFallback: 'Fortalecimiento de Gobernanza Étnica' },
             '1.2': { icon: '<i class="fa-solid fa-leaf"></i>', colorBg: 'bg-green-50', colorText: 'text-green-700', nameFallback: 'Apoyo a Trámites Ambientales' },
             '1.3': { icon: '<i class="fa-solid fa-handshake-angle"></i>', colorBg: 'bg-orange-50', colorText: 'text-orange-600', nameFallback: 'Gestión de Conflictos' },
             '1.4': { icon: '<i class="fa-solid fa-seedling"></i>', colorBg: 'bg-purple-50', colorText: 'text-purple-700', nameFallback: 'Oportunidades de Desarrollo' }
@@ -266,7 +258,7 @@
         let expandedComponents = {};
         let expandedWbsNodes = {};
 
-        // --- SISTEMA ROBUSTO DE FECHAS (Formato 12-Mar-2026) ---
+        // --- MANEJO DE FECHAS ROBUSTO ---
         function parseDateCustom(cell) {
             if (!cell) return null;
             let val = cell.f || cell.v;
@@ -312,16 +304,14 @@
         // --- MANEJO DE ESTADOS UI ---
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('nav button').forEach(el => {
-                el.classList.remove('bg-brand-blue', 'text-white', 'shadow-sm');
-                el.classList.add('text-slate-600', 'hover:bg-slate-50');
-                el.querySelector('i').classList.add('text-slate-400');
+            document.querySelectorAll('.nav-btn').forEach(el => {
+                el.classList.remove('border-brand-blue', 'text-brand-blue', 'font-bold');
+                el.classList.add('border-transparent', 'text-slate-500', 'font-semibold');
             });
             document.getElementById(`tab-${tabId}`).classList.add('active');
             const btn = document.getElementById(`btn-tab-${tabId}`);
-            btn.classList.remove('text-slate-600', 'hover:bg-slate-50');
-            btn.classList.add('bg-brand-blue', 'text-white', 'shadow-sm');
-            btn.querySelector('i').classList.remove('text-slate-400');
+            btn.classList.remove('border-transparent', 'text-slate-500', 'font-semibold');
+            btn.classList.add('border-brand-blue', 'text-brand-blue', 'font-bold');
         }
 
         function parseVal(cell) {
@@ -338,8 +328,7 @@
 
         function cleanTitle(title) {
             if(!title) return '';
-            // Elimina estrictamente el número del EDT inicial (ej. "1.1.1 " o "1.4.2 - ") 
-            // pero DEJA intacta la palabra HITO y toda la descripción completa.
+            // Solo remueve los números iniciales (ej. "1.1.2 ") y deja el resto intacto.
             return title.replace(/^[\d\.]+\s*-?\s*/, '').trim(); 
         }
 
@@ -361,7 +350,10 @@
                 const id = r.c[0]?.v?.toString().trim();
                 if (!id) return;
 
-                const nameRaw = r.c[1]?.v || 'Sin Título';
+                const nameRaw = r.c[1]?.v || '';
+                // Filtramos si el nombre está vacío o es un título genérico basura
+                if (nameRaw.trim() === '') return;
+
                 flatData[id] = {
                     id: id,
                     nameRaw: nameRaw,
@@ -400,15 +392,18 @@
                 }
             });
 
-            // Identificar hojas reales (Solo nodos sin hijos, que sean nivel 3 o superior para evitar contar títulos)
-            actividadesHojas = Object.values(flatData).filter(item => {
-                 return item.children.length === 0 && item.id.startsWith('1.') && item.id.split('.').length > 2 && item.nameRaw.trim() !== '';
-            });
-
-            // Asignar los hijos directos de Nivel 2 a subActivitiesMap
+            // Recolectar tareas hojas (Solo nivel 3 o mayor, y que no tengan hijos)
             Object.keys(flatData).forEach(id => {
-                if (id.split('.').length === 2 && flatData[id]) {
-                    subActivitiesMap[id] = flatData[id].children || [];
+                const item = flatData[id];
+                const niveles = id.split('.');
+                
+                if (niveles.length === 2 && item) {
+                    subActivitiesMap[id] = item.children || [];
+                }
+                
+                // Regla estricta para TAREAS: Debe empezar con 1., no tener hijos, y tener al menos 3 niveles (ej. 1.1.1)
+                if (id.startsWith('1.') && item.children.length === 0 && niveles.length >= 3) {
+                    actividadesHojas.push(item);
                 }
             });
         }
@@ -426,9 +421,8 @@
         }
 
         function updateTopKPIs() {
-            // Stats globales
+            // Stats globales calculados en base a tareas reales hoja
             let statsGlobal = getTaskStatsFor(actividadesHojas);
-            if (statsGlobal.total === 0) statsGlobal = { total: 42, alDia: 26, alerta: 13, critico: 3 }; // Fallback
             
             const global = currentData['1'] || { real: 45, esp: 68 };
             const rPct = Math.round(global.real), ePct = Math.round(global.esp);
@@ -502,15 +496,14 @@
             });
         }
 
-        // --- ACTUALIZACIÓN DE GRÁFICA TENDENCIA (Lógica Mejorada y Dinámica) ---
         function initGraficoTendencia() {
             const cReal = currentData['1'] ? Math.round(currentData['1'].real) : 45;
             const cEsp = currentData['1'] ? Math.round(currentData['1'].esp) : 68;
             
             const hoy = new Date();
-            let mesActual = hoy.getFullYear() === 2026 ? hoy.getMonth() : 8; // Default Sept si no es 2026
+            let mesActual = hoy.getFullYear() === 2026 ? hoy.getMonth() : 8; // Default Septiembre
             
-            // Construir curva matemática que pasa obligatoriamente por cEsp en el mes actual
+            // Construir curva matemática
             let dataEsperado = [];
             for(let i=0; i<12; i++) {
                 if (i < mesActual) {
@@ -530,7 +523,6 @@
             const labelsLine = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
             labelsLine[mesActual] = 'Hoy';
 
-            // Plugin dinámico para dibujar etiquetas sin que se tapen
             const badgeLabelPlugin = {
                 id: 'badgeLabels',
                 afterDatasetsDraw(chart) {
@@ -540,7 +532,6 @@
                     const espMeta = chart.getDatasetMeta(0);
                     const realMeta = chart.getDatasetMeta(1);
                     
-                    // 1. Dibujar hitos a lo largo de la curva verde
                     espMeta.data.forEach((point, index) => {
                         const val = data.datasets[0].data[index];
                         if([1, 4, 7, 11].includes(index) && index !== mesActual) {
@@ -556,22 +547,17 @@
                         }
                     });
                     
-                    // 2. Dibujar mes actual (Lógica de Overlap)
                     const rp = realMeta.data[mesActual];
                     const ep = espMeta.data[mesActual];
                     if(rp && ep) {
                         const rVal = data.datasets[1].data[mesActual];
                         const eVal = data.datasets[0].data[mesActual];
                         
-                        // Si Real >= Esperado, Real va ARRIBA y Esperado ABAJO
-                        // Si Real < Esperado, Esperado va ARRIBA y Real ABAJO
                         const realIsTop = rVal >= eVal;
-                        
-                        // Posiciones Y calculadas (Offset para no tapar el punto)
                         const yReal = realIsTop ? rp.y - 28 : rp.y + 12;
                         const yEsp = realIsTop ? ep.y + 12 : ep.y - 28;
 
-                        // Dibujar Esperado (Hoy)
+                        // Esperado (Hoy)
                         ctx.fillStyle = '#1e7b45'; 
                         ctx.beginPath();
                         ctx.roundRect(ep.x - 16, yEsp, 32, 16, 4);
@@ -582,7 +568,7 @@
                         ctx.textBaseline = 'middle';
                         ctx.fillText(eVal + '%', ep.x, yEsp + 8);
 
-                        // Dibujar Real (Hoy) - Se dibuja de último para asegurar z-index visual
+                        // Real (Hoy)
                         ctx.fillStyle = '#0a1930'; 
                         ctx.beginPath();
                         ctx.roundRect(rp.x - 16, yReal, 32, 16, 4);
@@ -620,7 +606,7 @@
                             pointBorderWidth: 2,
                             tension: 0.4, 
                             fill: true,
-                            order: 2 // Renderizar primero
+                            order: 2 
                         },
                         {
                             label: 'Avance Real',
@@ -632,19 +618,18 @@
                             pointBorderColor: '#ffffff',
                             pointBorderWidth: 2,
                             showLine: false, 
-                            order: 1 // Renderizar encima
+                            order: 1 
                         }
                     ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    // Aumentamos padding superior y derecho para evitar recortes del 100% y etiquetas superiores
                     layout: { padding: { top: 40, right: 25, left: 20, bottom: 10 } },
                     plugins: { legend: { display: false }, tooltip: { enabled: false } }, 
                     scales: {
                         y: { 
-                            min: 0, max: 105, // Ligeramente más de 100 para dar aire
+                            min: 0, max: 105,
                             ticks: { stepSize: 25, callback: v => v <= 100 ? v + '%' : '', font: { size: 10, color: '#94a3b8' } },
                             border: { display: false },
                             grid: { color: '#f1f5f9', borderDash: [4, 4] }
@@ -662,8 +647,6 @@
             });
         }
 
-
-        
         function getWbsStatusBadge(real, esp) {
             const gap = esp - real;
             if (gap <= 0) return `<span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full text-[8px] font-black"><span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>AL DÍA</span>`;
@@ -691,22 +674,19 @@
                 let bgClass = depth === 0 ? 'bg-slate-50/50' : 'bg-white';
                 
                 const chevronIcon = hasChildren 
-                ? `<i class="fa-solid ${isExpanded ? 'fa-chevron-down text-brand-blue' : 'fa-chevron-right text-slate-400'} text-[8px] mr-2 flex-shrink-0 transition-transform"></i>` 
-                : (depth > 0 ? `<span class="text-slate-200 mr-2 flex-shrink-0">└─</span>` : `<span class="w-3.5 inline-block"></span>`);
-                
-            const clickAction = hasChildren ? `onclick="toggleWbsNode('${nodeKey}', '${componentKey}')"` : '';
-            
-            // Limpiar el título de la tarea para mostrar en la tabla (sin EDT)
-            const nombreLimpioTabla = cleanTitle(item.nameRaw);
-                
-            if (parentExpanded) {
-                rowsHtml += `
-                    <tr class="hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0 ${bgClass}">
-                        <td class="p-3 ${indentClass} flex items-center gap-1.5 select-none" ${clickAction} style="cursor: ${hasChildren ? 'pointer' : 'default'}">
-                            ${chevronIcon}
-                            <span class="leading-snug ${textClass}">${nombreLimpioTabla}</span>
-                        </td>
-                        <td class="p-3 text-center whitespace-nowrap">${statusBadge}</td>
+                    ? `<i class="fa-solid ${isExpanded ? 'fa-chevron-down text-brand-blue' : 'fa-chevron-right text-slate-400'} text-[8px] mr-2 flex-shrink-0 transition-transform"></i>` 
+                    : (depth > 0 ? `<span class="text-slate-200 mr-2 flex-shrink-0">└─</span>` : `<span class="w-3.5 inline-block"></span>`);
+                    
+                const clickAction = hasChildren ? `onclick="toggleWbsNode('${nodeKey}', '${componentKey}')"` : '';
+                    
+                if (parentExpanded) {
+                    rowsHtml += `
+                        <tr class="hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0 ${bgClass}">
+                            <td class="p-3 ${indentClass} flex items-center gap-1.5 select-none" ${clickAction} style="cursor: ${hasChildren ? 'pointer' : 'default'}">
+                                ${chevronIcon}
+                                <span class="leading-snug ${textClass}">${item.cleanName}</span>
+                            </td>
+                            <td class="p-3 text-center whitespace-nowrap">${statusBadge}</td>
                             <td class="p-3 text-center font-extrabold whitespace-nowrap text-brand-blue">${realPercent}%</td>
                             <td class="p-3 text-center font-semibold whitespace-nowrap text-slate-400">${planPercent}%</td>
                             <td class="p-3 text-center text-slate-500 whitespace-nowrap text-[9.5px]">${formatDateStr(item.startDate)}</td>
@@ -757,7 +737,6 @@
                 const isMainExpanded = expandedComponents[k] === true;
                 const cleanN = data.cleanName || conf.nameFallback;
                 
-                // Color de barra dinámico
                 const gap = espRound - realRound;
                 const barColor = gap <= 0 ? 'bg-brand-green' : (gap <= 10 ? 'bg-brand-yellow' : 'bg-brand-red');
 
@@ -768,14 +747,13 @@
                     <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm transition-all relative group hover:border-slate-300">
                         <div class="flex flex-col space-y-4">
                             
-                            <!-- Header de Tarjeta -->
+                            <!-- Header de Tarjeta (Sin prefijos numéricos) -->
                             <div class="flex flex-col md:flex-row justify-between md:items-center gap-4">
                                 <div class="flex items-center space-x-4 w-full">
                                     <div class="w-12 h-12 rounded-xl flex items-center justify-center ${conf.colorBg} ${conf.colorText} border border-slate-100 flex-shrink-0 text-xl transition-colors">
                                         ${conf.icon}
                                     </div>
                                     <div class="flex flex-col justify-center">
-                                        <!-- Título de línea modificado para mostrar solo el nombre limpio -->
                                         <h4 class="text-sm font-extrabold text-brand-blue leading-tight uppercase">${cleanN}</h4>
                                     </div>
                                 </div>
@@ -793,13 +771,11 @@
                                 </div>
                             </div>
 
-                            <!-- Barra de progreso general de la tarjeta -->
                             <div class="relative bg-slate-100 rounded-full h-2 w-full overflow-hidden">
                                 <div class="absolute top-0 left-0 h-full rounded-full ${barColor} z-[2]" style="width: ${Math.min(realRound, 100)}%;"></div>
                                 <div class="absolute top-0 left-0 h-full bg-slate-300 z-[1]" style="width: ${Math.min(espRound, 100)}%;"></div>
                             </div>
                             
-                            <!-- Botón de Expansión -->
                             <div class="flex justify-start items-center pt-1">
                                 <button onclick="toggleMainComponent('${k}')" class="text-brand-blue font-extrabold uppercase tracking-wider flex items-center gap-2 text-[10px] transition-all bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg">
                                     <i id="chevron-${k.replace(/\./g, '-')}" class="fa-solid fa-chevron-down text-[9px] transition-transform duration-300 ${isMainExpanded ? 'rotate-180' : ''}"></i>
@@ -807,7 +783,6 @@
                                 </button>
                             </div>
 
-                            <!-- Tabla desplegable WBS (Lógica inyectada) -->
                             <div id="activities-panel-${k.replace(/\./g, '-')}" class="collapsible-activities w-full ${isMainExpanded ? 'open' : ''}">
                                 <div class="w-full overflow-x-auto rounded-xl border border-slate-200 mt-2 bg-white">
                                     <table class="w-full text-left text-[11px] min-w-[850px]">
@@ -836,8 +811,6 @@
             });
         }
 
-
-        // --- INICIALIZACIÓN ---
         async function init() {
             try {
                 const res = await fetch(URL_PROJECT);
@@ -847,7 +820,7 @@
                     
                     processData(json.table.rows);
                     updateTopKPIs();
-                    renderLineasEstrategicas(); // Inyecta las tarjetas
+                    renderLineasEstrategicas(); 
                     setTimeout(() => initGraficoTendencia(), 50);
                 }
             } catch (err) {
