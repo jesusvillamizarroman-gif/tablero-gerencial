@@ -943,6 +943,9 @@
                     // Bloqueo estricto para evitar basura de fechas que provenga de errores de tipeo del Excel
                     if (normKey === 'ano' || normKey === 'año' || normKey.includes('fecha') || normKey.includes('cierre') || normKey.includes('inicio') || normKey.includes('incio') || normKey.includes('fin')) return;
 
+                    // Bloqueo explícito para ocultar la "Zona de Intervención o Impacto" (ya que es redundante)
+                    if (normKey.includes('zona de intervencion') || normKey.includes('zona de impacto')) return;
+
                     let displayVal = val;
                     if (colKeys.poblacional && key === colKeys.poblacional) displayVal = sanitizePoblacional(val);
                     
