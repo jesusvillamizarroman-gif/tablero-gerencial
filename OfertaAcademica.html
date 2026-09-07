@@ -1,4 +1,4 @@
->
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -79,9 +79,11 @@
         .bubble-marker:hover { transform: scale(1.1); background-color: rgba(0, 132, 61, 0.95); z-index: 1000 !important; }
         .bubble-marker.active { background-color: rgba(249, 115, 22, 0.9); border-color: white; transform: scale(1.15); z-index: 1001 !important; }
         
+        /* Drawer Animations */
         .drawer-open { transform: translateX(0%); }
         .drawer-closed { transform: translateX(100%); }
         
+        /* Animación Skeleton */
         @keyframes pulse-bg { 0% { background-color: #e2e8f0; } 50% { background-color: #cbd5e1; } 100% { background-color: #e2e8f0; } }
         .skeleton { animation: pulse-bg 1.5s infinite; }
     </style>
@@ -92,6 +94,7 @@
     <aside class="w-64 wayuu-pattern text-white flex flex-col flex-shrink-0 z-30 h-full overflow-y-auto no-scrollbar shadow-xl relative">
         <div class="absolute inset-0 bg-gradient-to-b from-transparent to-black/20 pointer-events-none"></div>
 
+        <!-- Logo Area -->
         <div class="p-6 pb-2 relative z-10">
             <div class="flex items-start gap-3">
                 <i class="fa-solid fa-people-group text-2xl mt-1 text-green-300 drop-shadow"></i>
@@ -106,6 +109,7 @@
             <p class="text-[11px] text-green-50 leading-relaxed font-light">Este tablero consolida oportunidades, proyectos y formación para las comunidades de La Guajira.</p>
         </div>
 
+        <!-- Navegación -->
         <nav class="mt-2 flex-1 px-3 relative z-10">
             <ul class="space-y-1.5">
                 <li>
@@ -125,7 +129,7 @@
                     <div class="px-4 text-[10px] font-extrabold text-green-400/70 uppercase tracking-wider mb-2">Herramientas</div>
                 </li>
                 
-                <!-- Traducción Desactivada -->
+                <!-- Traducción Desactivada Visualmente -->
                 <li class="px-4 py-3 rounded-lg border border-transparent opacity-60 cursor-not-allowed select-none bg-black/5">
                     <div class="flex flex-col gap-1 text-gray-400">
                         <div class="flex items-center gap-3 text-sm font-medium">
@@ -206,6 +210,7 @@
                                 </h2>
                             </div>
 
+                            <!-- KPIs -->
                             <div id="stats-row" class="flex flex-wrap gap-3 mt-1">
                                 <div class="bg-white border border-gray-200 rounded-2xl flex-1 min-w-[100px] shadow-sm flex flex-col overflow-hidden transition-shadow hover:shadow-md hover:border-brand-primary">
                                     <div class="p-3 text-center flex-1">
@@ -238,14 +243,17 @@
                                 </div>
                             </div>
 
+                            <!-- Categorías -->
                             <div>
                                 <h3 class="text-[10px] uppercase tracking-widest font-extrabold text-gray-400 mb-2">Categorías</h3>
                                 <div class="flex gap-2.5 overflow-x-auto pb-2 no-scrollbar" id="category-chips"></div>
                             </div>
 
+                            <!-- Filtros -->
                             <div class="bg-white rounded-2xl shadow-card border border-gray-100 p-4 md:p-5 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1.5 h-full bg-brand-primary"></div>
                                 <div class="flex flex-col md:flex-row gap-4 md:gap-5">
+                                    
                                     <div class="flex-1 relative">
                                         <label class="flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-extrabold text-gray-500 mb-2">
                                             <div class="w-5 h-5 rounded bg-brand-light text-brand-primary flex items-center justify-center shrink-0"><i class="fa-solid fa-layer-group text-[10px]"></i></div>
@@ -281,6 +289,7 @@
                             </div>
                         </div> 
                         
+                        <!-- Mapa Principal -->
                         <div class="xl:col-span-5 flex flex-col h-[400px] xl:h-auto min-h-[300px]">
                             <div class="bg-white rounded-2xl shadow-card border border-gray-100 flex flex-col h-full overflow-hidden relative">
                                 <div class="p-3.5 border-b border-gray-100 flex justify-between items-center bg-white z-10 relative">
@@ -300,7 +309,8 @@
                         </div>
                     </div> 
 
-                    <div>
+                    <!-- Resultados -->
+                    <div class="pb-8">
                         <div class="flex flex-wrap items-center justify-between mb-6 pb-2 border-b border-gray-200">
                             <h3 class="text-lg md:text-xl font-extrabold text-gray-900 flex items-center gap-2">
                                 <i class="fa-solid fa-layer-group text-brand-primary"></i> <span>Oportunidades destacadas</span>
@@ -315,7 +325,7 @@
                                 <i class="fa-solid fa-box-open text-2xl md:text-3xl text-orange-400"></i>
                             </div>
                             <h3 class="text-lg md:text-xl font-extrabold text-gray-900 mb-2">Sin coincidencias</h3>
-                            <p class="text-gray-500 max-w-md mx-auto text-xs md:text-sm font-medium mb-6">No hay ofertas que crucen con esta combinación de filtros. Intenta seleccionar otra ubicación.</p>
+                            <p class="text-gray-500 max-w-md mx-auto text-xs md:text-sm font-medium mb-6">No hay ofertas que crucen con esta combinación de filtros.</p>
                             <button onclick="document.getElementById('btn-clear-filters').click()" class="bg-brand-primary text-white font-bold px-6 py-2.5 rounded-xl shadow-md hover:bg-brand-sidebar transition-colors inline-flex items-center gap-2">
                                 <i class="fa-solid fa-rotate-left"></i> Limpiar todos los filtros
                             </button>
@@ -324,7 +334,7 @@
                 </div>
             </main>
 
-            <!-- CAJÓN DE DETALLES: "Conocer Más" (Absolute para respetar el menú izquierdo y barra superior) -->
+            <!-- CAJÓN DE DETALLES: Arquitectura "Full-Screen interna" para aprovechar el 100% del área blanca -->
             <div id="drawer-overlay" class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm z-[60] hidden transition-opacity opacity-0" onclick="closeDrawer()"></div>
             
             <div id="detail-drawer" class="absolute inset-y-0 right-0 h-full w-full bg-white shadow-drawer z-[70] flex flex-col drawer-closed transition-transform duration-300 ease-in-out border-l border-gray-100">
@@ -397,11 +407,19 @@
         let globalStatus = 'all'; 
         let globalChip = ''; 
 
-        // COLKEYS: colD = Índice 3 (Estricto para Enfoque)
+        // COLKEYS ESTRÍCTOS: Entidad = Col 0, Enfoque = Col 3, Fechas = Cols 7 y 8.
         const colKeys = { 
-            colD: null, colG: null, poblacional: null, estado: null, entidad: null, 
-            nombreOferta: null, enlace: null, contacto: null, municipioCols: [],
-            anoInicio: null, anoCierre: null
+            entidad: null, 
+            nombreOferta: null, 
+            colD: null, 
+            colG: null, 
+            poblacional: null, 
+            estado: null, 
+            enlace: null, 
+            contacto: null, 
+            anoInicio: null, 
+            anoCierre: null, 
+            municipioCols: [] 
         };
 
         const coordGuajira = {
@@ -496,32 +514,28 @@
             const norm = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             colKeys.municipioCols = [];
 
-            // REGLA ESTRICTA: Columna D (Índice 3) para "¿Qué quieres aprender?" (Enfoque)
-            if(headers.length > 3) { colKeys.colD = headers[3]; }
+            // ASIGNACIONES ESTRICTAS POR POSICIÓN Y PATRÓN:
+            if(headers.length > 0) colKeys.entidad = headers[0]; // Col A
+            if(headers.length > 3) colKeys.colD = headers[3];    // Col D (Enfoque poblacional o Enfoque simple)
+            if(headers.length > 6) colKeys.colG = headers[6];    // Col G (Chip categories)
+            if(headers.length > 7) colKeys.anoInicio = headers[7]; // Col H (Año inicio)
+            if(headers.length > 8) colKeys.anoCierre = headers[8]; // Col I (Año cierre)
 
             headers.forEach((header, index) => {
                 const n = norm(header);
-                if (n.includes('poblacion') || n.includes('enfoque poblacional') || n.includes('dirigido')) colKeys.poblacional = header;
+                if (/\bpoblacional\b/.test(n) || n.includes('enfoque poblacional') || n.includes('dirigido')) colKeys.poblacional = header;
                 if (/\bestado\b/.test(n)) colKeys.estado = header;
                 if (n.includes('enlace') || /\burl\b/.test(n) || /\blink\b/.test(n)) colKeys.enlace = header;
                 if (n.includes('contacto')) colKeys.contacto = header;
                 
-                // Fechas Estrictas
-                if (n.includes('ano inicio') || n.includes('año inicio')) colKeys.anoInicio = header;
-                if (n.includes('ano cierre') || n.includes('año cierre') || n.includes('ano fin') || n.includes('año fin')) colKeys.anoCierre = header;
-
-                if ((n.includes('nombre') && n.includes('oferta')) || n.includes('programa') || n.includes('proyecto')) colKeys.nombreOferta = header;
-                if (/\bentidad\b/.test(n) || n.includes('institucion') || n.includes('aliado')) colKeys.entidad = header;
-                
-                if (n.includes('categoria') || n.includes('tipo')) colKeys.colG = header;
+                // Buscar Nombre de Oferta (Priorizar columnas con "nombre", "oferta", "programa")
+                if ((n.includes('nombre') && n.includes('oferta')) || n.includes('programa') || n.includes('proyecto') || n.includes('formacion')) colKeys.nombreOferta = header;
                 
                 if (/\bmunicipio\b/.test(n)) colKeys.municipioCols.push(header);
             });
             
             if(!colKeys.estado) colKeys.estado = headers.find(h => norm(h).includes('estado')) || 'Estado';
-            if(!colKeys.entidad) colKeys.entidad = headers.find(h => norm(h).includes('entidad')) || headers[0];
-            if(!colKeys.nombreOferta) colKeys.nombreOferta = colKeys.entidad; // Fallback
-            if(!colKeys.colG && headers.length > 6) colKeys.colG = headers[6];
+            if(!colKeys.nombreOferta) colKeys.nombreOferta = headers.length > 1 ? headers[1] : headers[0]; // Fallback
         }
 
         function getRowStatus(row) {
@@ -747,6 +761,7 @@
             fill(document.getElementById('filter-municipio'), munOptions, 'Municipio / comunidad');
         }
 
+        // Íconos Dinámicos
         function getOfferIcon(title) {
             const str = title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             if(str.includes('solar') || str.includes('energ') || str.includes('panel')) return 'fa-solar-panel text-amber-500 bg-amber-50';
@@ -794,20 +809,26 @@
                 const munisText = [...new Set(zonas)].slice(0,3).join(', ') || 'La Guajira';
                 
                 const sector = colKeys.colD ? capitalizeFormat(row[colKeys.colD]) : 'Sector general';
-                const titulo = colKeys.nombreOferta && row[colKeys.nombreOferta] ? capitalizeFormat(row[colKeys.nombreOferta]) : (colKeys.entidad ? capitalizeFormat(row[colKeys.entidad]) : 'Oferta Institucional');
+                const titulo = colKeys.nombreOferta && row[colKeys.nombreOferta] ? capitalizeFormat(row[colKeys.nombreOferta]) : 'Oferta Institucional';
+                const entidad = colKeys.entidad && row[colKeys.entidad] ? capitalizeFormat(row[colKeys.entidad]) : '';
 
+                // Construcción de la Tarjeta con los Datos Precisos
                 htmlStr += `
                 <div class="bg-white rounded-2xl p-6 shadow-card border border-gray-100 card-hover flex flex-col h-full border-t-[4px] ${statusStyle.border} relative min-w-0">
-                    <div class="flex justify-between items-start mb-4">
+                    <div class="flex justify-between items-start mb-3">
                         <span class="${statusStyle.bg} ${statusStyle.text} px-3 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-widest shrink-0">${statusStyle.label}</span>
                         <button aria-label="Guardar oferta" onclick="toggleFavorite(${originalIndex}, event)" class="${isFav ? 'text-red-500' : 'text-gray-200 hover:text-red-400'} transition-transform hover:scale-110 shrink-0 ml-2">
                             <i class="fa-solid fa-heart text-xl"></i>
                         </button>
                     </div>
+                    
                     <div class="text-[10px] uppercase tracking-widest text-gray-400 font-extrabold mb-1.5 line-clamp-1 flex items-center gap-1.5" title="${sector}">
                         <i class="fa-solid fa-tag text-gray-300 shrink-0"></i> <span class="truncate">${sector}</span>
                     </div>
-                    <h3 class="text-xl font-extrabold text-gray-900 mb-4 leading-tight line-clamp-3 break-words" title="${titulo}">${titulo}</h3>
+                    
+                    <h3 class="text-xl font-extrabold text-gray-900 mb-2 leading-tight line-clamp-3 break-words" title="${titulo}">${titulo}</h3>
+                    
+                    ${entidad ? `<p class="text-xs font-semibold text-gray-600 mb-4 line-clamp-2"><i class="fa-solid fa-building text-gray-400 mr-1.5"></i> ${entidad}</p>` : ''}
                     
                     <div class="mt-auto pt-4 flex items-center justify-between border-t border-gray-50 gap-3">
                         <div class="flex items-center text-xs text-gray-500 font-semibold truncate pr-2 bg-brand-bg px-2.5 py-1.5 rounded-lg border border-gray-100 min-w-0">
@@ -827,7 +848,7 @@
             if(!row) return;
 
             const statusType = getRowStatus(row);
-            const tituloOferta = colKeys.nombreOferta && row[colKeys.nombreOferta] ? capitalizeFormat(row[colKeys.nombreOferta]) : (colKeys.entidad ? capitalizeFormat(row[colKeys.entidad]) : 'Detalle de Oferta');
+            const tituloOferta = colKeys.nombreOferta && row[colKeys.nombreOferta] ? capitalizeFormat(row[colKeys.nombreOferta]) : 'Detalle de Oferta';
             
             document.getElementById('drawer-title').textContent = tituloOferta;
             
@@ -840,6 +861,7 @@
             
             const applyBtn = document.getElementById('drawer-apply-btn');
             
+            // Lógica Botón de Enlace y Estado
             if (statusType === 'cerradas') {
                 applyBtn.removeAttribute('href');
                 applyBtn.className = "w-full sm:w-auto min-w-[250px] flex justify-center items-center gap-2 py-3.5 px-6 bg-gray-400 text-white font-bold rounded-xl opacity-60 pointer-events-none text-sm text-center";
@@ -874,7 +896,7 @@
             let fieldsToShow = [];
             const norm = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-            // UNIFICAR MUNICIPIOS (Siempre visible)
+            // UNIFICAR MUNICIPIOS
             let munisList = [];
             colKeys.municipioCols.forEach(c => {
                 if(row[c] && row[c].trim() !== '' && row[c].toLowerCase() !== 'n/a') {
@@ -883,8 +905,8 @@
             });
             const munisText = munisList.length > 0 ? [...new Set(munisList)].join(', ') : '';
 
+            // CONDICIONAL ABIERTA / CERRADA
             if (statusType === 'disponibles') {
-                // OFERTA ABIERTA: Mostrar solo campos clave
                 if (colKeys.entidad && row[colKeys.entidad]) fieldsToShow.push({ name: 'Entidad Responsable', val: capitalizeFormat(row[colKeys.entidad]) });
                 
                 let descKey = Object.keys(row).find(k => norm(k).includes('descripcio') || norm(k).includes('objetivo'));
@@ -894,7 +916,7 @@
                 if (munisText) fieldsToShow.push({ name: 'Municipios de Intervención', val: munisText });
 
             } else {
-                // OFERTA CERRADA: Toda la info + Periodo de ejecución consolidado (Columnas H e I)
+                // OFERTA CERRADA: UNIFICACIÓN DE FECHAS
                 let anioInicio = colKeys.anoInicio && row[colKeys.anoInicio] ? String(row[colKeys.anoInicio]).trim() : '';
                 let anioCierre = colKeys.anoCierre && row[colKeys.anoCierre] ? String(row[colKeys.anoCierre]).trim() : '';
                 let periodo = '';
@@ -906,20 +928,19 @@
                 if (periodo) fieldsToShow.push({ name: 'Periodo de ejecución', val: periodo });
                 if (munisText) fieldsToShow.push({ name: 'Municipios de Intervención', val: munisText });
 
+                // AGREGAR EL RESTO DE CAMPOS, IGNORANDO LOS REPETIDOS
                 Object.keys(row).forEach(key => {
                     const val = String(row[key]).trim();
                     const normKey = norm(key);
                     
                     if(!val || val.toLowerCase() === 'n/a' || key.includes('__powerapps') || (colKeys.enlace && key === colKeys.enlace) || normKey.includes('contacto')) return; 
                     if(colKeys.nombreOferta && key === colKeys.nombreOferta) return;
-                    if(colKeys.entidad && key === colKeys.entidad) return;
+                    if(colKeys.entidad && key === colKeys.entidad) return; // Se omite si ya está en el título
                     if(colKeys.municipioCols.includes(key)) return; 
+                    if(colKeys.anoInicio && key === colKeys.anoInicio) return; // Se omite (ya está en Periodo)
+                    if(colKeys.anoCierre && key === colKeys.anoCierre) return; // Se omite (ya está en Periodo)
                     
-                    // Ocultar las columnas H e I originales explícitamente
-                    if(colKeys.anoInicio && key === colKeys.anoInicio) return;
-                    if(colKeys.anoCierre && key === colKeys.anoCierre) return;
-                    
-                    // Bloqueo extremo por errores tipográficos como "incio"
+                    // Bloqueo estricto para evitar basura de fechas que provenga de errores de tipeo del Excel
                     if (normKey === 'ano' || normKey === 'año' || normKey.includes('fecha') || normKey.includes('cierre') || normKey.includes('inicio') || normKey.includes('incio') || normKey.includes('fin')) return;
 
                     let displayVal = val;
@@ -929,25 +950,28 @@
                 });
             }
 
-            // Evitar duplicados por seguridad
+            // LIMPIADOR DE ENTERS (\n) Y RENDERIZADO DEL GRID A 3 COLUMNAS
             const uniqueFields = [];
             const seenKeys = new Set();
+            
             fieldsToShow.forEach(f => {
                 if(!seenKeys.has(f.name)) {
                     seenKeys.add(f.name);
-                    uniqueFields.push(f);
+                    // AQUÍ ESTÁ LA MAGIA: Eliminamos \n y \r, reemplazándolos por espacios limpios
+                    let cleanedVal = String(f.val).replace(/\r?\n|\r/g, ' ').replace(/\s+/g, ' ');
+                    uniqueFields.push({ name: f.name, val: cleanedVal });
                 }
             });
 
-            // Renderizado Expansivo
-            let htmlStr = '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">';
+            // Grid expansivo sin scroll interno
+            let htmlStr = '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6 w-full">';
             uniqueFields.forEach(field => {
-                // Si el texto es largo, ocupa TODAS las columnas a lo ancho. Sin barra de scroll interna.
-                const isLongText = field.val.length > 90;
+                // Si el texto tiene más de 100 caracteres, tomará todo el ancho de la pantalla (Col-span-3)
+                const isLongText = field.val.length > 100;
                 htmlStr += `
                     <div class="border-b border-gray-100 pb-3 min-w-0 w-full ${isLongText ? 'col-span-1 md:col-span-2 lg:col-span-3' : 'col-span-1'}">
                         <span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest block mb-1.5 break-words">${capitalizeFormat(field.name)}</span>
-                        <div class="text-[14px] text-gray-800 leading-relaxed font-medium break-words whitespace-pre-wrap">${capitalizeFormat(field.val)}</div>
+                        <div class="text-[14px] text-gray-800 leading-relaxed font-medium break-words">${capitalizeFormat(field.val)}</div>
                     </div>`;
             });
             htmlStr += '</div>';
@@ -960,7 +984,7 @@
                 document.getElementById('detail-drawer').classList.remove('drawer-closed');
                 document.getElementById('detail-drawer').classList.add('drawer-open');
                 
-                // Inicializar mapa interno del Cajón
+                // Inicializar mapa interno
                 initDrawerMap(row);
             }, 10);
         }
