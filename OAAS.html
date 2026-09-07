@@ -4,471 +4,671 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tablero OAAS - Gerencia Guajira</title>
-    <!-- Tailwind CSS -->
+    
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome para Iconos -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            blue: '#0a1930',       
+                            blueLight: '#1e3a8a',
+                            green: '#22c55e',      
+                            yellow: '#f59e0b',     
+                            red: '#ef4444'
+                        }
+                    },
+                    boxShadow: { 'card': '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)' }
+                }
+            }
+        }
+    </script>
+    
+    <!-- FontAwesome y Google Fonts -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-    <!-- Google Fonts: Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <!-- html2canvas para captura de pantalla -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js y html2canvas -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
-        :root {
-            --mme-blue-dark: #002244;
-            --mme-blue: #003366;
-            --mme-blue-light: #0055a5;
-            --mme-yellow: #FFD700;
-            --mme-yellow-dark: #ccac00;
-            --colombia-red: #da291c;
-        }
-        body {
-            background-color: #f8fafc;
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            color: #0f172a;
-        }
-        .header-gradient {
-            background: linear-gradient(135deg, var(--mme-blue-dark) 0%, #004080 50%, var(--mme-blue-light) 100%);
-        }
-        .flag-strip {
-            height: 4px;
-            background: linear-gradient(to right, var(--mme-yellow) 57%, var(--mme-blue) 57%, var(--mme-blue) 80%, var(--colombia-red) 80%);
-        }
-        .card-shadow {
-            box-shadow: 0 10px 30px -10px rgba(0, 51, 102, 0.05);
-            border: 1px solid rgba(226, 232, 240, 0.8);
-        }
-        .progress-bar-fill {
-            transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .scrollbar-hide::-webkit-scrollbar {
-            display: none;
-        }
-        .scrollbar-hide {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        /* Transición de apertura suave del panel principal de detalles */
+        body { background-color: #f8fafc; color: #334155; overflow: hidden; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        #loader { transition: opacity 0.4s ease; }
+        .tab-content { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .table-row-hover:hover { background-color: #f8fafc; }
+        
+        /* Acordeón para tarjetas de Líneas Estratégicas */
         .collapsible-activities {
             max-height: 0;
             overflow: hidden;
-            transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-out;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-out;
             opacity: 0;
         }
         .collapsible-activities.open {
-            max-height: 8000px;
+            max-height: 5000px; /* Suficiente para expandir */
             opacity: 1;
             overflow-y: visible;
         }
-        .icon-container {
-            width: 38px;
-            height: 38px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 10px;
-            flex-shrink: 0;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in {
-            animation: fadeIn 0.5s ease forwards;
+        
+        .logo-minenergia {
+            width: auto;
+            max-height: 55px; /* Ajusta la altura máxima para que quepa bien */
+            object-fit: contain;
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col selection:bg-blue-100" id="dashboard-body">
+<body class="flex h-screen w-screen" id="dashboard-body">
 
-    <!-- Loader de optimización de datos -->
-    <div id="loader" data-html2canvas-ignore="true" class="fixed inset-0 bg-slate-900/95 z-50 flex flex-col justify-center items-center backdrop-blur-sm transition-opacity duration-500">
-        <div class="flex flex-col items-center">
-            <div class="relative w-16 h-16 mb-4">
-                <div class="absolute inset-0 rounded-full border-4 border-slate-700"></div>
-                <div class="absolute inset-0 rounded-full border-4 border-t-[#FFD700] border-r-[#003366] animate-spin"></div>
-            </div>
-            <p class="text-xs font-bold text-white uppercase tracking-widest text-center max-w-xs leading-relaxed px-4">
-                Oficina de Asuntos Ambientales y Sociales<br>
-                <span class="text-[#FFD700] font-normal text-[10px] tracking-normal">Sincronizando cronograma...</span>
-            </p>
+    <div id="loader" class="fixed inset-0 bg-white z-[100] flex flex-col justify-center items-center">
+        <div class="relative w-12 h-12 mb-4">
+            <div class="absolute inset-0 rounded-full border-4 border-slate-100"></div>
+            <div class="absolute inset-0 rounded-full border-4 border-t-brand-blue border-r-brand-blue animate-spin"></div>
         </div>
+        <p class="text-sm font-bold text-brand-blue uppercase tracking-widest text-center">
+            Sincronizando Tablero<br>
+            <span class="text-slate-400 font-medium text-xs normal-case tracking-normal mt-1 block">Conectando con Google Sheets...</span>
+        </p>
     </div>
 
-    <!-- Línea tricolor patria -->
-    <div class="flag-strip" data-html2canvas-ignore></div>
-    
-    <header class="header-gradient text-white py-5 px-6 shadow-xl relative overflow-hidden">
-        <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
-        
-        <div class="max-w-[1700px] mx-auto flex flex-col relative z-10 gap-5">
-            <!-- Fila Superior: Logo, Títulos y Badges -->
-            <div class="flex flex-col lg:flex-row justify-between items-center gap-4">
-                <!-- Logo y títulos -->
-                <div class="flex items-center space-x-4">
-                    <div class="p-3 bg-white/10 rounded-2xl backdrop-blur-md border border-white/20 shadow-inner flex items-center justify-center">
-                        <svg class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path></svg>
-                    </div>
-                    <div>
-                        <h1 class="text-xl md:text-2xl font-black tracking-tight uppercase leading-none mt-1">
-                            Oficina de Asuntos Ambientales y Sociales (OAAS)
-                        </h1>
-                        <p class="text-yellow-400 text-xs font-bold tracking-widest uppercase opacity-90 mt-1">
-                            Seguimiento Gerencia Guajira
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Acciones rápidas, conexión y Estado Global -->
-                <div class="flex flex-wrap items-center justify-center gap-3">
-                    <span id="update-date" class="bg-black/35 border border-white/15 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest text-white/95">
-                        Cargando fecha...
-                    </span>
-                    
-                    <span id="connection-badge" class="bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
-                        <i class="fa-solid fa-circle text-[8px] animate-pulse"></i>
-                        Sincronizado Online
-                    </span>
-
-                    <span id="header-kpi-status" class="px-3 py-1.5 rounded-full text-[10px] font-extrabold uppercase bg-white/10 text-white border border-white/20 flex-shrink-0 hidden md:inline-flex items-center gap-1">
-                        --
-                    </span>
-
-                    <!-- Botón de Descarga Imagen -->
-                    <button onclick="downloadScreenshot()" id="download-btn" class="bg-blue-500/30 hover:bg-blue-500/50 text-white border border-blue-400/40 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 transition-colors" data-html2canvas-ignore>
-                        <i class="fa-solid fa-camera"></i>
-                        Capturar
-                    </button>
-                </div>
-            </div>
-
-            <!-- Fila Inferior: Panel Integrado de Avance Global -->
-            <div class="bg-black/20 border border-white/10 rounded-2xl p-4 md:px-6 flex flex-col sm:flex-row items-center gap-6 shadow-inner backdrop-blur-sm mt-1">
-                <div class="text-center sm:text-left min-w-[120px] flex-shrink-0 border-b sm:border-b-0 sm:border-r border-white/10 pb-3 sm:pb-0 sm:pr-6">
-                    <span class="block text-[9px] font-bold text-white/60 uppercase tracking-widest mb-0.5">Avance Global</span>
-                    <span id="header-kpi-real" class="text-3xl md:text-4xl font-black text-white">--%</span>
-                </div>
-                
-                <div class="w-full flex-grow">
-                    <div class="flex justify-between text-[11px] text-white/80 mb-2 font-medium">
-                        <span class="md:hidden" id="header-kpi-status-mobile">Estado: --</span>
-                        <span class="hidden md:inline-block">Progreso General del Proyecto</span>
-                        <span>Meta Esperada: <strong id="header-kpi-plan" class="text-white">--%</strong></span>
-                    </div>
-                    <div class="relative bg-black/40 rounded-full h-2.5 md:h-3 w-full overflow-hidden border border-black/50 shadow-inner">
-                        <div id="header-kpi-bar" class="progress-bar-fill absolute top-0 left-0 h-full rounded-full bg-yellow-400 shadow-[inset_0_1px_3px_rgba(255,255,255,0.3)]" style="width: 0%"></div>
-                    </div>
-                </div>
+    <aside class="w-[220px] bg-white border-r border-slate-200 flex flex-col h-full z-20 flex-shrink-0 transition-all">
+        <div class="h-[100px] flex items-center justify-center border-b border-slate-100 px-4">
+            <div class="flex flex-col items-center">
+                <img src="https://drive.google.com/thumbnail?id=1l4uMxSlrE-dkiYtP4P_mzUlSyAGjix4m" alt="Logo Ministerio de Minas y Energía" class="logo-minenergia" onerror="this.onerror=null; this.src='https://placehold.co/180x50/ffffff/0a1930?text=MinEnerg%C3%ADa';">
             </div>
         </div>
-    </header>
 
-    <!-- Contenedor principal de la aplicación -->
-    <main class="max-w-[1700px] mx-auto p-4 md:p-8 w-full flex-grow flex flex-col gap-6">
-        
-        <!-- SECCIÓN UNIFICADA: COMPONENTES -->
-        <section class="w-full max-w-5xl mx-auto flex flex-col gap-6 transition-all duration-500">
-            
-            <!-- Contenedor dinámico de Desglose de Componentes -->
-            <div id="group-1" class="space-y-5">
-                <!-- Aquí se inyectan las tarjetas de 1.1, 1.2, etc. -->
-            </div>
-            
-        </section>
+        <nav class="p-3 flex-1 space-y-1.5 overflow-y-auto mt-2">
+            <button onclick="switchTab('resumen')" id="btn-tab-resumen" class="w-full flex items-center gap-3 px-3 py-2.5 bg-brand-blue text-white rounded-lg font-semibold text-[12px] shadow-sm transition-colors text-left">
+                <i class="fa-solid fa-house w-4 text-center"></i> Resumen Global
+            </button>
+            <button onclick="switchTab('lineas')" id="btn-tab-lineas" class="w-full flex items-center gap-3 px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-brand-blue rounded-lg font-medium text-[12px] transition-colors text-left">
+                <i class="fa-solid fa-table-list w-4 text-center text-slate-400"></i> Líneas Estratégicas
+            </button>
+        </nav>
+    </aside>
 
-        <!-- Footer con compromiso territorial de La Guajira -->
-        <footer class="mt-8 mb-4 max-w-4xl mx-auto text-center w-full">
-            <div class="bg-gradient-to-r from-blue-50/40 via-blue-50/80 to-blue-50/40 p-6 rounded-[2rem] border border-blue-100/30">
-                <p class="text-xs font-medium italic text-[#003366]/80 px-4 leading-relaxed">
-                    "La Guajira es el epicentro de la Transición Energética Justa. El bienestar social y el respeto ambiental 
-                    en cada comunidad es nuestra prioridad permanente para forjar un desarrollo equitativo."
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+        <header class="bg-white border-b border-slate-200 h-[100px] px-8 flex justify-between items-center z-10 flex-shrink-0">
+            <div>
+                <h1 class="text-[20px] font-black text-brand-blue tracking-tight uppercase leading-none mb-1.5">
+                    Oficina de Asuntos Ambientales y Sociales
+                </h1>
+                <p class="text-slate-500 text-[11px] font-semibold tracking-wider uppercase">
+                    Seguimiento Ejecutivo • Gerencia Guajira
                 </p>
-                <div class="mt-4 flex items-center justify-center space-x-3">
-                    <div class="h-[1px] w-12 bg-yellow-400"></div>
-                    <span class="text-[8px] font-extrabold text-slate-500 uppercase tracking-[0.3em]">
-                        Compromiso Social, Ambiental y Minero • OAAS • MinEnergía
-                    </span>
-                    <div class="h-[1px] w-12 bg-yellow-400"></div>
-                </div>
             </div>
-        </footer>
+            <div class="flex items-center gap-6">
+                <div class="flex flex-col text-right">
+                    <span class="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-1">Última actualización</span>
+                    <div class="flex items-center gap-2 justify-end text-xs font-bold text-slate-800">
+                        <i class="fa-regular fa-calendar-check text-brand-green"></i>
+                        <span id="display-date">Cargando...</span>
+                    </div>
+                </div>
+                <div class="h-8 w-[1px] bg-slate-200 mx-1"></div>
+                <button onclick="exportarTablero()" data-html2canvas-ignore class="flex items-center gap-2 px-4 py-2 bg-brand-blue hover:bg-blue-900 text-white rounded-lg text-[12px] font-semibold transition-colors shadow-sm">
+                    <i class="fa-solid fa-download"></i> Exportar
+                </button>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8 w-full" id="dashboard-content">
+            <div class="max-w-[1500px] mx-auto space-y-6">
+                
+                <div id="tab-resumen" class="tab-content active space-y-6">
+                    
+                    <!-- KPI PRINCIPAL UNIFICADO (Avance + Tareas) -->
+                    <div class="bg-brand-blue rounded-2xl p-6 text-white shadow-card flex flex-col md:flex-row items-center gap-6 border border-[#1e3a8a] relative overflow-hidden">
+                        
+                        <!-- Bloque Izquierdo: Avance -->
+                        <div class="w-full md:w-[40%] border-b md:border-b-0 md:border-r border-blue-800 pb-4 md:pb-0 md:pr-6 flex flex-col">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-xs font-bold uppercase tracking-wide text-blue-100">Avance Global OAAS</span>
+                                <div id="kpi-global-status" class="bg-brand-green/20 text-brand-green px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase border border-brand-green/30">
+                                    AL DÍA
+                                </div>
+                            </div>
+                            <div class="flex items-end gap-3 my-2">
+                                <span id="kpi-global-real" class="text-5xl font-black tracking-tighter leading-none">--%</span>
+                                <span class="text-[11px] text-blue-200 font-medium mb-1">Esperado: <strong id="kpi-global-esp" class="text-white">--%</strong></span>
+                            </div>
+                            <div class="mt-2 w-full bg-[#1e3a8a] h-2.5 rounded-full overflow-hidden relative shadow-inner">
+                                <div id="kpi-global-bar" class="bg-brand-green h-full rounded-full transition-all duration-1000" style="width: 0%"></div>
+                                <div id="kpi-global-esp-marker" class="absolute top-0 bottom-0 w-[2px] bg-white opacity-90 shadow-[0_0_4px_rgba(0,0,0,0.5)]" style="left: 0%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Bloque Derecho: Estado de Tareas (Unificado horizontalmente) -->
+                        <div class="w-full md:w-[60%] flex flex-col justify-center">
+                            <div class="flex items-center gap-2 mb-3">
+                                <i class="fa-solid fa-list-check text-xs text-blue-300"></i>
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-blue-200">Estado de las Actividades o Tareas</span>
+                            </div>
+                            
+                            <!-- Tareas en una sola línea -->
+                            <div class="flex items-center justify-between bg-blue-900/40 py-3 px-4 rounded-xl border border-blue-800/50">
+                                <div class="flex flex-col items-center flex-1">
+                                    <div class="flex items-center gap-1.5 mb-1"><div class="w-2 h-2 rounded-full bg-brand-red"></div><span class="text-[9px] text-blue-200 font-bold uppercase tracking-wide">Críticas</span></div>
+                                    <span id="kpi-actividades-critico" class="text-2xl font-black text-brand-red leading-none">--</span>
+                                </div>
+                                <div class="w-px h-8 bg-blue-800/60"></div>
+                                <div class="flex flex-col items-center flex-1">
+                                    <div class="flex items-center gap-1.5 mb-1"><div class="w-2 h-2 rounded-full bg-brand-yellow"></div><span class="text-[9px] text-blue-200 font-bold uppercase tracking-wide">Alerta</span></div>
+                                    <span id="kpi-actividades-alerta" class="text-2xl font-black text-brand-yellow leading-none">--</span>
+                                </div>
+                                <div class="w-px h-8 bg-blue-800/60"></div>
+                                <div class="flex flex-col items-center flex-1">
+                                    <div class="flex items-center gap-1.5 mb-1"><div class="w-2 h-2 rounded-full bg-brand-green"></div><span class="text-[9px] text-blue-200 font-bold uppercase tracking-wide">Al día</span></div>
+                                    <span id="kpi-actividades-aldia" class="text-2xl font-black text-brand-green leading-none">--</span>
+                                </div>
+                                <div class="w-px h-8 bg-blue-800/60"></div>
+                                <div class="flex flex-col items-center flex-1">
+                                    <div class="flex items-center gap-1.5 mb-1"><i class="fa-solid fa-hashtag text-[9px] text-blue-400"></i><span class="text-[9px] text-white font-bold uppercase tracking-wide">Total</span></div>
+                                    <span id="kpi-actividades-total" class="text-2xl font-black text-white leading-none">--</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+                        
+                        <!-- Resumen de Líneas con Tareas -->
+                        <div class="xl:col-span-5 bg-white rounded-2xl p-6 border border-slate-200 shadow-card flex flex-col min-h-[350px]">
+                            <div class="flex items-center gap-2 text-slate-500 mb-4">
+                                <i class="fa-solid fa-layer-group text-sm text-brand-blue"></i>
+                                <span class="text-[12px] font-bold uppercase tracking-wider text-brand-blue">Resumen Ejecutivo de Líneas</span>
+                            </div>
+                            <div class="overflow-x-auto flex-1">
+                                <table class="w-full text-left">
+                                    <thead>
+                                        <tr class="border-b border-slate-200 text-[9px] uppercase tracking-wider text-slate-400 font-bold">
+                                            <th class="pb-2 font-semibold">Línea Estratégica</th>
+                                            <th class="pb-2 font-semibold text-center">Estado Tareas</th>
+                                            <th class="pb-2 font-semibold text-center">% Real / Esp.</th>
+                                            <th class="pb-2 font-semibold text-right">Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="kpi-lineas-table" class="divide-y divide-slate-50">
+                                        <!-- Inyectado por JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Gráfica de Tendencia Mejorada -->
+                        <div class="xl:col-span-7 bg-white rounded-2xl shadow-card border border-slate-200 p-6 flex flex-col min-h-[350px]">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-1.5 h-6 bg-[#1e7b45] rounded-full"></div>
+                                <h2 class="text-[13px] font-black text-brand-blue uppercase tracking-wide">Tendencia de Avance Global (2026)</h2>
+                            </div>
+                            
+                            <div class="w-full flex-1 relative min-h-[250px] mt-4">
+                                <canvas id="chart-tendencia"></canvas>
+                            </div>
+                            
+                            <!-- Leyenda Gráfica -->
+                            <div class="flex justify-center items-center gap-8 mt-4 text-[11px] font-medium text-slate-600 border-t border-slate-100 pt-3">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-3.5 h-3.5 rounded-full bg-[#1e7b45]"></span>
+                                    Avance Esperado
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="w-3.5 h-3.5 rounded-full bg-brand-blue"></span>
+                                    Avance Real (Hoy)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-lineas" class="tab-content">
+                    <div class="mb-5 flex flex-col gap-1">
+                        <h2 class="text-xl font-black text-brand-blue uppercase tracking-tight">Líneas Estratégicas</h2>
+                        <!-- Subtítulo eliminado -->
+                    </div>
+
+                    <!-- Contenedor dinámico donde se inyectan las tarjetas estilo Hitos_3 -->
+                    <div id="lineas-cards-container" class="space-y-6">
+                        <!-- JS Inyecta las tarjetas aquí -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
     </main>
 
-    <!-- Pie de página general -->
-    <footer class="bg-slate-950 py-4 text-center mt-auto border-t border-slate-900">
-        <p class="text-[8px] text-slate-400 font-bold tracking-[0.4em] uppercase">
-            Ministerio de Minas y Energía - República de Colombia
-        </p>
-    </footer>
-
     <script>
-        // FUENTES DE DATOS GLOBALES
         const URL_PROJECT = `https://docs.google.com/spreadsheets/d/1CWZlW4Ij8KhhYqPJdMKozk_bAHXmRQlq/gviz/tq?tqx=out:json`;
-
-        // CONFIGURACIÓN DE ICONOS
-        const ICON_CONFIG = {
-            '1.1': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>',
-            '1.2': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>',
-            '1.3': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M18 11c.7 0 1.37.1 2 .29V8c0-2.2-1.8-4-4-4H4C1.8 4 0 5.8 0 8v8c0 2.2 1.8 4 4 4h4v3l4.3-3H16c.3 0 .6-.04.9-.11-.56-.84-.9-1.85-.9-2.93s.34-2.09.9-2.93c-.9-.03-1.9-.03-2.9-.03zm1-3H5V6h11V8zm-5 3H5V9h6V11zm9 3.5l-3.5 3.5-1.5-1.5-1.4 1.4 2.9 2.9 4.9-4.9-1.4-1.4z"/></svg>',
-            '1.4': '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M12.3 3c-1-.1-2 .1-3 .5C7.4 4.3 6.1 5.8 5.4 7.6c-1 2.3-.6 5 1 6.9l-3.1 3.1 1.4 1.4 3.1-3.1c1.4 1.1 3.2 1.6 5 1.4 2.4-.3 4.6-1.7 5.7-3.9 1.5-3 1-6.7-1.2-9-1.3-1.4-3.1-2.2-5-2.3zm2.5 10c-.7 1.4-2.1 2.3-3.7 2.5-1.1.1-2.2-.2-3-.9l6.3-6.3c1 .9 1.3 2.2 1.9 3.4l-.5 1.3z"/></svg>'
+        
+        // Configuraciones visuales para las Líneas (1.1 a 1.4) - Iconos ajustados
+        const LINEAS_CONFIG = {
+            '1.1': { icon: '<i class="fa-solid fa-users-gear"></i>', colorBg: 'bg-blue-50', colorText: 'text-brand-blue', nameFallback: 'Fortalecimiento de Gobernanza Étnica' },
+            '1.2': { icon: '<i class="fa-solid fa-leaf"></i>', colorBg: 'bg-green-50', colorText: 'text-green-700', nameFallback: 'Apoyo a Trámites Ambientales' },
+            '1.3': { icon: '<i class="fa-solid fa-handshake-angle"></i>', colorBg: 'bg-orange-50', colorText: 'text-orange-600', nameFallback: 'Gestión de Conflictos' },
+            '1.4': { icon: '<i class="fa-solid fa-seedling"></i>', colorBg: 'bg-purple-50', colorText: 'text-purple-700', nameFallback: 'Oportunidades de Desarrollo' }
         };
 
-        // VARIABLES GLOBALES
-        let currentData = {}; 
-        let SUB_ACTIVITIES = {}; 
-        let FLAT_DATA = {}; 
-        
-        let expandedWbsNodes = {};
+        let flatData = {};
+        let currentData = {};
+        let actividadesHojas = [];
+        let subActivitiesMap = {};
         let expandedComponents = {};
+        let expandedWbsNodes = {};
 
-        function showLoader(show) {
-            const loader = document.getElementById('loader');
-            if (loader) {
-                if (show) {
-                    loader.style.opacity = '1';
-                    loader.style.pointerEvents = 'all';
-                } else {
-                    loader.style.opacity = '0';
-                    loader.style.pointerEvents = 'none';
-                }
-            }
-        }
-
-        // --- SOLUCIÓN PRINCIPAL: LECTURA CORRECTA DE PORCENTAJES ---
-        function parseValue(cell) {
-            if (!cell) return 0;
+        // --- SISTEMA ROBUSTO DE FECHAS (Formato 12-Mar-2026) ---
+        function parseDateCustom(cell) {
+            if (!cell) return null;
+            let val = cell.f || cell.v;
+            if (!val) return null;
             
-            // Verificamos si hay texto original con un signo de porcentaje
-            let textValue = cell.f ? cell.f.toString() : (typeof cell.v === 'string' ? cell.v : null);
-            
-            if (textValue) {
-                const clean = textValue.replace('%', '').replace(',', '.').trim();
-                const val = parseFloat(clean);
-                
-                if (!isNaN(val)) {
-                    // Si incluía el símbolo %, significa que ya está en escala 0-100 (Ej: "1%" -> 1)
-                    if (textValue.includes('%')) {
-                        return Math.min(Math.max(val, 0), 100);
-                    }
-                }
+            if (typeof val === 'string' && val.includes('Date')) {
+                const m = val.match(/Date\((\d+),(\d+),(\d+)/);
+                if(m) return new Date(m[1], m[2], m[3]);
             }
             
-            // Procesamiento de datos numéricos puros (sin %)
-            let num = cell.v;
-            if (typeof num === 'string') {
-                num = parseFloat(num.replace(',', '.'));
-            }
-            
-            if (typeof num === 'number' && !isNaN(num)) {
-                // En MS Project a menudo 100% se exporta como 1.0
-                // Lo multiplicamos solo si es menor o igual a 1 para pasar de decimal a porcentaje.
-                if (num > 0 && num <= 1) {
-                    return Math.min(Math.max(num * 100, 0), 100);
-                }
-                return Math.min(Math.max(num, 0), 100);
-            }
-            
-            return 0; // Previene valores NaN
-        }
-
-        function formatDateShort(dateStr) {
-            if (!dateStr) return '-';
-            dateStr = dateStr.toString().trim();
-            dateStr = dateStr.replace(/^(lun|mar|mié|mie|jue|vie|sáb|sab|dom)\.?\s+/i, '');
-            const parts = dateStr.match(/^(\d{1,2})[\/\- ](\d{1,2})[\/\- ](\d{2,4})$/);
-            let day, month, year;
-            const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-
-            if (parts) {
-                day = parseInt(parts[1], 10);
-                month = parseInt(parts[2], 10) - 1; 
-                year = parts[3];
-                if (year.length === 2) year = "20" + year; 
-            } else {
-                const cleanStr = dateStr.toLowerCase().replace(/\s+de\s+/g, ' ');
-                const words = cleanStr.split(/\s+/);
+            if (typeof val === 'string') {
+                const cleanStr = val.toLowerCase().replace(/de/g, ' ').replace(/\s+/g, ' ').trim();
+                const words = cleanStr.split(' ');
                 if (words.length >= 3) {
-                    day = parseInt(words[0], 10);
-                    year = words[2];
-                    if (year.length === 2) year = "20" + year;
-                    const mName = words[1];
+                    const day = parseInt(words[0]);
+                    const monthStr = words[1];
+                    let year = parseInt(words[2]);
+                    
                     const dict = {
                         'enero': 0, 'ene': 0, 'febrero': 1, 'feb': 1, 'marzo': 2, 'mar': 2,
                         'abril': 3, 'abr': 3, 'mayo': 4, 'may': 4, 'junio': 5, 'jun': 5,
                         'julio': 6, 'jul': 6, 'agosto': 7, 'ago': 7, 'septiembre': 8, 'sep': 8,
                         'octubre': 9, 'oct': 9, 'noviembre': 10, 'nov': 10, 'diciembre': 11, 'dic': 11
                     };
-                    month = dict[mName] !== undefined ? dict[mName] : -1;
-                }
-            }
-            if (day && month >= 0 && month < 12 && year) {
-                return `${day}-${monthNames[month]}-${year.toString().slice(-2)}`;
-            }
-            try {
-                // Soporte mejorado ISO
-                const parsedDate = new Date(dateStr);
-                if (!isNaN(parsedDate.getTime())) {
-                    if (dateStr.includes('T') && dateStr.includes('Z')) {
-                        return `${parsedDate.getUTCDate()}-${monthNames[parsedDate.getUTCMonth()]}-${parsedDate.getUTCFullYear().toString().slice(-2)}`;
+                    const month = dict[monthStr];
+                    if (!isNaN(day) && month !== undefined && !isNaN(year)) {
+                        if (year < 100) year += 2000;
+                        return new Date(year, month, day);
                     }
-                    return `${parsedDate.getDate()}-${monthNames[parsedDate.getMonth()]}-${parsedDate.getFullYear().toString().slice(-2)}`;
                 }
-            } catch (e) {}
-            return dateStr;
+            }
+            let d = new Date(val);
+            if (!isNaN(d.getTime())) return d;
+            return null;
         }
 
-        function buildDynamicWbsTree(rows) {
-            const flatMap = {};
+        function formatDateStr(date) {
+            if(!date) return '-';
+            const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+            return `${date.getDate()}-${meses[date.getMonth()]}-${date.getFullYear()}`;
+        }
+
+        // --- MANEJO DE ESTADOS UI ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('nav button').forEach(el => {
+                el.classList.remove('bg-brand-blue', 'text-white', 'shadow-sm');
+                el.classList.add('text-slate-600', 'hover:bg-slate-50');
+                el.querySelector('i').classList.add('text-slate-400');
+            });
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+            const btn = document.getElementById(`btn-tab-${tabId}`);
+            btn.classList.remove('text-slate-600', 'hover:bg-slate-50');
+            btn.classList.add('bg-brand-blue', 'text-white', 'shadow-sm');
+            btn.querySelector('i').classList.remove('text-slate-400');
+        }
+
+        function parseVal(cell) {
+            if (!cell) return 0;
+            let val = cell.v;
+            if (typeof val === 'string') val = parseFloat(val.replace('%', '').replace(',', '.').trim());
+            if (typeof val === 'number' && !isNaN(val)) {
+                if (val > 0 && val <= 1 && (cell.f && !cell.f.includes('%'))) return val * 100;
+                if (cell.f && cell.f.includes('%')) return val; 
+                return val > 1 ? val : val * 100;
+            }
+            return 0;
+        }
+
+        function cleanTitle(title) {
+            if(!title) return '';
+            // Elimina estrictamente el número del EDT inicial (ej. "1.1.1 " o "1.4.2 - ") 
+            // pero DEJA intacta la palabra HITO y toda la descripción completa.
+            return title.replace(/^[\d\.]+\s*-?\s*/, '').trim(); 
+        }
+
+        function getStatus(real, esp) {
+            const dif = esp - real;
+            if (dif <= 0) return { label: 'AL DÍA', textColor: 'text-emerald-700', bgColor: 'bg-emerald-50', dotColor: 'bg-emerald-500', borderColor: 'border-emerald-200' };
+            if (dif <= 10) return { label: 'ALERTA', textColor: 'text-yellow-700', bgColor: 'bg-yellow-50', dotColor: 'bg-yellow-500', borderColor: 'border-yellow-200' };
+            return { label: 'CRÍTICO', textColor: 'text-red-700', bgColor: 'bg-red-50', dotColor: 'bg-red-500', borderColor: 'border-red-200' };
+        }
+
+        function processData(rows) {
+            flatData = {};
+            currentData = {};
+            subActivitiesMap = {};
+            actividadesHojas = [];
             
             rows.forEach(r => {
                 if (!r.c) return;
-                const edtRaw = r.c[0]?.v;
-                if (edtRaw === undefined || edtRaw === null) return;
-                const edt = edtRaw.toString().trim();
-                if (!edt) return;
+                const id = r.c[0]?.v?.toString().trim();
+                if (!id) return;
 
-                const nombre = r.c[1]?.v || 'Sin Nombre';
-                const duracion = r.c[2]?.v || '';
-                
-                // Extraemos valores exactos y se delega el Math.round a las funciones de render
-                const real = parseValue(r.c[3]);
-                const esperado = parseValue(r.c[4]);
-                
-                const comienzo = r.c[6]?.f || r.c[6]?.v || '';
-                const fin = r.c[7]?.f || r.c[7]?.v || '';
-                const responsable = r.c[8]?.v || '';
-
-                flatMap[edt] = {
-                    code: edt,
-                    desc: nombre, 
-                    comp: real,   
-                    esp: esperado, 
-                    inicio: comienzo,
-                    fin: fin,
-                    responsable: responsable,
-                    duracion: duracion,
+                const nameRaw = r.c[1]?.v || 'Sin Título';
+                flatData[id] = {
+                    id: id,
+                    nameRaw: nameRaw,
+                    cleanName: cleanTitle(nameRaw),
+                    real: parseVal(r.c[3]),
+                    esp: parseVal(r.c[4]),
+                    startDate: parseDateCustom(r.c[6]), 
+                    finDate: parseDateCustom(r.c[7]),   
+                    responsable: r.c[8]?.v || 'N/A',
                     children: []
                 };
             });
 
-            FLAT_DATA = flatMap;
-            currentData = {};
-            SUB_ACTIVITIES = {};
-
-            // Algoritmo de orden jerárquico numérico en vez de lexicográfico
-            const allEdts = Object.keys(flatMap).sort((a, b) => {
-                const partsA = a.split('.').map(Number);
-                const partsB = b.split('.').map(Number);
-                const maxLen = Math.max(partsA.length, partsB.length);
-                
-                for (let i = 0; i < maxLen; i++) {
-                    const valA = partsA[i] || 0;
-                    const valB = partsB[i] || 0;
-                    if (valA !== valB) return valA - valB;
+            // Construir árbol
+            Object.keys(flatData).sort((a,b) => {
+                const pa = a.split('.').map(Number);
+                const pb = b.split('.').map(Number);
+                for(let i=0; i<Math.max(pa.length, pb.length); i++) {
+                    const va = pa[i]||0, vb = pb[i]||0;
+                    if(va !== vb) return va - vb;
                 }
                 return 0;
+            }).forEach(id => {
+                const item = flatData[id];
+                const niveles = id.split('.');
+                
+                if(niveles.length === 1) currentData[id] = item;
+                if(niveles.length === 2) {
+                    currentData[id] = item;
+                    subActivitiesMap[id] = [];
+                }
+                
+                if(niveles.length > 1) {
+                    const padreId = niveles.slice(0, -1).join('.');
+                    if(flatData[padreId]) flatData[padreId].children.push(item);
+                }
             });
 
-            allEdts.forEach(edt => {
-                const item = flatMap[edt];
-                const parts = edt.split('.');
+            // Identificar hojas reales (Solo nodos sin hijos, que sean nivel 3 o superior para evitar contar títulos)
+            actividadesHojas = Object.values(flatData).filter(item => {
+                 return item.children.length === 0 && item.id.startsWith('1.') && item.id.split('.').length > 2 && item.nameRaw.trim() !== '';
+            });
 
-                if (parts.length === 1) {
-                    currentData[edt] = {
-                        nombre: item.desc,
-                        real: item.comp, // Guardamos exactos, sin Math.round aquí
-                        esperado: item.esp
-                    };
+            // Asignar los hijos directos de Nivel 2 a subActivitiesMap
+            Object.keys(flatData).forEach(id => {
+                if (id.split('.').length === 2 && flatData[id]) {
+                    subActivitiesMap[id] = flatData[id].children || [];
                 }
-                else if (parts.length === 2) {
-                    currentData[edt] = {
-                        nombre: item.desc,
-                        real: item.comp,
-                        esperado: item.esp
-                    };
-                    SUB_ACTIVITIES[edt] = [];
+            });
+        }
+
+        // --- ACTUALIZACIÓN DE INTERFAZ TAB 1 ---
+        function getTaskStatsFor(nodesArray) {
+            let st = { total: nodesArray.length, alDia: 0, alerta: 0, critico: 0 };
+            nodesArray.forEach(n => {
+                const dif = n.esp - n.real;
+                if (dif <= 0) st.alDia++;
+                else if (dif <= 10) st.alerta++;
+                else st.critico++;
+            });
+            return st;
+        }
+
+        function updateTopKPIs() {
+            // Stats globales
+            let statsGlobal = getTaskStatsFor(actividadesHojas);
+            if (statsGlobal.total === 0) statsGlobal = { total: 42, alDia: 26, alerta: 13, critico: 3 }; // Fallback
+            
+            const global = currentData['1'] || { real: 45, esp: 68 };
+            const rPct = Math.round(global.real), ePct = Math.round(global.esp);
+            const statusGlo = getStatus(rPct, ePct);
+            
+            // Actualizar Widgets Top
+            document.getElementById('kpi-global-real').innerText = `${rPct}%`;
+            document.getElementById('kpi-global-esp').innerText = `${ePct}%`;
+            document.getElementById('kpi-global-bar').style.width = `${Math.min(rPct, 100)}%`;
+            document.getElementById('kpi-global-esp-marker').style.left = `${Math.min(ePct, 100)}%`;
+            
+            const badgeGlo = document.getElementById('kpi-global-status');
+            badgeGlo.className = `px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase border ${statusGlo.bgColor} ${statusGlo.textColor} ${statusGlo.borderColor}`;
+            badgeGlo.innerText = statusGlo.label;
+            
+            document.getElementById('kpi-actividades-critico').innerText = statsGlobal.critico;
+            document.getElementById('kpi-actividades-alerta').innerText = statsGlobal.alerta;
+            document.getElementById('kpi-actividades-aldia').innerText = statsGlobal.alDia;
+            document.getElementById('kpi-actividades-total').innerText = statsGlobal.total;
+            
+            // Fecha
+            const hoy = new Date();
+            const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+            document.getElementById('display-date').innerText = `${hoy.getDate()} ${meses[hoy.getMonth()]} ${hoy.getFullYear()}`;
+
+            const table = document.getElementById('kpi-lineas-table');
+            table.innerHTML = '';
+            
+            ['1.1', '1.2', '1.3', '1.4'].forEach(k => {
+                const d = currentData[k];
+                if(!d) return;
+                
+                // Obtener tareas hojas específicas de esta línea
+                const hojasLinea = actividadesHojas.filter(n => n.id.startsWith(`${k}.`));
+                const stLine = getTaskStatsFor(hojasLinea);
+                const stProg = getStatus(Math.round(d.real), Math.round(d.esp));
+                const conf = LINEAS_CONFIG[k];
+                const cleanN = d.cleanName || conf.nameFallback;
+                
+                const html = `
+                    <tr class="table-row-hover border-b border-slate-50 last:border-0 transition-colors">
+                        <td class="py-3 pr-2 w-[45%]">
+                            <div class="flex items-center gap-2">
+                                <div class="w-5 h-5 rounded ${conf.colorBg} ${conf.colorText} flex items-center justify-center text-[9px] flex-shrink-0">
+                                    ${conf.icon}
+                                </div>
+                                <span class="text-[10px] font-bold text-slate-700 leading-tight line-clamp-2" title="${cleanN}">${cleanN}</span>
+                            </div>
+                        </td>
+                        <td class="py-3 px-2 text-center whitespace-nowrap">
+                            <div class="flex items-center justify-center gap-1.5 text-[9px] font-bold">
+                                <span class="flex items-center gap-0.5 text-brand-red"><div class="w-1.5 h-1.5 rounded-full bg-brand-red"></div> ${stLine.critico}</span>
+                                <span class="text-slate-300">|</span>
+                                <span class="flex items-center gap-0.5 text-brand-yellow"><div class="w-1.5 h-1.5 rounded-full bg-brand-yellow"></div> ${stLine.alerta}</span>
+                                <span class="text-slate-300">|</span>
+                                <span class="flex items-center gap-0.5 text-brand-green"><div class="w-1.5 h-1.5 rounded-full bg-brand-green"></div> ${stLine.alDia}</span>
+                            </div>
+                        </td>
+                        <td class="py-3 px-2 text-center whitespace-nowrap">
+                            <span class="text-[11.5px] font-black text-brand-blue">${Math.round(d.real)}%</span>
+                            <span class="text-[9px] text-slate-400 font-semibold">/ ${Math.round(d.esp)}%</span>
+                        </td>
+                        <td class="py-3 pl-2 text-right">
+                            <div class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded border ${stProg.bgColor} ${stProg.borderColor}">
+                                <span class="w-1 h-1 rounded-full ${stProg.dotColor}"></span>
+                                <span class="text-[8px] font-bold tracking-wide ${stProg.textColor}">${stProg.label}</span>
+                            </div>
+                        </td>
+                    </tr>`;
+                table.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        // --- ACTUALIZACIÓN DE GRÁFICA TENDENCIA (Lógica Mejorada y Dinámica) ---
+        function initGraficoTendencia() {
+            const cReal = currentData['1'] ? Math.round(currentData['1'].real) : 45;
+            const cEsp = currentData['1'] ? Math.round(currentData['1'].esp) : 68;
+            
+            const hoy = new Date();
+            let mesActual = hoy.getFullYear() === 2026 ? hoy.getMonth() : 8; // Default Sept si no es 2026
+            
+            // Construir curva matemática que pasa obligatoriamente por cEsp en el mes actual
+            let dataEsperado = [];
+            for(let i=0; i<12; i++) {
+                if (i < mesActual) {
+                    dataEsperado.push(Math.round((cEsp / mesActual) * i));
+                } else if (i === mesActual) {
+                    dataEsperado.push(cEsp);
+                } else {
+                    const rMonths = 11 - mesActual;
+                    const rProg = 100 - cEsp;
+                    dataEsperado.push(Math.round(cEsp + (rProg / rMonths) * (i - mesActual)));
                 }
-                else {
-                    const parentEdt = parts.slice(0, -1).join('.');
-                    if (flatMap[parentEdt]) {
-                        flatMap[parentEdt].children.push(item);
+            }
+            
+            let dataReal = Array(12).fill(null);
+            dataReal[mesActual] = cReal;
+
+            const labelsLine = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            labelsLine[mesActual] = 'Hoy';
+
+            // Plugin dinámico para dibujar etiquetas sin que se tapen
+            const badgeLabelPlugin = {
+                id: 'badgeLabels',
+                afterDatasetsDraw(chart) {
+                    const { ctx, data } = chart;
+                    ctx.save();
+                    
+                    const espMeta = chart.getDatasetMeta(0);
+                    const realMeta = chart.getDatasetMeta(1);
+                    
+                    // 1. Dibujar hitos a lo largo de la curva verde
+                    espMeta.data.forEach((point, index) => {
+                        const val = data.datasets[0].data[index];
+                        if([1, 4, 7, 11].includes(index) && index !== mesActual) {
+                            ctx.fillStyle = '#1e7b45'; 
+                            ctx.beginPath();
+                            ctx.roundRect(point.x - 16, point.y - 25, 32, 16, 4);
+                            ctx.fill();
+                            ctx.font = 'bold 9px Inter';
+                            ctx.fillStyle = '#ffffff';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText(val + '%', point.x, point.y - 17);
+                        }
+                    });
+                    
+                    // 2. Dibujar mes actual (Lógica de Overlap)
+                    const rp = realMeta.data[mesActual];
+                    const ep = espMeta.data[mesActual];
+                    if(rp && ep) {
+                        const rVal = data.datasets[1].data[mesActual];
+                        const eVal = data.datasets[0].data[mesActual];
+                        
+                        // Si Real >= Esperado, Real va ARRIBA y Esperado ABAJO
+                        // Si Real < Esperado, Esperado va ARRIBA y Real ABAJO
+                        const realIsTop = rVal >= eVal;
+                        
+                        // Posiciones Y calculadas (Offset para no tapar el punto)
+                        const yReal = realIsTop ? rp.y - 28 : rp.y + 12;
+                        const yEsp = realIsTop ? ep.y + 12 : ep.y - 28;
+
+                        // Dibujar Esperado (Hoy)
+                        ctx.fillStyle = '#1e7b45'; 
+                        ctx.beginPath();
+                        ctx.roundRect(ep.x - 16, yEsp, 32, 16, 4);
+                        ctx.fill();
+                        ctx.font = 'bold 9px Inter';
+                        ctx.fillStyle = '#ffffff';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(eVal + '%', ep.x, yEsp + 8);
+
+                        // Dibujar Real (Hoy) - Se dibuja de último para asegurar z-index visual
+                        ctx.fillStyle = '#0a1930'; 
+                        ctx.beginPath();
+                        ctx.roundRect(rp.x - 16, yReal, 32, 16, 4);
+                        ctx.fill();
+                        ctx.font = 'bold 9px Inter';
+                        ctx.fillStyle = '#ffffff';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(rVal + '%', rp.x, yReal + 8);
                     }
+                    ctx.restore();
                 }
+            };
+
+            const ctxLine = document.getElementById('chart-tendencia').getContext('2d');
+            
+            const gradient = ctxLine.createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, 'rgba(30, 123, 69, 0.2)'); 
+            gradient.addColorStop(1, 'rgba(30, 123, 69, 0.0)');
+
+            new Chart(ctxLine, {
+                type: 'line',
+                data: {
+                    labels: labelsLine,
+                    datasets: [
+                        {
+                            label: 'Avance Esperado',
+                            data: dataEsperado,
+                            borderColor: '#1e7b45',
+                            backgroundColor: gradient,
+                            borderWidth: 3,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#ffffff', 
+                            pointBorderColor: '#1e7b45',
+                            pointBorderWidth: 2,
+                            tension: 0.4, 
+                            fill: true,
+                            order: 2 // Renderizar primero
+                        },
+                        {
+                            label: 'Avance Real',
+                            data: dataReal,
+                            borderColor: 'transparent',
+                            backgroundColor: '#0a1930', 
+                            pointRadius: 6,
+                            pointBackgroundColor: '#0a1930',
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 2,
+                            showLine: false, 
+                            order: 1 // Renderizar encima
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    // Aumentamos padding superior y derecho para evitar recortes del 100% y etiquetas superiores
+                    layout: { padding: { top: 40, right: 25, left: 20, bottom: 10 } },
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } }, 
+                    scales: {
+                        y: { 
+                            min: 0, max: 105, // Ligeramente más de 100 para dar aire
+                            ticks: { stepSize: 25, callback: v => v <= 100 ? v + '%' : '', font: { size: 10, color: '#94a3b8' } },
+                            border: { display: false },
+                            grid: { color: '#f1f5f9', borderDash: [4, 4] }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { 
+                                font: function(context) { return { size: context.tick.label === 'Hoy' ? 11 : 9, weight: context.tick.label === 'Hoy' ? 'bold' : 'normal' }; },
+                                color: function(context) { return context.tick.label === 'Hoy' ? '#0a1930' : '#94a3b8'; }
+                            }
+                        }
+                    }
+                },
+                plugins: [badgeLabelPlugin]
             });
-
-            allEdts.forEach(edt => {
-                const parts = edt.split('.');
-                if (parts.length === 2) {
-                    SUB_ACTIVITIES[edt] = flatMap[edt].children || [];
-                }
-            });
         }
 
-        function updateConnectionBadge(online) {
-            const badge = document.getElementById('connection-badge');
-            if (badge) {
-                if (online) {
-                    badge.className = "bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-2";
-                    badge.innerHTML = `<i class="fa-solid fa-circle text-[8px] animate-pulse"></i> Sincronizado Online`;
-                } else {
-                    badge.className = "bg-amber-500/15 text-amber-500 border border-amber-500/30 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-2";
-                    badge.innerHTML = `<i class="fa-solid fa-cloud-arrow-down text-[10px]"></i> Error de Conexión`;
-                }
-            }
-        }
 
-        function setDynamicDate() {
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/Bogota' };
-            const today = new Date();
-            const formatter = new Intl.DateTimeFormat('es-CO', options);
-            let formattedDate = formatter.format(today);
-            formattedDate = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
-            document.getElementById('update-date').innerText = formattedDate;
-        }
-
-        async function init() {
-            showLoader(true);
-            setDynamicDate();
-            try {
-                const resProject = await fetch(URL_PROJECT);
-                
-                if (resProject && resProject.ok) {
-                    const text1 = await resProject.text();
-                    const json1 = JSON.parse(text1.substring(text1.indexOf('{'), text1.lastIndexOf('}') + 1));
-                    buildDynamicWbsTree(json1.table.rows);
-                    updateConnectionBadge(true);
-                } else {
-                    throw new Error("No se pudo cargar el Cronograma base.");
-                }
-                
-            } catch (e) {
-                console.error("Fallo de conexión.", e);
-                updateConnectionBadge(false);
-            } finally {
-                renderUI();
-                showLoader(false);
-            }
-        }
-
-        function getHealthStatus(real, esperado) {
-            const gap = esperado - real;
-            if (gap <= 0) {
-                return { text: 'AL DÍA', textColor: 'text-emerald-600', borderClass: 'border-emerald-200', icon: '🟢', barColor: 'bg-emerald-500' };
-            } else if (gap <= 10) {
-                return { text: 'ALERTA LEVE', textColor: 'text-amber-600', borderClass: 'border-amber-200', icon: '🟡', barColor: 'bg-amber-500' };
-            } else {
-                return { text: 'CRÍTICO / DEMORA', textColor: 'text-rose-600', borderClass: 'border-rose-200', icon: '🔴', barColor: 'bg-rose-500' };
-            }
-        }
-
-        function getWbsStatusBadge(real, esperado) {
-            const gap = esperado - real;
-            if (gap <= 0) {
-                return `<span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full text-[8.5px] font-black"><span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>AL DÍA</span>`;
-            } else if (gap <= 10) {
-                return `<span class="inline-flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-0.5 rounded-full text-[8.5px] font-black"><span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>ALERTA LEVE</span>`;
-            } else {
-                return `<span class="inline-flex items-center gap-1 bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-0.5 rounded-full text-[8.5px] font-black"><span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span>CRÍTICO</span>`;
-            }
+        
+        function getWbsStatusBadge(real, esp) {
+            const gap = esp - real;
+            if (gap <= 0) return `<span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full text-[8px] font-black"><span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>AL DÍA</span>`;
+            if (gap <= 10) return `<span class="inline-flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-0.5 rounded-full text-[8px] font-black"><span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>ALERTA</span>`;
+            return `<span class="inline-flex items-center gap-1 bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-0.5 rounded-full text-[8px] font-black"><span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span>CRÍTICO</span>`;
         }
 
         function buildTreeRows(items, depth = 0, parentExpanded = true, componentKey) {
@@ -477,60 +677,41 @@
             
             items.forEach((item) => {
                 const hasChildren = item.children && item.children.length > 0;
-                const nodeKey = `${item.code.replace(/\./g, '-')}`;
+                const nodeKey = `${item.id.replace(/\./g, '-')}`;
                 
-                if (expandedWbsNodes[nodeKey] === undefined) {
-                    expandedWbsNodes[nodeKey] = false; 
-                }
+                if (expandedWbsNodes[nodeKey] === undefined) expandedWbsNodes[nodeKey] = false; 
                 
                 const isExpanded = expandedWbsNodes[nodeKey];
-                
-                // Aplicamos Math.round solo para la visualización
-                let realPercent = Math.round(item.comp);
-                let planPercent = Math.round(item.esp);
+                const realPercent = Math.round(item.real);
+                const planPercent = Math.round(item.esp);
                 const statusBadge = getWbsStatusBadge(realPercent, planPercent);
                     
-                let indentClass = '';
-                let textClass = 'font-bold text-slate-700';
-                let bgClass = 'bg-white';
-                
-                if (depth === 0) {
-                    indentClass = 'pl-4';
-                    textClass = 'font-bold text-slate-900 text-[11px] leading-relaxed';
-                    bgClass = 'bg-slate-50/45';
-                } else if (depth === 1) {
-                    indentClass = 'pl-10';
-                    textClass = 'font-semibold text-slate-700 text-[10.5px]';
-                    bgClass = 'bg-slate-50/20';
-                } else if (depth === 2) {
-                    indentClass = 'pl-16';
-                    textClass = 'font-medium text-slate-600 text-[10px]';
-                    bgClass = 'bg-white';
-                } else if (depth >= 3) {
-                    indentClass = 'pl-20';
-                    textClass = 'font-normal text-slate-500 text-[9.5px]';
-                    bgClass = 'bg-white';
-                }
+                let indentClass = depth === 0 ? 'pl-4' : (depth === 1 ? 'pl-10' : (depth === 2 ? 'pl-16' : 'pl-20'));
+                let textClass = depth === 0 ? 'font-bold text-slate-900 text-[10.5px]' : (depth === 1 ? 'font-semibold text-slate-700 text-[10px]' : 'font-medium text-slate-600 text-[9.5px]');
+                let bgClass = depth === 0 ? 'bg-slate-50/50' : 'bg-white';
                 
                 const chevronIcon = hasChildren 
-                    ? `<i class="fa-solid ${isExpanded ? 'fa-chevron-down text-blue-700' : 'fa-chevron-right text-slate-400'} text-[8px] mr-1.5 flex-shrink-0 transition-transform"></i>` 
-                    : (depth > 0 ? `<span class="text-slate-300 mr-2 flex-shrink-0">└─</span>` : `<span class="w-3.5 inline-block"></span>`);
-                    
-                const clickAction = hasChildren ? `onclick="toggleWbsNode('${nodeKey}', '${componentKey}')"` : '';
-                    
-                if (parentExpanded) {
-                    rowsHtml += `
-                        <tr class="hover:bg-slate-100/60 transition-colors ${bgClass}">
-                            <td class="p-3 ${indentClass} flex items-center gap-1.5 select-none" ${clickAction} style="cursor: ${hasChildren ? 'pointer' : 'default'}">
-                                ${chevronIcon}
-                                <span class="leading-snug ${textClass}">${item.desc}</span>
-                            </td>
-                            <td class="p-3 text-center whitespace-nowrap">${statusBadge}</td>
-                            <td class="p-3 text-center font-extrabold whitespace-nowrap text-slate-900">${realPercent}%</td>
-                            <td class="p-3 text-center font-semibold whitespace-nowrap text-slate-500">${planPercent}%</td>
-                            <td class="p-3 text-center text-slate-500 whitespace-nowrap">${formatDateShort(item.inicio)}</td>
-                            <td class="p-3 text-center text-slate-500 whitespace-nowrap">${formatDateShort(item.fin)}</td>
-                            <td class="p-3 text-right pr-4 text-slate-500 font-medium whitespace-nowrap text-[10px]">${item.responsable || '-'}</td>
+                ? `<i class="fa-solid ${isExpanded ? 'fa-chevron-down text-brand-blue' : 'fa-chevron-right text-slate-400'} text-[8px] mr-2 flex-shrink-0 transition-transform"></i>` 
+                : (depth > 0 ? `<span class="text-slate-200 mr-2 flex-shrink-0">└─</span>` : `<span class="w-3.5 inline-block"></span>`);
+                
+            const clickAction = hasChildren ? `onclick="toggleWbsNode('${nodeKey}', '${componentKey}')"` : '';
+            
+            // Limpiar el título de la tarea para mostrar en la tabla (sin EDT)
+            const nombreLimpioTabla = cleanTitle(item.nameRaw);
+                
+            if (parentExpanded) {
+                rowsHtml += `
+                    <tr class="hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0 ${bgClass}">
+                        <td class="p-3 ${indentClass} flex items-center gap-1.5 select-none" ${clickAction} style="cursor: ${hasChildren ? 'pointer' : 'default'}">
+                            ${chevronIcon}
+                            <span class="leading-snug ${textClass}">${nombreLimpioTabla}</span>
+                        </td>
+                        <td class="p-3 text-center whitespace-nowrap">${statusBadge}</td>
+                            <td class="p-3 text-center font-extrabold whitespace-nowrap text-brand-blue">${realPercent}%</td>
+                            <td class="p-3 text-center font-semibold whitespace-nowrap text-slate-400">${planPercent}%</td>
+                            <td class="p-3 text-center text-slate-500 whitespace-nowrap text-[9.5px]">${formatDateStr(item.startDate)}</td>
+                            <td class="p-3 text-center text-slate-500 whitespace-nowrap text-[9.5px]">${formatDateStr(item.finDate)}</td>
+                            <td class="p-3 text-left pr-4 text-slate-500 font-medium whitespace-nowrap text-[9.5px] truncate max-w-[100px]" title="${item.responsable}">${item.responsable || '-'}</td>
                         </tr>
                     `;
                 }
@@ -542,138 +723,107 @@
             return rowsHtml;
         }
 
-        function renderUI() {
-            if (currentData['1']) {
-                const realRound = Math.round(currentData['1'].real);
-                const espRound = Math.round(currentData['1'].esperado);
-                const gap = espRound - realRound;
-                
-                let statusText = '';
-                let statusClass = '';
-                let icon = '';
-                let barColor = '';
-                
-                if (gap <= 0) {
-                    statusText = 'AL DÍA';
-                    statusClass = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
-                    icon = '🟢';
-                    barColor = 'bg-emerald-400';
-                } else if (gap <= 10) {
-                    statusText = 'ALERTA LEVE';
-                    statusClass = 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30';
-                    icon = '🟡';
-                    barColor = 'bg-yellow-400';
-                } else {
-                    statusText = 'CRÍTICO / DEMORA';
-                    statusClass = 'bg-rose-500/20 text-rose-300 border-rose-500/30';
-                    icon = '🔴';
-                    barColor = 'bg-rose-400';
-                }
-
-                document.getElementById('header-kpi-real').innerText = `${realRound}%`;
-                document.getElementById('header-kpi-plan').innerText = `${espRound}%`;
-                
-                const bar = document.getElementById('header-kpi-bar');
-                bar.style.width = `${Math.min(realRound, 100)}%`;
-                bar.className = `progress-bar-fill absolute top-0 left-0 h-full rounded-full ${barColor} shadow-[inset_0_1px_3px_rgba(255,255,255,0.3)]`;
-                
-                const statusBadge = document.getElementById('header-kpi-status');
-                const statusMobile = document.getElementById('header-kpi-status-mobile');
-                
-                if (statusBadge) {
-                    statusBadge.className = `px-3 py-1.5 rounded-full text-[10px] font-extrabold uppercase flex-shrink-0 hidden md:inline-flex items-center gap-1.5 ${statusClass}`;
-                    statusBadge.innerHTML = `<span>${icon}</span> ${statusText}`;
-                }
-                if (statusMobile) {
-                    statusMobile.innerHTML = `Estado: <span class="font-bold">${statusText}</span> ${icon}`;
-                }
+        window.toggleMainComponent = function(key) {
+            expandedComponents[key] = !expandedComponents[key];
+            const panel = document.getElementById(`activities-panel-${key.replace(/\./g, '-')}`);
+            const chevron = document.getElementById(`chevron-${key.replace(/\./g, '-')}`);
+            if (panel && chevron) {
+                panel.classList.toggle('open');
+                chevron.classList.toggle('rotate-180');
             }
-
-            renderItems('group-1', ['1.1', '1.2', '1.3', '1.4']);
         }
 
-        function renderItems(containerId, keys) {
-            const container = document.getElementById(containerId);
-            container.innerHTML = '';
+        window.toggleWbsNode = function(nodeKey, componentKey) {
+            expandedWbsNodes[nodeKey] = !expandedWbsNodes[nodeKey];
+            const tbodyId = `tbody-${componentKey.replace(/\./g, '-')}`;
+            const tbody = document.getElementById(tbodyId);
+            if (tbody) {
+                const subActivitiesList = subActivitiesMap[componentKey] || [];
+                tbody.innerHTML = buildTreeRows(subActivitiesList, 0, true, componentKey);
+            }
+        }
 
-            keys.forEach((k, index) => {
+        function renderLineasEstrategicas() {
+            const container = document.getElementById('lineas-cards-container');
+            container.innerHTML = '';
+            
+            ['1.1', '1.2', '1.3', '1.4'].forEach((k) => {
                 const data = currentData[k];
                 if (!data) return;
 
-                const svgIcon = ICON_CONFIG[k] || '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg>';
-                const health = getHealthStatus(data.real, data.esperado);
-                const subActivitiesList = SUB_ACTIVITIES[k] || [];
-                const subActivitiesRows = buildTreeRows(subActivitiesList, 0, true, k);
-                const isMainExpanded = expandedComponents[k] === true;
-
-                // Valores redondeados estrictamente para interfaz
+                const conf = LINEAS_CONFIG[k];
                 const realRound = Math.round(data.real);
-                const espRound = Math.round(data.esperado);
+                const espRound = Math.round(data.esp);
+                const isMainExpanded = expandedComponents[k] === true;
+                const cleanN = data.cleanName || conf.nameFallback;
+                
+                // Color de barra dinámico
+                const gap = espRound - realRound;
+                const barColor = gap <= 0 ? 'bg-brand-green' : (gap <= 10 ? 'bg-brand-yellow' : 'bg-brand-red');
+
+                const subActivitiesList = subActivitiesMap[k] || [];
+                const subActivitiesRows = buildTreeRows(subActivitiesList, 0, true, k);
 
                 const html = `
-                    <div class="animate-fade-in bg-white p-5 md:p-6 rounded-2xl border border-slate-200 card-shadow transition-all duration-300 relative group hover:border-slate-300" style="animation-delay: ${index * 70}ms" data-edt-item="${k}">
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm transition-all relative group hover:border-slate-300">
                         <div class="flex flex-col space-y-4">
                             
-                            <div class="flex justify-between items-center gap-3">
+                            <!-- Header de Tarjeta -->
+                            <div class="flex flex-col md:flex-row justify-between md:items-center gap-4">
                                 <div class="flex items-center space-x-4 w-full">
-                                    <div class="icon-container w-12 h-12 rounded-xl flex items-center justify-center bg-slate-50 text-slate-600 shadow-sm border border-slate-200 flex-shrink-0 text-xl group-hover:bg-blue-50 group-hover:text-[#003366] transition-colors">
-                                        ${svgIcon}
+                                    <div class="w-12 h-12 rounded-xl flex items-center justify-center ${conf.colorBg} ${conf.colorText} border border-slate-100 flex-shrink-0 text-xl transition-colors">
+                                        ${conf.icon}
                                     </div>
                                     <div class="flex flex-col justify-center">
-                                        <span class="text-[9px] font-bold ${health.textColor} uppercase flex items-center gap-1 mb-1 bg-white inline-block">
-                                            <span>${health.icon}</span> ${health.text}
-                                        </span>
-                                        <h4 class="text-sm font-extrabold text-slate-800 leading-tight group-hover:text-[#003366] transition-colors uppercase">
-                                            ${data.nombre}
-                                        </h4>
+                                        <!-- Título de línea modificado para mostrar solo el nombre limpio -->
+                                        <h4 class="text-sm font-extrabold text-brand-blue leading-tight uppercase">${cleanN}</h4>
                                     </div>
                                 </div>
                                 
-                                <div class="flex items-center space-x-3 flex-shrink-0 bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl">
+                                <div class="flex items-center justify-end space-x-3 flex-shrink-0 bg-slate-50 border border-slate-100 px-4 py-2 rounded-xl">
                                     <div class="text-right">
-                                        <span class="text-slate-800 font-black text-lg md:text-xl">${realRound}%</span>
+                                        <span class="text-brand-blue font-black text-lg">${realRound}%</span>
                                         <span class="text-[9px] font-extrabold text-slate-400 block -mt-1.5 uppercase">REAL</span>
                                     </div>
-                                    <div class="h-8 w-[1px] bg-slate-200"></div>
+                                    <div class="h-6 w-[1px] bg-slate-200"></div>
                                     <div class="text-right">
-                                        <span class="text-slate-500 font-bold text-base md:text-lg">${espRound}%</span>
+                                        <span class="text-slate-500 font-bold text-base">${espRound}%</span>
                                         <span class="text-[9px] font-extrabold text-slate-400 block -mt-1.5 uppercase">ESP</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Barra con Math.min para evitar desbordes -->
-                            <div class="progress-bar-bg relative bg-slate-100 rounded-full h-2.5 w-full overflow-hidden border border-slate-200/50">
-                                <div class="progress-bar-fill absolute top-0 left-0 h-full rounded-full ${health.barColor} shadow-inner" style="width: ${Math.min(data.real, 100)}%; z-index: 2">
-                                    <div class="absolute inset-0 bg-white/10 [background-image:linear-gradient(45deg,rgba(255,255,255,.15)_25%,transparent_25%,transparent_50%,rgba(255,255,255,.15)_50%,rgba(255,255,255,.15)_75%,transparent_75%,transparent)] [background-size:1rem_1rem]"></div>
-                                </div>
-                                <div class="absolute top-0 left-0 h-full bg-slate-200" style="width: ${Math.min(data.esperado, 100)}%; z-index: 1"></div>
+                            <!-- Barra de progreso general de la tarjeta -->
+                            <div class="relative bg-slate-100 rounded-full h-2 w-full overflow-hidden">
+                                <div class="absolute top-0 left-0 h-full rounded-full ${barColor} z-[2]" style="width: ${Math.min(realRound, 100)}%;"></div>
+                                <div class="absolute top-0 left-0 h-full bg-slate-300 z-[1]" style="width: ${Math.min(espRound, 100)}%;"></div>
                             </div>
                             
-                            <div class="flex justify-end items-center pt-1 text-[10px] text-slate-400" data-html2canvas-ignore>
-                                <button onclick="toggleMainComponent('${k}')" class="text-slate-600 hover:text-[#003366] font-extrabold uppercase tracking-wider flex items-center gap-1.5 text-[9px] transition-all bg-white hover:bg-slate-50 px-4 py-2 rounded-lg border border-slate-200 shadow-sm">
-                                    <span>Consultar Detalle del Componente</span>
-                                    <i id="chevron-${k.replace(/\./g, '-')}" class="fa-solid fa-chevron-down text-[8px] transition-transform duration-350 ${isMainExpanded ? 'rotate-180' : ''}"></i>
+                            <!-- Botón de Expansión -->
+                            <div class="flex justify-start items-center pt-1">
+                                <button onclick="toggleMainComponent('${k}')" class="text-brand-blue font-extrabold uppercase tracking-wider flex items-center gap-2 text-[10px] transition-all bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg">
+                                    <i id="chevron-${k.replace(/\./g, '-')}" class="fa-solid fa-chevron-down text-[9px] transition-transform duration-300 ${isMainExpanded ? 'rotate-180' : ''}"></i>
+                                    <span>Ver fases y actividades</span>
                                 </button>
                             </div>
 
+                            <!-- Tabla desplegable WBS (Lógica inyectada) -->
                             <div id="activities-panel-${k.replace(/\./g, '-')}" class="collapsible-activities w-full ${isMainExpanded ? 'open' : ''}">
-                                <div class="w-full overflow-x-auto rounded-xl border border-slate-200 shadow-sm mt-2 scrollbar-hide bg-white animate-fade-in">
+                                <div class="w-full overflow-x-auto rounded-xl border border-slate-200 mt-2 bg-white">
                                     <table class="w-full text-left text-[11px] min-w-[850px]">
-                                        <thead class="bg-slate-50 text-slate-500 font-extrabold uppercase text-[8px] tracking-wider border-b border-slate-200">
+                                        <thead class="bg-slate-50 text-slate-500 font-extrabold uppercase text-[9px] tracking-wider border-b border-slate-200">
                                             <tr>
-                                                <th class="p-3.5 pl-4">Fase / Actividad</th>
-                                                <th class="p-3.5 text-center">Estado</th>
-                                                <th class="p-3.5 text-center">% Comp.</th>
-                                                <th class="p-3.5 text-center">% Esp.</th>
-                                                <th class="p-3.5 text-center">Inicio</th>
-                                                <th class="p-3.5 text-center">Fin</th>
-                                                <th class="p-3.5 text-right pr-4">Responsable</th>
+                                                <th class="p-3 pl-4 w-[40%]">Fase / Actividad</th>
+                                                <th class="p-3 text-center">Estado</th>
+                                                <th class="p-3 text-center">% Comp.</th>
+                                                <th class="p-3 text-center">% Esp.</th>
+                                                <th class="p-3 text-center">Inicio</th>
+                                                <th class="p-3 text-center">Fin</th>
+                                                <th class="p-3 text-left">Responsable</th>
                                             </tr>
                                         </thead>
-                                        <!-- Inyección dinámica para evitar re-render de todo el DOM -->
                                         <tbody id="tbody-${k.replace(/\./g, '-')}" class="divide-y divide-slate-100">
-                                            ${subActivitiesRows || `<tr><td colspan="7" class="p-4 text-center text-slate-400 italic">No hay detalles registrados para este componente.</td></tr>`}
+                                            ${subActivitiesRows || `<tr><td colspan="7" class="p-4 text-center text-slate-400 italic">No hay detalles registrados.</td></tr>`}
                                         </tbody>
                                     </table>
                                 </div>
@@ -686,93 +836,48 @@
             });
         }
 
-        function toggleMainComponent(key) {
-            expandedComponents[key] = !expandedComponents[key];
-            
-            // Reemplazamos la llamada general renderUI() por manipulación de clases directa
-            const panelId = `activities-panel-${key.replace(/\./g, '-')}`;
-            const chevronId = `chevron-${key.replace(/\./g, '-')}`;
-            
-            const panel = document.getElementById(panelId);
-            const chevron = document.getElementById(chevronId);
-            
-            if (panel && chevron) {
-                panel.classList.toggle('open');
-                chevron.classList.toggle('rotate-180');
+
+        // --- INICIALIZACIÓN ---
+        async function init() {
+            try {
+                const res = await fetch(URL_PROJECT);
+                if (res.ok) {
+                    const text = await res.text();
+                    const json = JSON.parse(text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1));
+                    
+                    processData(json.table.rows);
+                    updateTopKPIs();
+                    renderLineasEstrategicas(); // Inyecta las tarjetas
+                    setTimeout(() => initGraficoTendencia(), 50);
+                }
+            } catch (err) {
+                console.error("Error cargando Google Sheets:", err);
+            } finally {
+                setTimeout(() => {
+                    const loader = document.getElementById('loader');
+                    loader.style.opacity = '0';
+                    setTimeout(() => loader.remove(), 400);
+                }, 800);
             }
         }
 
-        function toggleWbsNode(nodeKey, componentKey) {
-            expandedWbsNodes[nodeKey] = !expandedWbsNodes[nodeKey];
-            
-            // Solo redibujamos el TBody específico para este componente
-            const tbodyId = `tbody-${componentKey.replace(/\./g, '-')}`;
-            const tbody = document.getElementById(tbodyId);
-            
-            if (tbody) {
-                const subActivitiesList = SUB_ACTIVITIES[componentKey] || [];
-                tbody.innerHTML = buildTreeRows(subActivitiesList, 0, true, componentKey);
-            }
-        }
-
-        // --- LÓGICA DE CAPTURA DE PANTALLA ---
-        async function downloadScreenshot() {
-            const btn = document.getElementById('download-btn');
+        window.exportarTablero = async function() {
+            const btn = document.querySelector('button[onclick="exportarTablero()"]');
             const originalHTML = btn.innerHTML;
-            
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generando...';
             btn.disabled = true;
-
-            const currentScroll = window.scrollY;
-            window.scrollTo(0, 0);
-
-            const disableAnim = document.createElement('style');
-            disableAnim.innerHTML = `
-                * { animation: none !important; transition: none !important; }
-                .animate-fade-in { opacity: 1 !important; transform: translateY(0) !important; }
-            `;
-            document.head.appendChild(disableAnim);
-
             try {
-                await new Promise(r => setTimeout(r, 150));
-
-                const elementToCapture = document.getElementById('dashboard-body');
-                
-                const canvas = await html2canvas(elementToCapture, {
-                    scale: 2, 
-                    useCORS: true,
-                    backgroundColor: '#f8fafc',
-                    windowWidth: document.documentElement.offsetWidth,
-                    windowHeight: document.documentElement.scrollHeight,
-                    scrollY: 0
-                });
-                
-                const imgData = canvas.toDataURL('image/png');
+                const target = document.getElementById('dashboard-body');
+                const canvas = await html2canvas(target, { scale: 2, backgroundColor: '#f8fafc' });
                 const link = document.createElement('a');
-                link.href = imgData;
-                
-                const dateStr = new Date().toISOString().split('T')[0];
-                link.download = `Tablero_Gerencia_Guajira_${dateStr}.png`;
-                
-                document.body.appendChild(link);
+                link.download = `Tablero_OAAS_${new Date().toISOString().split('T')[0]}.png`;
+                link.href = canvas.toDataURL('image/png');
                 link.click();
-                document.body.removeChild(link);
-                
-            } catch (error) {
-                console.error("Error al generar la captura:", error);
-                alert("Hubo un error al intentar generar la imagen. Inténtalo de nuevo.");
-            } finally {
-                document.head.removeChild(disableAnim);
-                window.scrollTo(0, currentScroll);
-
-                btn.innerHTML = originalHTML;
-                btn.disabled = false;
-            }
-        }
-
-        window.onload = function() {
-            init();
+            } catch (err) { console.error(err); } 
+            finally { btn.innerHTML = originalHTML; btn.disabled = false; }
         };
+
+        window.onload = init;
     </script>
 </body>
 </html>
