@@ -171,22 +171,11 @@
                                 <canvas id="empresasChart"></canvas>
                             </div>
                         </div>
-                        
-                        <!-- Nuevo Post-it Resumen de Proyectos Únicos -->
-                        <div class="mt-4 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg shadow-sm">
-                            <div class="flex items-start">
-                                <i class="fa-solid fa-lightbulb text-yellow-500 mt-1 mr-3 text-lg"></i>
-                                <div>
-                                    <p class="text-xs text-yellow-700 font-bold uppercase tracking-wider mb-1">Resumen del Periodo</p>
-                                    <p id="resumen-empresas-text" class="text-sm text-gray-700 leading-snug"></p>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                     
                     <!-- Tabla Detallada de Proyectos -->
                     <div class="lg:col-span-2 overflow-x-auto flex flex-col h-full">
-                        <h4 class="text-sm font-semibold text-gray-600 mb-4 uppercase">Detalle de Proyectos (Ordenados por jerarquía)</h4>
+                        <h4 class="text-sm font-semibold text-gray-600 mb-4 uppercase">Detalle de Proyectos</h4>
                         <div class="overflow-y-auto custom-scroll border border-gray-100 rounded-lg" style="max-height: 450px;">
                             <table class="w-full text-sm text-left text-gray-500">
                                 <thead class="text-[10px] text-gray-700 uppercase bg-gray-50 border-b sticky top-0 z-10 shadow-sm">
@@ -588,13 +577,6 @@
                     `;
                 });
             }
-
-            // --- 3. ACTUALIZAR POST-IT DE RESUMEN ---
-            // Se calculan las empresas y proyectos únicos excluyendo valores vacíos o 'N/A'
-            const empresasUnicas = new Set(proyFiltrados.map(d => normalizar(d.empresa)).filter(e => e && e !== 'na' && e !== 'no especificada')).size;
-            const proyectosUnicos = new Set(proyFiltrados.map(d => normalizar(d.proyecto)).filter(p => p && p !== 'na')).size;
-            
-            document.getElementById('resumen-empresas-text').innerHTML = `Se identificaron <b>${empresasUnicas}</b> empresas participando en <b>${proyectosUnicos}</b> proyectos únicos durante este periodo.`;
         }
 
         function openTab(evt, tabName) {
