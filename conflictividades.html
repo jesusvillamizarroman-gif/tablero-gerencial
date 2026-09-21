@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Estrategia de Relacionamiento Territorial - Consolidado</title>
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -20,88 +22,106 @@
             }
         }
     </script>
-    <!-- Librerías Externas -->
+    
+    <!-- Librerías Externas Unificadas -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     
     <style>
-        body { background-color: #fdfbf7; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #fdfbf7; font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         
-        /* Utilidades para los Tabs Principales */
+        /* Utilidades para los Tabs Principales y Accesibilidad */
         .main-tab-content { display: none; }
         .main-tab-content.active { display: block; animation: fadeIn 0.5s ease-in-out; }
         .main-tab-btn.active { border-bottom-width: 4px; border-color: #0077b6; color: #0077b6; font-weight: 600; }
+        .main-tab-btn:focus-visible { outline: 2px solid #0077b6; outline-offset: -2px; }
         
-        /* Utilidades Sub-Tabs (Nacional) */
-        .sub-tab-btn { transition: all 0.2s ease-in-out; }
-        .sub-tab-btn.active { background-color: #0077b6; color: white; border-color: #0077b6; }
-        .sub-tab-btn.inactive { background-color: white; color: #4b5563; border-color: #d1d5db; }
-        .sub-tab-btn.inactive:hover { background-color: #f3f4f6; }
+        /* Utilidades Sub-Tabs */
+        .sub-tab-btn, .md-sub-btn { transition: all 0.2s ease-in-out; cursor: pointer; }
+        .sub-tab-btn.active, .md-sub-btn[aria-pressed="true"] { background-color: #0077b6; color: white; border-color: #0077b6; }
+        .sub-tab-btn.inactive, .md-sub-btn[aria-pressed="false"] { background-color: white; color: #4b5563; border-color: #d1d5db; }
+        .sub-tab-btn.inactive:hover, .md-sub-btn[aria-pressed="false"]:hover { background-color: #f3f4f6; }
+        
+        .md-sub-btn[aria-pressed="true"] { background-color: #f9a826; color: #fff; border-color: #f9a826; font-weight: 700; }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Elementos Guajira */
+        /* Estilos de Elementos Compartidos */
+        .d-none { display: none !important; }
         .map-container { height: 400px; width: 100%; border-radius: 0.5rem; z-index: 10; }
+        .map-container-large { height: 550px; width: 100%; border-radius: 0.5rem; z-index: 10; }
+        .leaflet-container { background: #f8f9fa; font-family: inherit; }
+        
         .timeline-container { display: flex; overflow-x: auto; padding-bottom: 1rem; scroll-snap-type: x mandatory; }
         .timeline-item { flex: 0 0 auto; width: 200px; scroll-snap-align: start; }
         .timeline-dot { width: 16px; height: 16px; background-color: #f9a826; border-radius: 50%; margin: 0 auto; position: relative; z-index: 2; }
         .timeline-line { height: 4px; background-color: #e5e7eb; position: absolute; top: 24px; left: 0; right: 0; z-index: 1; }
+        
         .loader { border: 3px solid #f3f3f3; border-top: 3px solid #0077b6; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 8px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
         /* Scrollbars personalizados */
-        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+        .custom-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Botones Principales Mesas/Dialogos */
+        .md-btn-main { transition: all 0.2s ease; cursor: pointer; }
+        .md-btn-main[aria-pressed="true"] { background-color: #0077b6; color: white; border-color: #0077b6; }
+        .md-btn-main[aria-pressed="false"] { background-color: #f9fafb; color: #4b5563; border-color: #d1d5db; }
+        .md-btn-main[aria-pressed="false"]:hover { background-color: #e5e7eb; }
     </style>
 </head>
-<body class="text-gray-800">
+<body class="text-gray-800 antialiased flex flex-col min-h-screen">
 
     <!-- Header -->
-    <header class="bg-white shadow-md border-b-4 border-guajira-sun">
+    <header class="bg-white shadow-md border-b-4 border-guajira-sun sticky top-0 z-50">
         <div class="container mx-auto px-4 py-6 flex flex-col md:flex-row items-center justify-between">
             <div class="flex items-center space-x-4">
-                <div class="bg-guajira-sun text-white p-3 rounded-full">
+                <div class="bg-guajira-sun text-white p-3 rounded-full shadow-sm flex items-center justify-center h-12 w-12">
                     <i class="fa-solid fa-map-location-dot text-2xl"></i>
                 </div>
                 <div>
-                    <h1 class="text-3xl font-bold text-guajira-earth">Estrategia de Relacionamiento Territorial</h1>
-                    <p class="text-gray-600 text-sm mt-1">Panel Consolidado Nacional y Regional</p>
+                    <h1 class="text-2xl md:text-3xl font-bold text-guajira-earth leading-tight">Estrategia de Relacionamiento Territorial</h1>
+                    <p class="text-gray-600 text-sm mt-1 flex items-center"><i class="fa-solid fa-landmark mr-1.5 text-guajira-sea"></i> Ministerio de Minas y Energía</p>
                 </div>
             </div>
             <div class="mt-4 md:mt-0 flex bg-blue-50 border border-blue-100 p-3 rounded-lg shadow-sm items-center">
                 <i class="fa-solid fa-calendar-check text-guajira-sea text-xl mr-3"></i>
                 <div>
-                    <p class="text-lg font-bold text-guajira-sea">Plataforma Activa</p>
+                    <p class="text-sm font-bold text-guajira-sea">Plataforma Activa</p>
                 </div>
             </div>
         </div>
 
         <div class="container mx-auto px-4 mt-4">
-            <nav class="flex overflow-x-auto border-b border-gray-200">
-                <button class="main-tab-btn active px-6 py-3 text-gray-600 hover:text-guajira-sea focus:outline-none transition-colors whitespace-nowrap" style="border-bottom-width: 4px;" onclick="openTabMain(event, 'tab-prevencion')">
+            <nav class="flex overflow-x-auto border-b border-gray-200" role="tablist">
+                <button id="nav-tab-1" role="tab" aria-selected="true" aria-controls="tab-prevencion" tabindex="0" class="main-tab-btn active px-6 py-3 text-gray-600 hover:text-guajira-sea focus:outline-none transition-colors whitespace-nowrap" style="border-bottom-width: 4px;" onclick="openTabMain(event, 'tab-prevencion')">
                     <i class="fa-solid fa-shield-halved mr-2"></i>1. Prevención y Diálogo Social
                 </button>
-                <button class="main-tab-btn px-6 py-3 text-gray-600 hover:text-guajira-sea focus:outline-none transition-colors whitespace-nowrap" style="border-bottom-width: 0px;" onclick="openTabMain(event, 'tab-nacional')">
-                    <i class="fa-solid fa-earth-americas mr-2"></i>2. Gestión de Conflictividades Nacional
+                <button id="nav-tab-2" role="tab" aria-selected="false" aria-controls="tab-nacional" tabindex="-1" class="main-tab-btn px-6 py-3 text-gray-600 hover:text-guajira-sea focus:outline-none transition-colors whitespace-nowrap" style="border-bottom-width: 0px;" onclick="openTabMain(event, 'tab-nacional')">
+                    <i class="fa-solid fa-earth-americas mr-2"></i>2. Gestión Nacional
                 </button>
-                <button class="main-tab-btn px-6 py-3 text-gray-600 hover:text-guajira-sea focus:outline-none transition-colors whitespace-nowrap" style="border-bottom-width: 0px;" onclick="openTabMain(event, 'tab-guajira')">
-                    <i class="fa-solid fa-fire mr-2"></i>2.1 Gestión de Conflictividades Guajira
+                <button id="nav-tab-3" role="tab" aria-selected="false" aria-controls="tab-guajira" tabindex="-1" class="main-tab-btn px-6 py-3 text-gray-600 hover:text-guajira-sea focus:outline-none transition-colors whitespace-nowrap" style="border-bottom-width: 0px;" onclick="openTabMain(event, 'tab-guajira')">
+                    <i class="fa-solid fa-fire mr-2"></i>2.1 Conflictividades Guajira
+                </button>
+                <button id="nav-tab-4" role="tab" aria-selected="false" aria-controls="tab-mesas-dialogos" tabindex="-1" class="main-tab-btn px-6 py-3 text-gray-600 hover:text-guajira-sea focus:outline-none transition-colors whitespace-nowrap" style="border-bottom-width: 0px;" onclick="openTabMain(event, 'tab-mesas-dialogos')">
+                    <i class="fa-solid fa-people-group mr-2"></i>3. Mesas y Diálogos
                 </button>
             </nav>
         </div>
     </header>
 
-    <main class="container mx-auto px-4 py-8 max-w-7xl">
+    <main class="container mx-auto px-4 py-8 flex-grow max-w-7xl">
         
         <!-- PESTAÑA 1: Prevención -->
-        <section id="tab-prevencion" class="main-tab-content active">
+        <section id="tab-prevencion" role="tabpanel" aria-labelledby="nav-tab-1" class="main-tab-content active">
             <div class="mb-6">
-                <h2 class="text-2xl font-semibold text-gray-800 border-l-4 border-guajira-sea pl-3 mb-4">Ruta de Prevención (Embudo de Gestión)</h2>
+                <h2 class="text-2xl font-semibold text-gray-800 border-l-4 border-guajira-sea pl-3 mb-2">Ruta de Prevención (Embudo de Gestión)</h2>
                 <p class="text-gray-600 mb-6">Información correspondiente a los procesos de diálogo, conformación de comités y planes de acción resultantes a nivel general.</p>
                 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
@@ -122,7 +142,11 @@
         </section>
 
         <!-- PESTAÑA 2: Dashboard Nacional -->
-        <section id="tab-nacional" class="main-tab-content">
+        <section id="tab-nacional" role="tabpanel" aria-labelledby="nav-tab-2" class="main-tab-content">
+            <div class="mb-6">
+                <h2 class="text-2xl font-semibold text-gray-800 border-l-4 border-guajira-sea pl-3 mb-2">Gestión de Conflictividades Nacional</h2>
+                <p class="text-gray-600 mb-6">Consolidado general de alertas tempranas y conflictividades en el territorio nacional.</p>
+            </div>
             <div class="space-y-6">
                 
                 <!-- Sub Navegación Nacional -->
@@ -169,7 +193,7 @@
                 </div>
 
                 <!-- Filtro Subsector Nacional -->
-                <div class="bg-white rounded-2xl shadow-sm p-4 border border-gray-200 hidden sticky top-0 z-20" id="nacional-filter-section">
+                <div class="bg-white rounded-2xl shadow-sm p-4 border border-gray-200 hidden z-20" id="nacional-filter-section">
                     <div>
                         <label for="nacional-subsector-filter" class="block text-sm font-bold text-guajira-earth mb-2">
                             <i class="fa-solid fa-filter text-guajira-sun mr-1"></i> Filtrar por <span id="nacional-filter-label-text">Subsector</span>
@@ -187,8 +211,7 @@
                             <i class="fa-solid fa-map-location text-guajira-sea mr-2"></i>
                             <h3 class="font-semibold text-gray-700">Distribución Departamental</h3>
                         </div>
-                        <!-- ID del Mapa Nacional modificado -->
-                        <div id="map-nacional" class="w-full flex-grow" style="min-height: 400px; z-index:1;"></div>
+                        <div id="map-nacional" class="map-container flex-grow" style="z-index:1;"></div>
                     </div>
 
                     <div id="nacional-chart-container" class="bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col p-4 hidden">
@@ -202,14 +225,15 @@
             </div>
         </section>
 
-        <!-- PESTAÑA 3: Dashboard Guajira -->
-        <section id="tab-guajira" class="main-tab-content">
+        <!-- PESTAÑA 3 (2.1): Dashboard Guajira -->
+        <section id="tab-guajira" role="tabpanel" aria-labelledby="nav-tab-3" class="main-tab-content">
             <div id="sync-status" class="mb-4 text-sm text-blue-600 bg-blue-50 p-3 rounded flex items-center shadow-sm border border-blue-100">
                 <div class="loader border-t-guajira-sea"></div> <span class="font-semibold text-guajira-sea">Sincronizando datos territoriales de La Guajira...</span>
             </div>
 
             <div class="mb-6">
-                <h2 class="text-2xl font-semibold text-gray-800 border-l-4 border-red-500 pl-3">Gestión de Conflictividades en Territorio (La Guajira)</h2>
+                <h2 class="text-2xl font-semibold text-gray-800 border-l-4 border-red-500 pl-3 mb-2">Gestión de Conflictividades en Territorio (La Guajira)</h2>
+                <p class="text-gray-600 mb-6">Detalle específico y mapeo de proyectos territoriales enfocados en la región.</p>
             </div>
 
             <!-- Evolución Histórica Guajira -->
@@ -224,7 +248,7 @@
             </div>
 
             <!-- Filtro Global Guajira -->
-            <div class="flex flex-col md:flex-row md:items-center bg-white p-4 mb-6 rounded-xl shadow-sm border border-gray-200 gap-4 sticky top-0 z-20">
+            <div class="flex flex-col md:flex-row md:items-center bg-white p-4 mb-6 rounded-xl shadow-sm border border-gray-200 gap-4 z-20">
                 <div class="flex items-center flex-wrap gap-2">
                     <span class="text-sm font-bold text-guajira-earth mr-2 uppercase whitespace-nowrap"><i class="fa-solid fa-filter text-guajira-sun mr-1"></i> Selecciona el año:</span>
                     <div id="botones-filtro-container" class="flex flex-wrap gap-2">
@@ -239,7 +263,7 @@
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-semibold text-gray-800"><i class="fa-solid fa-map-location text-red-500 mr-2"></i>Ubicación de Conflictos (Guajira) <span id="mapa-titulo-ano" class="text-sm font-normal bg-gray-100 px-2 py-1 rounded text-gray-600 ml-2">Todos</span></h3>
                     </div>
-                    <div id="map-conflictos" class="map-container border border-gray-200 flex-grow" style="min-height: 400px; z-index: 1;"></div>
+                    <div id="map-conflictos" class="map-container border border-gray-200 flex-grow" style="z-index: 1;"></div>
                 </div>
 
                 <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col">
@@ -283,44 +307,199 @@
             </div>
         </section>
 
+        <!-- PESTAÑA 4 (3): Mesas y Diálogos (MÓDULO NUEVO INTEGRADO) -->
+        <section id="tab-mesas-dialogos" role="tabpanel" aria-labelledby="nav-tab-4" class="main-tab-content">
+            <div class="mb-6">
+                <h2 class="text-2xl font-semibold text-gray-800 border-l-4 border-guajira-sea pl-3 mb-2">Mesas de Concertación y Espacios de Diálogo</h2>
+                <p class="text-gray-600 mb-6">Consulta territorial de mesas, espacios de diálogo, participantes y entidades vinculadas.</p>
+            </div>
+            
+            <!-- ESTADO DE CARGA Y ERRORES MD -->
+            <div id="md-alertas-container" class="mb-6 space-y-3" aria-live="polite">
+                <div id="md-sync-status" class="text-sm text-blue-700 bg-blue-50 px-4 py-3 rounded-lg flex items-center shadow-sm border border-blue-100">
+                    <div class="loader"></div> <span class="font-semibold text-base">Descargando registros y sincronizando tableros...</span>
+                </div>
+            </div>
+
+            <!-- BOTONES PRINCIPALES MD -->
+            <div class="flex justify-center mb-8">
+                <div class="inline-flex rounded-md shadow-sm overflow-hidden" role="group" aria-label="Selección de vista principal">
+                    <button type="button" id="md-btn-toggle-mesas" class="md-btn-main px-6 md:px-8 py-3 text-sm md:text-base font-medium border" aria-pressed="true">
+                        <i class="fa-solid fa-users-viewfinder mr-2"></i> Mesas de Concertación
+                    </button>
+                    <button type="button" id="md-btn-toggle-dialogos" class="md-btn-main px-6 md:px-8 py-3 text-sm md:text-base font-medium border-t border-b border-r" aria-pressed="false">
+                        <i class="fa-regular fa-comments mr-2"></i> Espacios de Diálogo
+                    </button>
+                </div>
+            </div>
+
+            <!-- PANELES DE INFORMACIÓN Y FILTROS MD -->
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+                
+                <!-- PANEL IZQUIERDO: Filtros y KPI MD -->
+                <div class="lg:col-span-1 space-y-6 flex flex-col">
+                    
+                    <!-- FILTROS MD -->
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+                        <h2 class="text-md font-bold text-gray-800 border-b pb-3 mb-4"><i class="fa-solid fa-filter text-guajira-sun mr-2"></i>Filtros de Búsqueda</h2>
+                        
+                        <div class="mb-5">
+                            <label for="md-filtro-ano" class="block text-sm font-bold text-gray-700 mb-2">Año:</label>
+                            <select id="md-filtro-ano" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 block w-full p-2.5 outline-none cursor-pointer">
+                                <option value="Todos">Cargando...</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="md-filtro-subsector" class="block text-sm font-bold text-gray-700 mb-2">Subsector:</label>
+                            <select id="md-filtro-subsector" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 block w-full p-2.5 outline-none cursor-pointer">
+                                <option value="Todos">Cargando...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- POST-IT (MESAS) MD -->
+                    <div id="md-kpi-mesas" class="bg-blue-50 border-l-4 border-blue-500 p-5 rounded shadow-sm flex items-center justify-between transition-all flex-grow">
+                       <div>
+                          <h3 class="text-xs font-bold text-blue-800 uppercase tracking-wide">Total Mesas</h3>
+                          <p id="md-kpi-mesas-count" class="text-5xl font-black text-blue-900 mt-1">0</p>
+                       </div>
+                       <i class="fa-solid fa-users-rectangle text-5xl text-blue-200"></i>
+                    </div>
+
+                    <!-- POST-IT (DIÁLOGOS) MD -->
+                    <div id="md-kpi-dialogos" class="d-none bg-yellow-50 border-l-4 border-yellow-500 p-5 rounded shadow-sm flex items-center justify-between transition-all flex-grow">
+                       <div>
+                          <h3 class="text-xs font-bold text-yellow-800 uppercase tracking-wide">Total Diálogos</h3>
+                          <p id="md-kpi-dialogos-count" class="text-5xl font-black text-yellow-900 mt-1">0</p>
+                       </div>
+                       <i class="fa-regular fa-comments text-5xl text-yellow-200"></i>
+                    </div>
+                </div>
+
+                <!-- PANEL DERECHO: Mapa y Gráfica MD -->
+                <div class="lg:col-span-3 flex flex-col">
+                    
+                    <!-- BOTONES SUB-FILTRO (SOLO MESAS) MD -->
+                    <div id="md-contenedor-subfiltro-mesas" class="flex justify-center mb-4 transition-opacity duration-300">
+                        <div class="inline-flex rounded-md shadow-sm p-1 bg-gray-100 border border-gray-200" role="group" aria-label="Filtro Tipo de Mesa">
+                            <button type="button" class="md-sub-btn px-6 py-2 text-sm rounded-md" aria-pressed="true" data-tipo="Todas">Todas</button>
+                            <button type="button" class="md-sub-btn px-6 py-2 text-sm rounded-md" aria-pressed="false" data-tipo="Nacional">Nacional</button>
+                            <button type="button" class="md-sub-btn px-6 py-2 text-sm rounded-md" aria-pressed="false" data-tipo="Regional">Regional</button>
+                            <button type="button" class="md-sub-btn px-6 py-2 text-sm rounded-md" aria-pressed="false" data-tipo="Local">Local</button>
+                        </div>
+                    </div>
+
+                    <!-- CONTENEDOR PRINCIPAL DE VISUALIZACIÓN MD -->
+                    <div class="bg-white p-1 rounded-xl shadow-sm border border-gray-200 flex-grow flex flex-col">
+                        
+                        <!-- Barra de Título Visualización MD -->
+                        <div class="p-3 flex justify-between items-center border-b border-gray-100">
+                            <h2 class="text-md font-semibold text-gray-800 flex items-center">
+                                <i id="md-vis-icon" class="fa-solid fa-map-location-dot text-guajira-sea mr-2"></i>
+                                <span id="md-vis-title">Distribución Nacional</span>
+                            </h2>
+                            <span id="md-badge-ubicaciones-perdidas" class="d-none bg-red-50 text-red-700 text-xs font-semibold px-2.5 py-1 rounded-full border border-red-200 shadow-sm" title="Registros sin departamento reconocido">
+                                <i class="fa-solid fa-triangle-exclamation mr-1"></i> <span id="md-text-perdidas">0</span> sin ubicación
+                            </span>
+                        </div>
+                        
+                        <!-- Capa Mapa MD -->
+                        <div id="md-map-nacional" class="map-container-large bg-gray-50 relative"></div>
+                        
+                        <!-- Capa Gráfica (Mesas Nacionales) MD -->
+                        <div id="md-chart-nacional-container" class="d-none bg-white w-full h-[550px] p-4 flex-col justify-center relative">
+                            <canvas id="md-chartNacional"></canvas>
+                            <!-- Mensaje Vacio MD -->
+                            <div id="md-chart-no-data" class="d-none absolute inset-0 flex flex-col items-center justify-center bg-gray-50 z-10">
+                                <i class="fa-solid fa-chart-bar text-4xl text-gray-300 mb-2"></i>
+                                <p class="text-gray-500 font-medium text-sm">No hay mesas nacionales registradas para estos filtros.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Leyenda Mapa MD -->
+                        <div id="md-leyenda-mapa" class="p-3 border-t border-gray-100 bg-gray-50 flex flex-wrap gap-4 text-xs font-semibold text-gray-600 justify-center">
+                            <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-blue-500 mr-1.5 shadow-sm"></span>Hidrocarburos</span>
+                            <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-yellow-500 mr-1.5 shadow-sm"></span>Energía Eléctrica</span>
+                            <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-gray-500 mr-1.5 shadow-sm"></span>Minería</span>
+                            <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-green-500 mr-1.5 shadow-sm"></span>Multisectorial / Otros</span>
+                        </div>
+
+                        <!-- TABLA DE DETALLES MD (Oculta por defecto) -->
+                        <div id="md-contenedor-detalles" class="d-none border-t-4 border-guajira-sea bg-white flex flex-col transition-all duration-300 shadow-inner">
+                            <div class="bg-gray-50 p-3 border-b border-gray-200 flex justify-between items-center sticky top-0">
+                                <h3 class="text-sm font-bold text-gray-800"><i class="fa-solid fa-table-list text-guajira-sea mr-2"></i>Detalles de la Ubicación: <span id="md-detalles-titulo-ubicacion" class="text-guajira-sun uppercase ml-1"></span></h3>
+                                <button type="button" id="md-btn-cerrar-detalles" class="text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors bg-white px-3 py-1 rounded shadow-sm border border-gray-200 text-xs font-bold flex items-center">
+                                    <i class="fa-solid fa-xmark mr-1.5 text-base"></i> Cerrar
+                                </button>
+                            </div>
+                            <div class="max-h-[350px] overflow-y-auto custom-scroll p-0">
+                                <table class="w-full text-sm text-left text-gray-600">
+                                    <thead class="text-xs text-gray-700 uppercase bg-white sticky top-0 shadow-sm z-10">
+                                        <tr id="md-tabla-detalles-head">
+                                            <!-- Encabezados dinámicos JS -->
+                                        </tr>
+                                    </thead>
+                                    <tbody id="md-tabla-detalles-body" class="divide-y divide-gray-100 bg-white">
+                                        <!-- Filas dinámicas generadas por JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </section>
+
     </main>
 
+    <!-- MAIN JAVASCRIPT LOGIC -->
     <script>
+        // UTILIDADES COMPARTIDAS DOM
         const $ = id => document.getElementById(id);
         const $$ = sel => document.querySelectorAll(sel);
 
-        // Control de Pestañas Globales
+        // Control de Pestañas Globales Integrado
         function openTabMain(evt, tabName) {
-            // Ocultar contenidos
             $$(".main-tab-content").forEach(el => { 
                 el.style.display = "none"; 
                 el.classList.remove("active"); 
             });
-            // Resetear botones
             $$(".main-tab-btn").forEach(btn => { 
                 btn.classList.remove("active"); 
                 btn.style.borderBottomWidth = "0px";
+                btn.setAttribute("aria-selected", "false");
             });
             
-            // Mostrar contenido actual
-            $(tabName).style.display = "block";
-            setTimeout(() => $(tabName).classList.add("active"), 10);
+            const targetTab = $(tabName);
+            targetTab.style.display = "block";
             
-            // Activar botón pulsado
+            // Animación de entrada suave
+            requestAnimationFrame(() => {
+                targetTab.classList.add("active");
+            });
+            
             evt.currentTarget.classList.add("active");
             evt.currentTarget.style.borderBottomWidth = "4px";
+            evt.currentTarget.setAttribute("aria-selected", "true");
 
-            // Asegurar que los mapas se redimensionen correctamente si estaban ocultos
-            if(tabName === 'tab-nacional' && mapNacional) {
-                setTimeout(() => mapNacional.invalidateSize(), 100);
+            // Gestión de Invalidation y Redimensionamiento por Módulo
+            if(tabName === 'tab-nacional') {
+                if(mapNacional) setTimeout(() => mapNacional.invalidateSize(), 50);
+                if(chartInstanceNacional) setTimeout(() => chartInstanceNacional.resize(), 50);
             }
-            if(tabName === 'tab-guajira' && mapConf) {
-                setTimeout(() => mapConf.invalidateSize(), 100);
+            if(tabName === 'tab-guajira') {
+                if(mapConf) setTimeout(() => mapConf.invalidateSize(), 50);
+                if(graficoEmpresasInstance) setTimeout(() => graficoEmpresasInstance.resize(), 50);
+            }
+            if(tabName === 'tab-mesas-dialogos') {
+                MesasDialogosModule.onTabActivated();
             }
         }
 
         /* =========================================================
-           NAMESPACE JAVASCRIPT: DASHBOARD NACIONAL
+           NAMESPACE 1: DASHBOARD NACIONAL
            ========================================================= */
         const DEPARTMENTS_COORDS_NACIONAL = {
             "ANTIOQUIA": [6.2518, -75.5636], "ATLANTICO": [10.9685, -74.7813], "BOGOTA": [4.6097, -74.0817], 
@@ -403,7 +582,7 @@
         function initMapNacional() {
             mapNacional = L.map('map-nacional').setView([4.5709, -74.2973], 5);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; OpenStreetMap &copy; CARTO', maxZoom: 19
+                attribution: '&copy; CARTO', maxZoom: 19
             }).addTo(mapNacional);
             markersLayerNacional = L.layerGroup().addTo(mapNacional);
         }
@@ -508,7 +687,6 @@
                 const count = yearCounts[year];
                 const isSelected = appStateNac.selectedYear === year;
                 
-                // Colores adaptados a la paleta Guajira
                 const baseClass = "w-28 h-28 flex flex-col items-center justify-center rounded-xl cursor-pointer transition-all duration-300 shadow-sm border select-none";
                 const selectedClass = "bg-[#0077b6] border-[#0077b6] text-white shadow-lg scale-110 ring-4 ring-blue-200 z-10 rotate-2";
                 const defaultClass = "bg-[#e5c07b]/30 border-[#f9a826] hover:bg-[#e5c07b]/50 text-gray-800 hover:-translate-y-1 hover:shadow-md hover:rotate-2";
@@ -539,7 +717,10 @@
             }
 
             updateMapNacional(finalData);
-            if (appStateNac.activeTab !== 'otros') updateChartNacional(finalData);
+            if (appStateNac.activeTab !== 'otros') {
+                // Previene instanciación si el contenedor está oculto (falla en Chart.js)
+                requestAnimationFrame(() => updateChartNacional(finalData));
+            }
         }
 
         function updateMapNacional(data) {
@@ -568,10 +749,12 @@
         }
 
         function updateChartNacional(data) {
+            if ($('nacional-chart-container').classList.contains('hidden')) return;
             const ctx = $('chart-nacional').getContext('2d');
-            if (data.length === 0) {
-                if (chartInstanceNacional) chartInstanceNacional.destroy(); return;
-            }
+            
+            if (chartInstanceNacional) { chartInstanceNacional.destroy(); chartInstanceNacional = null; }
+            
+            if (data.length === 0) return;
 
             let sectorCounts = {};
             data.forEach(row => {
@@ -583,15 +766,13 @@
             const labels = sortedSectors;
             const values = sortedSectors.map(s => sectorCounts[s]);
 
-            if (chartInstanceNacional) chartInstanceNacional.destroy();
-
             chartInstanceNacional = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels,
                     datasets: [{
                         label: 'Número de registros', data: values,
-                        backgroundColor: '#0077b6', borderRadius: 4, barPercentage: 0.6 // Color Guajira Sea
+                        backgroundColor: '#0077b6', borderRadius: 4, barPercentage: 0.6
                     }]
                 },
                 options: {
@@ -624,7 +805,7 @@
         }
 
         /* =========================================================
-           NAMESPACE JAVASCRIPT: DASHBOARD GUAJIRA
+           NAMESPACE 2: DASHBOARD GUAJIRA
            ========================================================= */
         const coordenadasGuajira = {
             "uribia": {lat: 11.733, lng: -72.266}, "maicao": {lat: 11.378, lng: -72.243},
@@ -643,10 +824,11 @@
         };
 
         let dbResumen = [], dbMunicipios = [], dbTipologias = [], dbEmpresas = [], dbProyectos = []; 
-        let mapConf, marcadoresConflictos = [], graficoEmpresasInstance = null, añosDisponibles = ["Todos"];
+        let mapConf, marcadoresLayerConf, graficoEmpresasInstance = null, añosDisponibles = ["Todos"];
 
-        const normalizar = t => t ? String(t).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : "";
-        const getVal = (row, words) => row[Object.keys(row).find(k => words.some(w => normalizar(k).includes(w)))] || null;
+        const guajiraNormalizar = t => t ? String(t).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : "";
+        const guajiraGetVal = (row, words) => row[Object.keys(row).find(k => words.some(w => guajiraNormalizar(k).includes(w)))] || null;
+        const escapeHTMLBase = str => { const t = document.createElement('div'); t.textContent = str; return t.innerHTML; };
 
         async function cargarDatosGuajira() {
             const syncUI = $('sync-status');
@@ -655,35 +837,36 @@
                 const [dRes, dMun, dTip, dEmp, dPro] = await Promise.all(Object.values(urlsGuajira).map(fetchCSV));
 
                 dbResumen = dRes.map(r => ({
-                    año: getVal(r, ['ano'])?.toString().trim() || '',
-                    casos: parseInt(getVal(r, ['caso', 'priorizado', 'conflicto'])) || 0,
-                    comunidades: parseInt(getVal(r, ['comunidad', 'impacta'])) || 0
+                    año: guajiraGetVal(r, ['ano'])?.toString().trim() || '',
+                    casos: parseInt(guajiraGetVal(r, ['caso', 'priorizado', 'conflicto'])) || 0,
+                    comunidades: parseInt(guajiraGetVal(r, ['comunidad', 'impacta'])) || 0
                 })).filter(i => i.año && i.casos > 0);
 
-                añosDisponibles = ["Todos", ...new Set(dbResumen.map(d => d.año))].sort();
+                // No mutamos original, creamos Set y ordenamos
+                añosDisponibles = ["Todos", ...[...new Set(dbResumen.map(d => d.año))].sort()];
 
                 dbMunicipios = dMun.map(r => {
-                    let muni = getVal(r, ['municipio', 'lugar'])?.toString().trim() || 'Desconocido';
-                    let coord = coordenadasGuajira[normalizar(muni)] || coordenadasGuajira["riohacha"];
-                    return { año: getVal(r, ['ano'])?.toString().trim() || '', municipio: muni, conflictos: parseInt(getVal(r, ['conflicto', 'cantidad', 'numero'])) || 0, lat: coord.lat, lng: coord.lng };
+                    let muni = guajiraGetVal(r, ['municipio', 'lugar'])?.toString().trim() || 'Desconocido';
+                    let coord = coordenadasGuajira[guajiraNormalizar(muni)] || null; // Fix: No Riohacha por defecto si no existe
+                    return { año: guajiraGetVal(r, ['ano'])?.toString().trim() || '', municipio: muni, conflictos: parseInt(guajiraGetVal(r, ['conflicto', 'cantidad', 'numero'])) || 0, lat: coord?.lat, lng: coord?.lng };
                 }).filter(i => i.año && i.conflictos > 0);
 
                 dbTipologias = dTip.map(r => ({
-                    año: getVal(r, ['ano'])?.toString().trim() || '', tipo: getVal(r, ['tipolog', 'tipo'])?.toString().trim() || 'Otros', conflictos: parseInt(getVal(r, ['conflicto', 'cantidad'])) || 0
+                    año: guajiraGetVal(r, ['ano'])?.toString().trim() || '', tipo: guajiraGetVal(r, ['tipolog', 'tipo'])?.toString().trim() || 'Otros', conflictos: parseInt(guajiraGetVal(r, ['conflicto', 'cantidad'])) || 0
                 })).filter(i => i.año && i.conflictos > 0);
 
                 dbEmpresas = dEmp.map(r => ({
-                    año: getVal(r, ['ano'])?.toString().trim() || '',
-                    empresa: getVal(r, ['empresa', 'compania'])?.toString().trim() || 'N/A',
-                    conflictos: parseInt(getVal(r, ['conflicto', 'cantidad'])) || 0
+                    año: guajiraGetVal(r, ['ano'])?.toString().trim() || '',
+                    empresa: guajiraGetVal(r, ['empresa', 'compania'])?.toString().trim() || 'N/A',
+                    conflictos: parseInt(guajiraGetVal(r, ['conflicto', 'cantidad'])) || 0
                 })).filter(i => i.año && i.conflictos > 0);
 
                 dbProyectos = dPro.map(r => ({
-                    año: getVal(r, ['ano'])?.toString().trim() || '',
-                    empresa: getVal(r, ['empresa'])?.toString().trim() || 'No Especificada',
-                    empresa_ejecutora: getVal(r, ['ejecutora', 'ejecutor', 'contratista'])?.toString().trim() || 'N/A',
-                    proyecto: getVal(r, ['proyecto', 'bloque', 'contrato', 'nombre', 'detalle'])?.toString().trim() || 'N/A',
-                    conflictos: parseInt(getVal(r, ['conflicto', 'cantidad', 'casos', 'total', 'numero'])) || 0
+                    año: guajiraGetVal(r, ['ano'])?.toString().trim() || '',
+                    empresa: guajiraGetVal(r, ['empresa'])?.toString().trim() || 'No Especificada',
+                    empresa_ejecutora: guajiraGetVal(r, ['ejecutora', 'ejecutor', 'contratista'])?.toString().trim() || 'N/A',
+                    proyecto: guajiraGetVal(r, ['proyecto', 'bloque', 'contrato', 'nombre', 'detalle'])?.toString().trim() || 'N/A',
+                    conflictos: parseInt(guajiraGetVal(r, ['conflicto', 'cantidad', 'casos', 'total', 'numero'])) || 0
                 })).filter(i => i.año);
 
                 syncUI.style.display = 'none';
@@ -698,7 +881,8 @@
 
         function initMapGuajira() {
             mapConf = L.map('map-conflictos').setView([11.5444, -72.9072], 8);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap', maxZoom: 19 }).addTo(mapConf);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CARTO', maxZoom: 19 }).addTo(mapConf);
+            marcadoresLayerConf = L.layerGroup().addTo(mapConf); // Fix: Uso de capa para limpieza
         }
 
         function renderTimeline() {
@@ -706,7 +890,7 @@
                 <div class="timeline-item text-center">
                     <div class="pt-6"><div class="timeline-dot shadow-md ring-4 ring-white"></div></div>
                     <div class="mt-4 mx-2">
-                        <h4 class="text-4xl font-black text-gray-800 drop-shadow-sm mb-2">${item.año}</h4>
+                        <h4 class="text-4xl font-black text-gray-800 drop-shadow-sm mb-2">${escapeHTMLBase(item.año)}</h4>
                         <div class="inline-flex justify-center space-x-3 bg-blue-50/80 backdrop-blur-sm rounded-full py-1.5 px-4 border border-blue-100 shadow-sm">
                             <div class="text-center"><span class="font-black text-guajira-sea text-xl leading-none">${item.casos}</span><span class="text-[9px] text-gray-500 uppercase font-bold block leading-none mt-1">Casos</span></div>
                             <div class="border-l border-blue-200"></div>
@@ -723,28 +907,34 @@
             ['mapa', 'tipologia', 'empresas'].forEach(id => $(`${id}-titulo-ano`).innerText = id === 'mapa' ? t : `(${t})`);
 
             let datosFiltrados = year === 'Todos' ? dbMunicipios : dbMunicipios.filter(d => d.año === year);
-            renderMapaGuajira(datosFiltrados); renderTipologias(year); renderEmpresasYProyectos(year);
+            renderMapaGuajira(datosFiltrados); 
+            renderTipologias(year); 
+            // Deferred chart render
+            requestAnimationFrame(() => renderEmpresasYProyectos(year));
         }
 
         function generarBotonesFiltroGuajira() {
             $('botones-filtro-container').innerHTML = añosDisponibles.map(año => 
-                `<button class="filtro-btn px-5 py-2 text-sm font-semibold border shadow-sm rounded-lg transition-all whitespace-nowrap ${año === 'Todos' ? 'bg-guajira-sea text-white border-transparent' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}" data-year="${año}" onclick="aplicarFiltroGuajira('${año}')">${año}</button>`
+                `<button class="filtro-btn px-5 py-2 text-sm font-semibold border shadow-sm rounded-lg transition-all whitespace-nowrap ${año === 'Todos' ? 'bg-guajira-sea text-white border-transparent' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}" data-year="${año}" onclick="aplicarFiltroGuajira('${año}')">${escapeHTMLBase(año)}</button>`
             ).join('');
         }
 
         function renderMapaGuajira(datosFiltrados) {
-            if(!mapConf) return;
-            marcadoresConflictos.forEach(m => mapConf.removeLayer(m)); marcadoresConflictos = [];
+            if(!mapConf || !marcadoresLayerConf) return;
+            marcadoresLayerConf.clearLayers();
             const agrupados = datosFiltrados.reduce((acc, d) => {
-                acc[d.municipio] = acc[d.municipio] || { lat: d.lat, lng: d.lng, total: 0 };
-                acc[d.municipio].total += d.conflictos; return acc;
+                if(d.lat && d.lng) { // Solo si tiene coordenadas válidas
+                    acc[d.municipio] = acc[d.municipio] || { lat: d.lat, lng: d.lng, total: 0 };
+                    acc[d.municipio].total += d.conflictos; 
+                }
+                return acc;
             }, {});
 
             Object.entries(agrupados).forEach(([muni, data]) => {
                 const size = Math.min(Math.max(35, 25 + (data.total * 1.5)), 80); 
                 const marker = L.marker([data.lat, data.lng], {icon: L.divIcon({ html: `<div class="bg-red-500 text-white rounded-full flex items-center justify-center font-bold shadow-lg border-2 border-white" style="width: ${size}px; height: ${size}px;">${data.total}</div>`, className: '', iconSize: [size, size], iconAnchor: [size/2, size/2] })})
-                    .bindPopup(`<div class="text-center p-1"><b class="text-lg uppercase">${muni}</b><br><span class="text-red-600 font-black text-2xl">${data.total}</span><br><span class="text-[10px] text-gray-500 uppercase">Conflictos</span></div>`).addTo(mapConf);
-                marcadoresConflictos.push(marker);
+                    .bindPopup(`<div class="text-center p-1"><b class="text-lg uppercase">${escapeHTMLBase(muni)}</b><br><span class="text-red-600 font-black text-2xl">${data.total}</span><br><span class="text-[10px] text-gray-500 uppercase">Conflictos</span></div>`);
+                marcadoresLayerConf.addLayer(marker);
             });
         }
 
@@ -759,18 +949,21 @@
                 .sort((a, b) => b.count - a.count)
                 .map((item, i) => `
                     <div class="mb-3">
-                        <div class="flex justify-between text-sm mb-1"><span class="font-semibold text-gray-700">${item.tipo}</span><span class="font-bold text-gray-900">${item.count}</span></div>
+                        <div class="flex justify-between text-sm mb-1"><span class="font-semibold text-gray-700">${escapeHTMLBase(item.tipo)}</span><span class="font-bold text-gray-900">${item.count}</span></div>
                         <div class="w-full bg-gray-100 rounded-full h-2"><div class="${colors[i % colors.length]} h-2 rounded-full" style="width: ${item.pct}%"></div></div>
                     </div>`).join('') || '';
         }
 
         function renderEmpresasYProyectos(year) {
+            // Prevent render if container hidden
+            if ($('tab-guajira').style.display === 'none') return;
+
             const empFiltrados = year === 'Todos' ? dbEmpresas : dbEmpresas.filter(d => d.año === year);
             const agrupadoEmp = empFiltrados.reduce((acc, d) => { acc[d.empresa] = (acc[d.empresa] || 0) + d.conflictos; return acc; }, {});
             const empresasOrds = Object.keys(agrupadoEmp).sort((a,b) => agrupadoEmp[b] - agrupadoEmp[a]);
             
             $('chart-container-guajira').style.height = Math.max(250, empresasOrds.length * 35) + 'px';
-            if(graficoEmpresasInstance) graficoEmpresasInstance.destroy();
+            if(graficoEmpresasInstance) { graficoEmpresasInstance.destroy(); graficoEmpresasInstance = null; }
             
             if(empresasOrds.length) {
                 graficoEmpresasInstance = new Chart($('empresasChart').getContext('2d'), {
@@ -781,11 +974,12 @@
             }
 
             const proyFiltrados = year === 'Todos' ? dbProyectos : dbProyectos.filter(d => d.año === year);
-            $('tabla-proyectos-content').innerHTML = proyFiltrados.sort((a, b) => (b.conflictos - a.conflictos)).map(d => `
+            const clonProy = [...proyFiltrados]; // Evitar mutar el array original con sort()
+            $('tabla-proyectos-content').innerHTML = clonProy.sort((a, b) => (b.conflictos - a.conflictos)).map(d => `
                 <tr class="bg-white border-b hover:bg-blue-50">
-                    <td class="px-4 py-3 font-bold text-gray-800 text-[11px] uppercase">${d.empresa}</td>
-                    <td class="px-4 py-3 text-gray-600 text-xs">${d.empresa_ejecutora}</td>
-                    <td class="px-4 py-3 text-gray-700 text-sm">${d.proyecto}</td>
+                    <td class="px-4 py-3 font-bold text-gray-800 text-[11px] uppercase">${escapeHTMLBase(d.empresa)}</td>
+                    <td class="px-4 py-3 text-gray-600 text-xs">${escapeHTMLBase(d.empresa_ejecutora)}</td>
+                    <td class="px-4 py-3 text-gray-700 text-sm">${escapeHTMLBase(d.proyecto)}</td>
                 </tr>`).join('');
         }
 
@@ -794,11 +988,429 @@
             cargarDatosGuajira();
         }
 
-        // Lanzador Maestro
-        window.onload = () => {
+        /* =========================================================
+           NAMESPACE 3: MÓDULO MESAS Y DIÁLOGOS (NUEVO)
+           ========================================================= */
+        const MesasDialogosModule = (() => {
+            let isInitialized = false;
+            
+            const MD_URLS = {
+                mesas: "https://docs.google.com/spreadsheets/d/1qkTz97jPx97s2LYJ2XSSnoxbycB7eAsX4I1tyWtsESI/export?format=csv",
+                dialogos: "https://docs.google.com/spreadsheets/d/14Cxrf2OgIm61qBqXZz-2lkNFFHEjuuy6vzH3Cs3q-pY/export?format=csv&gid=699255464"
+            };
+
+            const mdState = {
+                vistaActual: 'mesas', 
+                tipoMesaActual: 'Todas',
+                dataMesas: [],
+                dataDialogos: [],
+                map: null,
+                layerGroup: null,
+                chartInstance: null
+            };
+
+            // Coordenadas extendidas
+            const MD_COORDENADAS = {
+                "amazonas": {lat: -1.442, lng: -71.575}, "antioquia": {lat: 6.958, lng: -75.405}, "arauca": {lat: 6.643, lng: -70.762},
+                "atlantico": {lat: 10.654, lng: -74.965}, "bolivar": {lat: 8.874, lng: -74.195}, "boyaca": {lat: 5.567, lng: -72.936},
+                "caldas": {lat: 5.340, lng: -75.293}, "caqueta": {lat: 1.139, lng: -73.666}, "casanare": {lat: 5.390, lng: -71.914},
+                "cauca": {lat: 2.378, lng: -76.620}, "cesar": {lat: 9.387, lng: -73.541}, "choco": {lat: 5.485, lng: -76.812},
+                "cordoba": {lat: 8.353, lng: -75.698}, "cundinamarca": {lat: 4.887, lng: -74.004}, "guainia": {lat: 2.531, lng: -69.213},
+                "guaviare": {lat: 1.956, lng: -71.745}, "huila": {lat: 2.519, lng: -75.529}, "la guajira": {lat: 11.544, lng: -72.907},
+                "magdalena": {lat: 10.334, lng: -74.195}, "meta": {lat: 3.655, lng: -72.907}, "narino": {lat: 1.636, lng: -77.728},
+                "norte de santander": {lat: 8.169, lng: -72.955}, "putumayo": {lat: 0.692, lng: -76.046}, "quindio": {lat: 4.475, lng: -75.668},
+                "risaralda": {lat: 5.093, lng: -75.879}, "san andres": {lat: 12.551, lng: -81.700}, "santander": {lat: 6.641, lng: -73.308},
+                "sucre": {lat: 8.895, lng: -74.965}, "tolima": {lat: 3.905, lng: -75.293}, "valle del cauca": {lat: 3.738, lng: -76.241},
+                "vaupes": {lat: 0.449, lng: -70.470}, "vichada": {lat: 4.545, lng: -69.458}, "bogota": {lat: 4.609, lng: -74.081},
+                "uribia": {lat: 11.733, lng: -72.266}, "maicao": {lat: 11.378, lng: -72.243}, "albania": {lat: 11.161, lng: -72.589},
+                "riohacha": {lat: 11.544, lng: -72.907}, "dibulla": {lat: 11.272, lng: -73.308}, "villanueva": {lat: 10.603, lng: -72.980}, 
+                "fonseca": {lat: 10.893, lng: -72.852}, "san juan del cesar": {lat: 10.768, lng: -73.003}, "barrancas": {lat: 10.957, lng: -72.784},
+                "manaure": {lat: 11.775, lng: -72.445}, "hato nuevo": {lat: 11.066, lng: -72.759}
+            };
+
+            const mdEscapeHTML = str => { const t = document.createElement('div'); t.textContent = str; return t.innerHTML; };
+            const mdNormalizar = str => (typeof str === 'string' ? str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : "");
+            
+            const mdExtraerAno = val => {
+                if (!val) return "Sin año";
+                const match = String(val).match(/\d{4}/);
+                return match ? match[0] : "Sin año";
+            };
+
+            // Regla estricta Columna B
+            const getColumnaB = row => {
+                const keys = Object.keys(row || {});
+                return keys.length > 1 && row[keys[1]] ? String(row[keys[1]]).trim() : "Sin clasificar";
+            };
+
+            const mdGetDeptoCoords = strNorm => {
+                if(!strNorm) return null;
+                if(MD_COORDENADAS[strNorm]) return { ...MD_COORDENADAS[strNorm], nombreMostrado: strNorm };
+                for (const [key, val] of Object.entries(MD_COORDENADAS)) {
+                    if (strNorm.includes(key)) return { ...val, nombreMostrado: key };
+                }
+                return null;
+            };
+
+            const mdGetColorSubsector = sub => {
+                const val = mdNormalizar(sub);
+                if(val.includes("hidro") || val.includes("petro")) return "#3b82f6";
+                if(val.includes("energ") || val.includes("electr")) return "#eab308";
+                if(val.includes("mine") || val.includes("carbon")) return "#6b7280";
+                return "#22c55e"; 
+            };
+
+            const mdParseCSV = url => new Promise((resolve, reject) => {
+                Papa.parse(url, { download: true, header: true, skipEmptyLines: 'greedy', complete: res => resolve(res.data), error: err => reject(err) });
+            });
+
+            function mdProcesarDatos(rawData, prefijoID, esMesas) {
+                return rawData.map((r, index) => {
+                    const keys = Object.keys(r);
+                    if (keys.length === 0) return null;
+
+                    const safeKeys = keys.map(k => ({ orig: k, safe: mdNormalizar(k).replace(/\s+/g, '') }));
+
+                    let kId = safeKeys.find(k => k.safe === '_id' || k.safe === 'id');
+                    let idVal = (kId && r[kId.orig] && String(r[kId.orig]).trim() !== "") ? r[kId.orig] : `${prefijoID}-AUTO-${index}`;
+
+                    let subsectorVal = getColumnaB(r);
+
+                    let kFecha = safeKeys.find(k => k.safe.includes('fecha') || k.safe.includes('registro') || k.safe.includes('ano'));
+                    let anoVal = kFecha && r[kFecha.orig] ? mdExtraerAno(r[kFecha.orig]) : "Sin año";
+
+                    let tipoMesaVal = "Sin clasificar";
+                    let kTipo = safeKeys.find(k => k.safe.includes('tipodemesa'));
+                    if (kTipo && r[kTipo.orig] && String(r[kTipo.orig]).trim() !== "") {
+                        tipoMesaVal = String(r[kTipo.orig]).trim();
+                    }
+
+                    let deptoKeys = safeKeys.filter(k => k.safe.includes('departamento') || k.safe.includes('regional') || k.safe.includes('municipio') || k.safe.includes('lugar'));
+                    let locValues = deptoKeys.map(k => r[k.orig]).filter(v => v && String(v).trim() !== "");
+                    let deptoVal = locValues.join(" ") || "Sin ubicación";
+
+                    const extractPorPalabra = (palabras) => {
+                        const clave = safeKeys.find(k => palabras.some(p => k.safe.includes(p)));
+                        return clave && r[clave.orig] && String(r[clave.orig]).trim() !== "" ? String(r[clave.orig]).trim() : "No registrado";
+                    };
+                    
+                    let actoresVal = esMesas ? extractPorPalabra(['actores', 'sociales', 'economicos']) : extractPorPalabra(['actores', 'organizaciones']);
+                    let entidadesVal = esMesas ? extractPorPalabra(['instituciones', 'entidades', 'espacio']) : extractPorPalabra(['entidades', 'participan']);
+                    let institucionesVal = esMesas ? "N/A" : extractPorPalabra(['participantesinstituciones', 'instituciones']);
+                    let participantesVal = extractPorPalabra(['participantes', 'estimado']);
+
+                    return {
+                        id: String(idVal).trim(), ano: anoVal, subsector: subsectorVal, tipoMesa: tipoMesaVal,
+                        deptoOriginal: deptoVal, deptoNorm: mdNormalizar(deptoVal), actores: actoresVal,
+                        entidades: entidadesVal, instituciones: institucionesVal, participantes: participantesVal
+                    };
+                }).filter(d => d !== null);
+            }
+
+            async function init() {
+                if (isInitialized) return;
+                
+                mdState.map = L.map('md-map-nacional').setView([4.5709, -74.2973], 5.5);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CARTO', maxZoom: 10, minZoom: 4 }).addTo(mdState.map);
+                mdState.layerGroup = L.layerGroup().addTo(mdState.map);
+                
+                try {
+                    const [resMesas, resDialogos] = await Promise.allSettled([ mdParseCSV(MD_URLS.mesas), mdParseCSV(MD_URLS.dialogos) ]);
+
+                    $('md-sync-status').classList.add('d-none');
+
+                    if (resMesas.status === 'fulfilled') mdState.dataMesas = mdProcesarDatos(resMesas.value, 'M', true);
+                    if (resDialogos.status === 'fulfilled') mdState.dataDialogos = mdProcesarDatos(resDialogos.value, 'D', false);
+
+                    asignarEventos();
+                    mdCambiarVista('mesas');
+                    isInitialized = true;
+                } catch (err) {
+                    $('md-sync-status').classList.remove('d-none');
+                    $('md-sync-status').innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-500 mr-2 text-lg"></i> Error de carga en módulo Mesas.`;
+                    console.error("MD Falla crítica:", err);
+                }
+            }
+
+            function asignarEventos() {
+                $('md-btn-toggle-mesas').addEventListener('click', () => mdCambiarVista('mesas'));
+                $('md-btn-toggle-dialogos').addEventListener('click', () => mdCambiarVista('dialogos'));
+                $('md-filtro-ano').addEventListener('change', mdProcesarVisualizacion);
+                $('md-filtro-subsector').addEventListener('change', mdProcesarVisualizacion);
+                $('md-btn-cerrar-detalles').addEventListener('click', () => $('md-contenedor-detalles').classList.add('d-none'));
+                
+                $$('.md-sub-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        $$('.md-sub-btn').forEach(b => b.setAttribute('aria-pressed', 'false'));
+                        e.target.setAttribute('aria-pressed', 'true');
+                        mdState.tipoMesaActual = e.target.getAttribute('data-tipo');
+                        mdProcesarVisualizacion();
+                    });
+                });
+            }
+
+            function mdCambiarVista(vista) {
+                mdState.vistaActual = vista;
+                const esMesas = vista === 'mesas';
+                const dataset = esMesas ? mdState.dataMesas : mdState.dataDialogos;
+                
+                $('md-btn-toggle-mesas').setAttribute('aria-pressed', esMesas ? 'true' : 'false');
+                $('md-btn-toggle-dialogos').setAttribute('aria-pressed', !esMesas ? 'true' : 'false');
+                
+                if (esMesas) {
+                    $('md-kpi-mesas').classList.remove('d-none');
+                    $('md-kpi-dialogos').classList.add('d-none');
+                    $('md-contenedor-subfiltro-mesas').classList.remove('d-none');
+                } else {
+                    $('md-kpi-mesas').classList.add('d-none');
+                    $('md-kpi-dialogos').classList.remove('d-none');
+                    $('md-contenedor-subfiltro-mesas').classList.add('d-none');
+                    mdState.tipoMesaActual = 'Todas';
+                }
+
+                mdReconstruirFiltros(dataset);
+                mdProcesarVisualizacion();
+            }
+
+            function mdReconstruirFiltros(dataset) {
+                const elAno = $('md-filtro-ano');
+                const elSub = $('md-filtro-subsector');
+                const selAno = elAno.value;
+                const selSub = elSub.value;
+                
+                const anosUnicos = [...new Set(dataset.map(d => d.ano))].filter(a => a !== "Sin año").sort().reverse();
+                let docFragAno = document.createDocumentFragment();
+                let optTodoAno = document.createElement('option'); optTodoAno.value = 'Todos'; optTodoAno.textContent = 'Todos los años'; docFragAno.appendChild(optTodoAno);
+                anosUnicos.forEach(a => { let opt = document.createElement('option'); opt.value = a; opt.textContent = a; docFragAno.appendChild(opt); });
+                if(dataset.some(d => d.ano === "Sin año")) { let opt = document.createElement('option'); opt.value = 'Sin año'; opt.textContent = 'Sin año'; docFragAno.appendChild(opt); }
+                elAno.innerHTML = ''; elAno.appendChild(docFragAno);
+                elAno.value = Array.from(elAno.options).some(o => o.value === selAno) ? selAno : "Todos";
+
+                const subUnicos = [...new Set(dataset.map(d => d.subsector))].filter(s => s !== "Sin clasificar").sort();
+                let docFragSub = document.createDocumentFragment();
+                let optTodoSub = document.createElement('option'); optTodoSub.value = 'Todos'; optTodoSub.textContent = 'Todos los subsectores'; docFragSub.appendChild(optTodoSub);
+                subUnicos.forEach(s => { let opt = document.createElement('option'); opt.value = s; opt.textContent = s; docFragSub.appendChild(opt); });
+                if(dataset.some(d => d.subsector === "Sin clasificar")) { let opt = document.createElement('option'); opt.value = 'Sin clasificar'; opt.textContent = 'Sin clasificar'; docFragSub.appendChild(opt); }
+                elSub.innerHTML = ''; elSub.appendChild(docFragSub);
+                elSub.value = Array.from(elSub.options).some(o => o.value === selSub) ? selSub : "Todos";
+            }
+
+            function mdProcesarVisualizacion() {
+                const v = mdState.vistaActual;
+                const y = $('md-filtro-ano').value;
+                const s = $('md-filtro-subsector').value;
+                const tm = mdState.tipoMesaActual;
+                
+                let datosFiltrados = (v === 'mesas' ? mdState.dataMesas : mdState.dataDialogos).filter(d => 
+                    (y === 'Todos' || d.ano === y) && (s === 'Todos' || d.subsector === s)
+                );
+
+                if (v === 'mesas' && tm !== 'Todas') {
+                    datosFiltrados = datosFiltrados.filter(d => mdNormalizar(d.tipoMesa) === mdNormalizar(tm));
+                }
+
+                const idsUnicos = new Set();
+                datosFiltrados.forEach(d => { if (!d.id.includes('AUTO-')) idsUnicos.add(d.id); });
+                
+                if (v === 'mesas') $('md-kpi-mesas-count').textContent = idsUnicos.size;
+                else $('md-kpi-dialogos-count').textContent = idsUnicos.size;
+
+                $('md-contenedor-detalles').classList.add('d-none');
+
+                if (v === 'mesas' && tm === 'Nacional') {
+                    mdMostrarGrafica(datosFiltrados);
+                } else {
+                    $('md-chart-nacional-container').classList.add('d-none');
+                    $('md-map-nacional').classList.remove('d-none');
+                    $('md-leyenda-mapa').classList.remove('d-none');
+                    $('md-vis-title').textContent = "Distribución Geográfica";
+                    $('md-vis-icon').className = "fa-solid fa-map-location-dot text-guajira-sea mr-2";
+                    
+                    if(mdState.map) setTimeout(() => mdState.map.invalidateSize(), 50);
+                    mdDibujarPines(datosFiltrados);
+                }
+            }
+
+            function mdDibujarPines(datos) {
+                if(!mdState.layerGroup) return;
+                mdState.layerGroup.clearLayers();
+                let sinUbicacion = 0;
+                const sFiltro = $('md-filtro-subsector').value;
+                
+                const agrupado = datos.reduce((acc, d) => {
+                    const coord = mdGetDeptoCoords(d.deptoNorm);
+                    if(coord) {
+                        const key = `${coord.lat},${coord.lng}`;
+                        if(!acc[key]) {
+                            acc[key] = { nombre: d.deptoOriginal, lat: coord.lat, lng: coord.lng, total: 0, registros: [], conteoSubsectores: {} };
+                        }
+                        acc[key].total++;
+                        acc[key].registros.push(d);
+                        acc[key].conteoSubsectores[d.subsector] = (acc[key].conteoSubsectores[d.subsector] || 0) + 1;
+                    } else {
+                        sinUbicacion++;
+                    }
+                    return acc;
+                }, {});
+
+                if (sinUbicacion > 0) {
+                    $('md-badge-ubicaciones-perdidas').classList.remove('d-none');
+                    $('md-text-perdidas').textContent = sinUbicacion;
+                } else $('md-badge-ubicaciones-perdidas').classList.add('d-none');
+
+                Object.values(agrupado).forEach(data => {
+                    let pinColor = "#3b82f6";
+                    if (sFiltro !== "Todos") {
+                        pinColor = mdGetColorSubsector(sFiltro);
+                    } else {
+                        let max = 0; let subPred = "";
+                        Object.entries(data.conteoSubsectores).forEach(([sub, qty]) => { if(qty > max) { max = qty; subPred = sub; } });
+                        pinColor = mdGetColorSubsector(subPred);
+                    }
+
+                    const svgIcon = `
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" style="width: 38px; height: 38px; filter: drop-shadow(0px 5px 4px rgba(0,0,0,0.4)); transition: transform 0.2s;">
+                            <path fill="${pinColor}" stroke="#ffffff" stroke-width="12" d="M215.7 499.2C267 435 384 279.4 384 192C384 86 298 0 192 0S0 86 0 192c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 128a64 64 0 1 1 0 128 64 64 0 1 1 0-128z"/>
+                        </svg>
+                    `;
+
+                    const marker = L.marker([data.lat, data.lng], {
+                        icon: L.divIcon({ html: svgIcon, className: 'bg-transparent cursor-pointer hover:scale-110', iconSize: [38, 38], iconAnchor: [19, 38], popupAnchor: [0, -38] })
+                    });
+                    
+                    marker.bindPopup(`<div class="text-center p-2 min-w-[150px]"><b class="text-gray-800 text-sm uppercase block mb-1 border-b pb-1">${mdEscapeHTML(data.nombre)}</b><span class="text-gray-800 font-bold block mt-1.5"><i class="fa-solid fa-list-ol mr-1"></i> ${data.total} Registros</span><span class="text-[10px] text-blue-600 font-bold block mt-2 uppercase underline">Haz clic en el pin para detalles</span></div>`);
+                    marker.on('click', () => mdMostrarTablaDetalles(data.registros, data.nombre));
+                    mdState.layerGroup.addLayer(marker);
+                });
+            }
+
+            function mdMostrarTablaDetalles(registros, nombreUbicacion) {
+                $('md-detalles-titulo-ubicacion').textContent = nombreUbicacion;
+                const esMesas = mdState.vistaActual === 'mesas';
+                const headTr = $('md-tabla-detalles-head');
+
+                if (esMesas) {
+                    headTr.innerHTML = `
+                        <th scope="col" class="px-4 py-3 border-b border-r border-gray-200 w-24">ID</th>
+                        <th scope="col" class="px-4 py-3 border-b border-r border-gray-200">Principales Actores</th>
+                        <th scope="col" class="px-4 py-3 border-b border-r border-gray-200">Principales Entidades</th>
+                        <th scope="col" class="px-4 py-3 border-b border-gray-200 w-32 text-center">Nº Participantes</th>
+                    `;
+                } else {
+                    headTr.innerHTML = `
+                        <th scope="col" class="px-4 py-3 border-b border-r border-gray-200 w-24">ID</th>
+                        <th scope="col" class="px-4 py-3 border-b border-r border-gray-200">ACTORES SOCIALES/ECONOMICOS</th>
+                        <th scope="col" class="px-4 py-3 border-b border-r border-gray-200">Instituciones participantes</th>
+                        <th scope="col" class="px-4 py-3 border-b border-r border-gray-200">Entidades Participantes</th>
+                        <th scope="col" class="px-4 py-3 border-b border-gray-200 w-32 text-center">PARTICIPANTES</th>
+                    `;
+                }
+                
+                const htmlFilas = registros.map(r => {
+                    if (esMesas) {
+                        return `
+                        <tr class="hover:bg-blue-50/50 transition-colors">
+                            <td class="px-4 py-3 font-semibold text-xs border-r border-gray-200 text-gray-800 break-all">${mdEscapeHTML(r.id)}</td>
+                            <td class="px-4 py-3 text-xs border-r border-gray-200 text-gray-600">${mdEscapeHTML(r.actores)}</td>
+                            <td class="px-4 py-3 text-xs border-r border-gray-200 text-gray-600">${mdEscapeHTML(r.entidades)}</td>
+                            <td class="px-4 py-3 text-xs text-center font-bold text-gray-700">${mdEscapeHTML(r.participantes)}</td>
+                        </tr>`;
+                    } else {
+                        return `
+                        <tr class="hover:bg-blue-50/50 transition-colors">
+                            <td class="px-4 py-3 font-semibold text-xs border-r border-gray-200 text-gray-800 break-all">${mdEscapeHTML(r.id)}</td>
+                            <td class="px-4 py-3 text-xs border-r border-gray-200 text-gray-600">${mdEscapeHTML(r.actores)}</td>
+                            <td class="px-4 py-3 text-xs border-r border-gray-200 text-gray-600">${mdEscapeHTML(r.instituciones)}</td>
+                            <td class="px-4 py-3 text-xs border-r border-gray-200 text-gray-600">${mdEscapeHTML(r.entidades)}</td>
+                            <td class="px-4 py-3 text-xs text-center font-bold text-gray-700">${mdEscapeHTML(r.participantes)}</td>
+                        </tr>`;
+                    }
+                }).join('');
+                
+                $('md-tabla-detalles-body').innerHTML = htmlFilas;
+                $('md-contenedor-detalles').classList.remove('d-none');
+                
+                setTimeout(() => {
+                    $('md-contenedor-detalles').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 150);
+            }
+
+            function mdMostrarGrafica(datos) {
+                $('md-map-nacional').classList.add('d-none');
+                $('md-leyenda-mapa').classList.add('d-none');
+                $('md-badge-ubicaciones-perdidas').classList.add('d-none');
+                
+                $('md-chart-nacional-container').classList.remove('d-none');
+                $('md-chart-nacional-container').classList.add('flex'); 
+                
+                $('md-vis-title').textContent = "Mesas Nacionales por Subsector";
+                $('md-vis-icon').className = "fa-solid fa-chart-column text-guajira-sea mr-2";
+                
+                requestAnimationFrame(() => {
+                    if(mdState.chartInstance) { mdState.chartInstance.destroy(); mdState.chartInstance = null; }
+
+                    if(datos.length === 0) {
+                        $('md-chartNacional').classList.add('d-none');
+                        $('md-chart-no-data').classList.remove('d-none');
+                        return;
+                    }
+
+                    $('md-chartNacional').classList.remove('d-none');
+                    $('md-chart-no-data').classList.add('d-none');
+
+                    const agrupado = datos.reduce((acc, d) => {
+                        const clave = d.subsector.length > 35 ? d.subsector.substring(0, 32) + '...' : d.subsector;
+                        acc[clave] = (acc[clave] || 0) + 1;
+                        return acc;
+                    }, {});
+
+                    const etiquetas = Object.keys(agrupado).sort((a,b) => agrupado[b] - agrupado[a]);
+                    const valores = etiquetas.map(k => agrupado[k]);
+                    const ctx = $('md-chartNacional').getContext('2d');
+
+                    mdState.chartInstance = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: etiquetas,
+                            datasets: [{
+                                label: 'Mesas Registradas',
+                                data: valores,
+                                backgroundColor: etiquetas.map(mdGetColorSubsector),
+                                borderRadius: 6
+                            }]
+                        },
+                        options: {
+                            indexAxis: 'y',
+                            responsive: true, maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                        }
+                    });
+                });
+            }
+            
+            const onTabActivated = () => {
+                if(!isInitialized) {
+                    init();
+                } else {
+                    if(mdState.map && !$('md-map-nacional').classList.contains('d-none')) {
+                        setTimeout(() => mdState.map.invalidateSize(), 50);
+                    }
+                    if(mdState.chartInstance && !$('md-chart-nacional-container').classList.contains('d-none')) {
+                        setTimeout(() => mdState.chartInstance.resize(), 50);
+                    }
+                }
+            };
+
+            return { onTabActivated };
+        })();
+
+        // Lanzador Maestro Seguro
+        document.addEventListener('DOMContentLoaded', () => {
             initGuajira();
             initNacional();
-        };
+            // Mesas y Dialogos usa Lazy Loading en onTabActivated
+        });
 
     </script>
 </body>
