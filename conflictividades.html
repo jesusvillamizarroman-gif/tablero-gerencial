@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estrategia de Relacionamiento Territorial - La Guajira</title>
+    <title>Estrategia de Relacionamiento Territorial - Consolidado</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -20,19 +20,31 @@
             }
         }
     </script>
+    <!-- Librerías Externas -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Lector CSV PapaParse -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     
     <style>
         body { background-color: #fdfbf7; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .map-container { height: 400px; width: 100%; border-radius: 0.5rem; z-index: 10; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.5s ease-in-out; }
+        
+        /* Utilidades para los Tabs Principales */
+        .main-tab-content { display: none; }
+        .main-tab-content.active { display: block; animation: fadeIn 0.5s ease-in-out; }
+        .main-tab-btn.active { border-bottom-width: 4px; border-color: #0077b6; color: #0077b6; font-weight: 600; }
+        
+        /* Utilidades Sub-Tabs (Nacional) */
+        .sub-tab-btn { transition: all 0.2s ease-in-out; }
+        .sub-tab-btn.active { background-color: #0077b6; color: white; border-color: #0077b6; }
+        .sub-tab-btn.inactive { background-color: white; color: #4b5563; border-color: #d1d5db; }
+        .sub-tab-btn.inactive:hover { background-color: #f3f4f6; }
+
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .tab-btn.active { border-bottom-width: 4px; border-color: #0077b6; color: #0077b6; font-weight: 600; }
+        
+        /* Elementos Guajira */
+        .map-container { height: 400px; width: 100%; border-radius: 0.5rem; z-index: 10; }
         .timeline-container { display: flex; overflow-x: auto; padding-bottom: 1rem; scroll-snap-type: x mandatory; }
         .timeline-item { flex: 0 0 auto; width: 200px; scroll-snap-align: start; }
         .timeline-dot { width: 16px; height: 16px; background-color: #f9a826; border-radius: 50%; margin: 0 auto; position: relative; z-index: 2; }
@@ -40,7 +52,7 @@
         .loader { border: 3px solid #f3f3f3; border-top: 3px solid #0077b6; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 8px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        /* Scrollbar styling para la tabla y gráfico */
+        /* Scrollbars personalizados */
         .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
@@ -54,48 +66,50 @@
         <div class="container mx-auto px-4 py-6 flex flex-col md:flex-row items-center justify-between">
             <div class="flex items-center space-x-4">
                 <div class="bg-guajira-sun text-white p-3 rounded-full">
-                    <i class="fa-solid fa-sun text-2xl"></i>
+                    <i class="fa-solid fa-map-location-dot text-2xl"></i>
                 </div>
                 <div>
                     <h1 class="text-3xl font-bold text-guajira-earth">Estrategia de Relacionamiento Territorial</h1>
-                    <p class="text-gray-600 text-sm mt-1"><i class="fa-solid fa-map-location-dot mr-1 text-guajira-sea"></i> Departamento de La Guajira</p>
+                    <p class="text-gray-600 text-sm mt-1">Panel Consolidado Nacional y Regional</p>
                 </div>
             </div>
-            
             <div class="mt-4 md:mt-0 flex bg-blue-50 border border-blue-100 p-3 rounded-lg shadow-sm items-center">
                 <i class="fa-solid fa-calendar-check text-guajira-sea text-xl mr-3"></i>
                 <div>
-                    <p class="text-lg font-bold text-guajira-sea">Informe a corte del 18 de Septiembre del 2026</p>
+                    <p class="text-lg font-bold text-guajira-sea">Plataforma Activa</p>
                 </div>
             </div>
         </div>
 
         <div class="container mx-auto px-4 mt-4">
             <nav class="flex overflow-x-auto border-b border-gray-200">
-                <button class="tab-btn px-6 py-3 text-gray-600 hover:text-guajira-sea focus:outline-none transition-colors whitespace-nowrap" onclick="openTab(event, 'prevencion')">
+                <button class="main-tab-btn active px-6 py-3 text-gray-600 hover:text-guajira-sea focus:outline-none transition-colors whitespace-nowrap" style="border-bottom-width: 4px;" onclick="openTabMain(event, 'tab-prevencion')">
                     <i class="fa-solid fa-shield-halved mr-2"></i>1. Prevención y Diálogo Social
                 </button>
-                <button class="tab-btn active px-6 py-3 text-gray-600 hover:text-guajira-sea focus:outline-none transition-colors whitespace-nowrap" onclick="openTab(event, 'conflictividades')">
-                    <i class="fa-solid fa-fire mr-2"></i>2. Gestión de Conflictividades
+                <button class="main-tab-btn px-6 py-3 text-gray-600 hover:text-guajira-sea focus:outline-none transition-colors whitespace-nowrap" style="border-bottom-width: 0px;" onclick="openTabMain(event, 'tab-nacional')">
+                    <i class="fa-solid fa-earth-americas mr-2"></i>2. Gestión de Conflictividades Nacional
+                </button>
+                <button class="main-tab-btn px-6 py-3 text-gray-600 hover:text-guajira-sea focus:outline-none transition-colors whitespace-nowrap" style="border-bottom-width: 0px;" onclick="openTabMain(event, 'tab-guajira')">
+                    <i class="fa-solid fa-fire mr-2"></i>2.1 Gestión de Conflictividades Guajira
                 </button>
             </nav>
         </div>
     </header>
 
-    <main class="container mx-auto px-4 py-8">
+    <main class="container mx-auto px-4 py-8 max-w-7xl">
         
-        <!-- Sección 1: Prevención -->
-        <section id="prevencion" class="tab-content">
+        <!-- PESTAÑA 1: Prevención -->
+        <section id="tab-prevencion" class="main-tab-content active">
             <div class="mb-6">
                 <h2 class="text-2xl font-semibold text-gray-800 border-l-4 border-guajira-sea pl-3 mb-4">Ruta de Prevención (Embudo de Gestión)</h2>
-                <p class="text-gray-600 mb-6">Información correspondiente a los procesos de diálogo, conformación de comités y planes de acción resultantes.</p>
+                <p class="text-gray-600 mb-6">Información correspondiente a los procesos de diálogo, conformación de comités y planes de acción resultantes a nivel general.</p>
                 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                     <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 border-t-4 border-t-blue-500">
                         <h3 class="text-gray-500 text-xs font-bold uppercase">Diálogos Realizados</h3>
                         <p class="text-3xl font-bold mt-2 text-gray-800">120</p>
                     </div>
-                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 border-t-4 border-t-yellow-500">
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 border-t-4 border-t-guajira-sun">
                         <h3 class="text-gray-500 text-xs font-bold uppercase">Comités Conformados</h3>
                         <p class="text-3xl font-bold mt-2 text-gray-800">85</p>
                     </div>
@@ -107,20 +121,100 @@
             </div>
         </section>
 
-        <!-- Sección 2: Conflictividades -->
-        <section id="conflictividades" class="tab-content active">
-            
-            <div id="sync-status" class="mb-4 text-sm text-blue-600 bg-blue-50 p-3 rounded flex items-center shadow-sm">
-                <div class="loader"></div> <span id="sync-text" class="font-semibold">Sincronizando datos con Google Sheets en vivo...</span>
+        <!-- PESTAÑA 2: Dashboard Nacional -->
+        <section id="tab-nacional" class="main-tab-content">
+            <div class="space-y-6">
+                
+                <!-- Sub Navegación Nacional -->
+                <div class="bg-white rounded-2xl shadow-sm p-4 border border-gray-200">
+                    <div class="flex flex-col sm:flex-row gap-3" id="nacional-tab-container">
+                        <button onclick="switchTabNacional('conflictividades')" id="nacional-btn-conflictividades" class="sub-tab-btn active flex-1 py-3 px-4 rounded-lg border font-medium shadow-sm">
+                            <i class="fa-solid fa-fire mr-1"></i> Conflictividades
+                        </button>
+                        <button onclick="switchTabNacional('alertas')" id="nacional-btn-alertas" class="sub-tab-btn inactive flex-1 py-3 px-4 rounded-lg border font-medium shadow-sm">
+                            <i class="fa-solid fa-bell mr-1"></i> Alertas Tempranas
+                        </button>
+                        <button onclick="switchTabNacional('otros')" id="nacional-btn-otros" class="sub-tab-btn inactive flex-1 py-3 px-4 rounded-lg border font-medium shadow-sm">
+                            <i class="fa-solid fa-file-contract mr-1"></i> Otros Reportes
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Alertas del Nacional -->
+                <div id="nacional-error-container" class="hidden bg-red-50 border-l-4 border-red-500 p-4 rounded-md shadow-sm">
+                    <div class="flex items-center">
+                        <i class="fa-solid fa-triangle-exclamation text-red-500 text-xl mr-3"></i>
+                        <div>
+                            <h3 class="text-sm font-bold text-red-800">Error crítico</h3>
+                            <p class="text-sm text-red-700 mt-1" id="nacional-error-message"></p>
+                        </div>
+                    </div>
+                </div>
+                <div id="nacional-warning-container" class="hidden bg-yellow-50 border-l-4 border-guajira-sun p-4 rounded-md shadow-sm">
+                    <div class="flex items-center">
+                        <i class="fa-solid fa-circle-exclamation text-guajira-sun text-xl mr-3"></i>
+                        <div>
+                            <h3 class="text-sm font-bold text-yellow-800">Advertencia</h3>
+                            <p class="text-sm text-yellow-700 mt-1" id="nacional-warning-message"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KPI / Post-its por Año -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col items-center justify-center relative overflow-hidden">
+                    <h2 class="font-bold text-guajira-earth uppercase tracking-wide text-sm mb-4"><i class="fa-solid fa-timeline mr-1"></i> Evolución Histórica Nacional (Filtro por año)</h2>
+                    <div id="nacional-years-container" class="flex flex-wrap gap-4 justify-center w-full min-h-[100px] items-center relative z-10">
+                        <p class="text-gray-400 text-sm italic">Sincronizando años...</p>
+                    </div>
+                </div>
+
+                <!-- Filtro Subsector Nacional -->
+                <div class="bg-white rounded-2xl shadow-sm p-4 border border-gray-200 hidden sticky top-0 z-20" id="nacional-filter-section">
+                    <div>
+                        <label for="nacional-subsector-filter" class="block text-sm font-bold text-guajira-earth mb-2">
+                            <i class="fa-solid fa-filter text-guajira-sun mr-1"></i> Filtrar por <span id="nacional-filter-label-text">Subsector</span>
+                        </label>
+                        <select id="nacional-subsector-filter" onchange="applyFilterNacional()" class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-guajira-sea focus:border-guajira-sea block p-3 shadow-sm transition-colors">
+                            <option value="ALL">Todos los subsectores</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Mapa y Gráfico Nacional -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+                        <div class="p-4 border-b bg-gray-50 flex items-center">
+                            <i class="fa-solid fa-map-location text-guajira-sea mr-2"></i>
+                            <h3 class="font-semibold text-gray-700">Distribución Departamental</h3>
+                        </div>
+                        <!-- ID del Mapa Nacional modificado -->
+                        <div id="map-nacional" class="w-full flex-grow" style="min-height: 400px; z-index:1;"></div>
+                    </div>
+
+                    <div id="nacional-chart-container" class="bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col p-4 hidden">
+                        <h3 class="font-semibold text-gray-700 mb-4 border-b pb-2"><i class="fa-solid fa-chart-bar text-guajira-sun mr-2"></i> Análisis por Sector</h3>
+                        <div class="relative w-full flex-grow custom-scroll" style="min-height: 350px;">
+                            <canvas id="chart-nacional"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- PESTAÑA 3: Dashboard Guajira -->
+        <section id="tab-guajira" class="main-tab-content">
+            <div id="sync-status" class="mb-4 text-sm text-blue-600 bg-blue-50 p-3 rounded flex items-center shadow-sm border border-blue-100">
+                <div class="loader border-t-guajira-sea"></div> <span class="font-semibold text-guajira-sea">Sincronizando datos territoriales de La Guajira...</span>
             </div>
 
             <div class="mb-6">
-                <h2 class="text-2xl font-semibold text-gray-800 border-l-4 border-red-500 pl-3">Gestión de Conflictividades en Territorio</h2>
+                <h2 class="text-2xl font-semibold text-gray-800 border-l-4 border-red-500 pl-3">Gestión de Conflictividades en Territorio (La Guajira)</h2>
             </div>
 
-            <!-- Evolución Histórica -->
-            <div class="mb-6 bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative">
-                <h3 class="text-gray-800 font-semibold mb-6 text-lg"><i class="fa-solid fa-chart-line text-guajira-earth mr-2"></i>Evolución Histórica</h3>
+            <!-- Evolución Histórica Guajira -->
+            <div class="mb-6 bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden">
+                <h3 class="text-gray-800 font-semibold mb-6 text-lg"><i class="fa-solid fa-chart-line text-guajira-earth mr-2"></i>Evolución Histórica Local</h3>
                 <div class="relative">
                     <div class="timeline-line"></div>
                     <div id="timeline-content" class="timeline-container gap-4 relative z-10 custom-scroll">
@@ -129,27 +223,25 @@
                 </div>
             </div>
 
-            <!-- Filtro Global y Post-it Total -->
+            <!-- Filtro Global Guajira -->
             <div class="flex flex-col md:flex-row md:items-center bg-white p-4 mb-6 rounded-xl shadow-sm border border-gray-200 gap-4 sticky top-0 z-20">
                 <div class="flex items-center flex-wrap gap-2">
-                    <span class="text-sm font-bold text-gray-700 mr-2 uppercase whitespace-nowrap"><i class="fa-solid fa-filter text-guajira-sun mr-1"></i> Selecciona el año:</span>
+                    <span class="text-sm font-bold text-guajira-earth mr-2 uppercase whitespace-nowrap"><i class="fa-solid fa-filter text-guajira-sun mr-1"></i> Selecciona el año:</span>
                     <div id="botones-filtro-container" class="flex flex-wrap gap-2">
                         <!-- Botones generados dinámicamente -->
                     </div>
                 </div>
             </div>
             
-            <!-- Mapa y Tipologías -->
+            <!-- Mapa y Tipologías Guajira -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                <!-- Mapa -->
                 <div class="lg:col-span-2 bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-semibold text-gray-800"><i class="fa-solid fa-map-location text-red-500 mr-2"></i>Ubicación de Conflictividades <span id="mapa-titulo-ano" class="text-sm font-normal bg-gray-100 px-2 py-1 rounded text-gray-600 ml-2">Todos</span></h3>
+                        <h3 class="text-lg font-semibold text-gray-800"><i class="fa-solid fa-map-location text-red-500 mr-2"></i>Ubicación de Conflictos (Guajira) <span id="mapa-titulo-ano" class="text-sm font-normal bg-gray-100 px-2 py-1 rounded text-gray-600 ml-2">Todos</span></h3>
                     </div>
                     <div id="map-conflictos" class="map-container border border-gray-200 flex-grow" style="min-height: 400px; z-index: 1;"></div>
                 </div>
 
-                <!-- Tipologías -->
                 <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col">
                     <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2"><i class="fa-solid fa-chart-pie text-guajira-sun mr-2"></i>Por Tipología <span id="tipologia-titulo-ano" class="text-sm font-normal text-gray-500 ml-1">(Todos)</span></h3>
                     <div id="tipologia-content" class="space-y-4 flex-grow overflow-y-auto pr-2 custom-scroll">
@@ -158,22 +250,20 @@
                 </div>
             </div>
 
-            <!-- Empresas y Proyectos -->
+            <!-- Empresas y Proyectos Guajira -->
             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                 <h3 class="text-lg font-semibold text-gray-800 mb-6 border-b pb-2"><i class="fa-solid fa-building-flag text-guajira-sea mr-2"></i>Relación por Empresa y Proyectos <span id="empresas-titulo-ano" class="text-sm font-normal text-gray-500 ml-1">(Todos)</span></h3>
                 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <!-- Gráfico Horizontal de TODAS las Empresas -->
                     <div class="lg:col-span-1 flex flex-col h-full">
                         <h4 class="text-sm font-semibold text-gray-600 mb-4 uppercase text-center">Conflictos por Empresa</h4>
                         <div class="w-full overflow-y-auto custom-scroll flex-grow border border-gray-100 rounded-lg p-2" style="max-height: 450px;">
-                            <div id="chart-container" class="relative w-full" style="min-height: 250px;">
+                            <div id="chart-container-guajira" class="relative w-full" style="min-height: 250px;">
                                 <canvas id="empresasChart"></canvas>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Tabla Detallada de Proyectos -->
                     <div class="lg:col-span-2 overflow-x-auto flex flex-col h-full">
                         <h4 class="text-sm font-semibold text-gray-600 mb-4 uppercase">Detalle de Proyectos</h4>
                         <div class="overflow-y-auto custom-scroll border border-gray-100 rounded-lg" style="max-height: 450px;">
@@ -192,16 +282,351 @@
                 </div>
             </div>
         </section>
+
     </main>
 
-    <!-- Map Library -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-    
     <script>
         const $ = id => document.getElementById(id);
         const $$ = sel => document.querySelectorAll(sel);
 
-        const coordenadas = {
+        // Control de Pestañas Globales
+        function openTabMain(evt, tabName) {
+            // Ocultar contenidos
+            $$(".main-tab-content").forEach(el => { 
+                el.style.display = "none"; 
+                el.classList.remove("active"); 
+            });
+            // Resetear botones
+            $$(".main-tab-btn").forEach(btn => { 
+                btn.classList.remove("active"); 
+                btn.style.borderBottomWidth = "0px";
+            });
+            
+            // Mostrar contenido actual
+            $(tabName).style.display = "block";
+            setTimeout(() => $(tabName).classList.add("active"), 10);
+            
+            // Activar botón pulsado
+            evt.currentTarget.classList.add("active");
+            evt.currentTarget.style.borderBottomWidth = "4px";
+
+            // Asegurar que los mapas se redimensionen correctamente si estaban ocultos
+            if(tabName === 'tab-nacional' && mapNacional) {
+                setTimeout(() => mapNacional.invalidateSize(), 100);
+            }
+            if(tabName === 'tab-guajira' && mapConf) {
+                setTimeout(() => mapConf.invalidateSize(), 100);
+            }
+        }
+
+        /* =========================================================
+           NAMESPACE JAVASCRIPT: DASHBOARD NACIONAL
+           ========================================================= */
+        const DEPARTMENTS_COORDS_NACIONAL = {
+            "ANTIOQUIA": [6.2518, -75.5636], "ATLANTICO": [10.9685, -74.7813], "BOGOTA": [4.6097, -74.0817], 
+            "BOGOTA, D.C.": [4.6097, -74.0817], "BOGOTA D.C.": [4.6097, -74.0817], "BOLIVAR": [9.9281, -74.9060], 
+            "BOYACA": [5.5353, -72.9072], "CALDAS": [5.3195, -75.2847], "CAQUETA": [0.9329, -74.2003],
+            "CAUCA": [2.4419, -76.6063], "CESAR": [9.4457, -73.6508], "CORDOBA": [8.1180, -75.8458], 
+            "CUNDINAMARCA": [4.9452, -74.0326], "CHOCO": [5.6923, -76.6583], "HUILA": [2.5317, -75.5262],
+            "LA GUAJIRA": [11.5444, -72.9072], "MAGDALENA": [10.2229, -74.1952], "META": [3.2720, -73.0877], 
+            "NARINO": [1.5332, -77.8687], "NORTE DE SANTANDER": [8.0772, -72.8893], "QUINDIO": [4.4984, -75.6669],
+            "RISARALDA": [5.1274, -75.8458], "SANTANDER": [6.8396, -73.2384], "SUCRE": [8.9320, -74.9450], 
+            "TOLIMA": [4.0304, -75.1432], "VALLE DEL CAUCA": [3.8166, -76.5779], "VALLE": [3.8166, -76.5779],
+            "ARAUCA": [6.7645, -70.7850], "CASANARE": [5.4190, -71.5540], "PUTUMAYO": [0.8932, -76.0142], 
+            "SAN ANDRES": [12.5651, -81.7006], "AMAZONAS": [-1.4394, -71.4925], "GUAINIA": [2.4746, -68.8058], 
+            "GUAVIARE": [2.2038, -72.3392], "VAUPES": [0.6542, -70.5283], "VICHADA": [4.3688, -69.6094]
+        };
+
+        const RAW_URLS_NACIONAL = {
+            conflictividades: "https://docs.google.com/spreadsheets/d/1_vvXIGWCSppApYruHmdnYxtQBHO8PL2HeNu5TXxSXZQ/edit?usp=sharing",
+            alertas: "https://docs.google.com/spreadsheets/d/1J-ctUuXHAJt2KA3tpO0fAQgacZDs7reTcm-28AJLiGQ/edit?usp=sharing",
+            otros: "https://docs.google.com/spreadsheets/d/1V4pcqgQ2e8X63xt28ylxMZF55cISDAnRya1fqN3Su4I/edit?usp=sharing"
+        };
+
+        let appStateNac = {
+            activeTab: 'conflictividades',
+            currentFilter: 'ALL',
+            selectedYear: null,
+            data: { conflictividades: [], alertas: [], otros: [] }
+        };
+
+        let mapNacional, markersLayerNacional, chartInstanceNacional;
+
+        function extractYearNacional(row) {
+            const vals = Object.values(row);
+            if (vals.length < 2) return 'Desconocido';
+            const dateStr = vals[1]; 
+            if (!dateStr) return 'Desconocido';
+            const match = String(dateStr).match(/(20\d{2})/);
+            return match ? match[1] : 'Desconocido';
+        }
+
+        function extractDepartmentNacional(row) {
+            const vals = Object.values(row);
+            if (vals.length < 3) return 'DESCONOCIDO';
+            const deptRaw = vals[2];
+            if (!deptRaw) return 'DESCONOCIDO';
+            return String(deptRaw).toUpperCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        }
+
+        function getSubsectorValueNacional(row) {
+            const keys = Object.keys(row);
+            let val = '';
+            if (appStateNac.activeTab === 'conflictividades') {
+                if (row['Subsector']) val = row['Subsector'];
+                else {
+                    const key = keys.find(k => k && k.toLowerCase().includes('subsector'));
+                    if (key) val = row[key];
+                }
+            } else if (appStateNac.activeTab === 'alertas') {
+                if (row['Subsector generador de la Alerta Temprana']) val = row['Subsector generador de la Alerta Temprana'];
+                else {
+                    const key = keys.find(k => k && k.toLowerCase().includes('subsector'));
+                    if (key) val = row[key];
+                }
+            }
+            return val ? String(val).trim() : 'No definido';
+        }
+
+        function getExportUrlNacional(url) { return url.replace(/\/edit.*$/, '/export?format=csv'); }
+
+        function fetchCsvDataNacional(url) {
+            return new Promise((resolve, reject) => {
+                Papa.parse(getExportUrlNacional(url), {
+                    download: true, header: true, skipEmptyLines: true,
+                    transformHeader: h => h.trim().replace(/^\uFEFF/, ''),
+                    complete: res => resolve(res.data), error: err => reject(err)
+                });
+            });
+        }
+
+        function initMapNacional() {
+            mapNacional = L.map('map-nacional').setView([4.5709, -74.2973], 5);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap &copy; CARTO', maxZoom: 19
+            }).addTo(mapNacional);
+            markersLayerNacional = L.layerGroup().addTo(mapNacional);
+        }
+
+        function validateColumnsNacional() {
+            let warnings = [];
+            const checkCols = (dataset, name, cols) => {
+                if (dataset.length > 0) {
+                    const firstRow = dataset[0];
+                    cols.forEach(col => {
+                        const hasExact = col in firstRow;
+                        const hasPartial = Object.keys(firstRow).some(k => k && k.toLowerCase().includes('subsector'));
+                        if (!hasExact && !hasPartial) {
+                            warnings.push(`<strong>${name}:</strong> Falta la columna "${col}".`);
+                        }
+                    });
+                }
+            };
+            checkCols(appStateNac.data.conflictividades, "Conflictividades", ["Subsector"]);
+            checkCols(appStateNac.data.alertas, "Alertas Tempranas", ["Subsector generador de la Alerta Temprana"]);
+
+            if (warnings.length > 0) {
+                $('nacional-warning-container').classList.remove('hidden');
+                $('nacional-warning-message').innerHTML = warnings.join("<br>");
+            }
+        }
+
+        window.switchTabNacional = function(tabName) {
+            appStateNac.activeTab = tabName;
+            appStateNac.currentFilter = 'ALL';
+            appStateNac.selectedYear = null; 
+            
+            ['conflictividades', 'alertas', 'otros'].forEach(t => {
+                const btn = $(`nacional-btn-${t}`);
+                if (t === tabName) {
+                    btn.classList.remove('inactive'); btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active'); btn.classList.add('inactive');
+                }
+            });
+            renderCurrentViewNacional();
+        }
+
+        window.toggleYearFilterNacional = function(year) {
+            appStateNac.selectedYear = (appStateNac.selectedYear === year) ? null : year;
+            updateDataVisualsNacional();
+        }
+
+        function renderCurrentViewNacional() {
+            let currentData = appStateNac.data[appStateNac.activeTab] || [];
+            const chartC = $('nacional-chart-container');
+            const filterL = $('nacional-filter-label-text');
+            const filterS = $('nacional-subsector-filter');
+            const filterSec = $('nacional-filter-section');
+
+            if (appStateNac.activeTab === 'conflictividades') {
+                filterSec.classList.remove('hidden'); chartC.classList.remove('hidden'); filterL.innerText = "Subsector";
+            } else if (appStateNac.activeTab === 'alertas') {
+                filterSec.classList.remove('hidden'); chartC.classList.remove('hidden'); filterL.innerText = "Subsector generador de la Alerta Temprana";
+            } else {
+                filterSec.classList.add('hidden'); chartC.classList.add('hidden');
+            }
+
+            if (appStateNac.activeTab !== 'otros' && currentData.length > 0) {
+                const uniqueSectors = [...new Set(currentData.map(item => getSubsectorValueNacional(item)).filter(val => val && val !== 'No definido'))].sort();
+                filterS.innerHTML = '<option value="ALL">Todos los subsectores</option>';
+                uniqueSectors.forEach(sector => {
+                    let option = document.createElement('option');
+                    option.value = sector; option.innerText = sector;
+                    filterS.appendChild(option);
+                });
+                filterS.value = appStateNac.currentFilter;
+            }
+            updateDataVisualsNacional();
+        }
+
+        window.applyFilterNacional = function() {
+            appStateNac.currentFilter = $('nacional-subsector-filter').value;
+            updateDataVisualsNacional();
+        }
+
+        function renderYearsNacional(data) {
+            const container = $('nacional-years-container');
+            container.innerHTML = '';
+
+            if (data.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-sm">No hay datos disponibles.</p>'; return;
+            }
+
+            const yearCounts = {};
+            data.forEach(row => {
+                const year = extractYearNacional(row);
+                yearCounts[year] = (yearCounts[year] || 0) + 1;
+            });
+
+            const sortedYears = Object.keys(yearCounts).sort((a, b) => {
+                if(a === 'Desconocido') return 1; if(b === 'Desconocido') return -1;
+                return parseInt(b) - parseInt(a);
+            });
+
+            sortedYears.forEach(year => {
+                const count = yearCounts[year];
+                const isSelected = appStateNac.selectedYear === year;
+                
+                // Colores adaptados a la paleta Guajira
+                const baseClass = "w-28 h-28 flex flex-col items-center justify-center rounded-xl cursor-pointer transition-all duration-300 shadow-sm border select-none";
+                const selectedClass = "bg-[#0077b6] border-[#0077b6] text-white shadow-lg scale-110 ring-4 ring-blue-200 z-10 rotate-2";
+                const defaultClass = "bg-[#e5c07b]/30 border-[#f9a826] hover:bg-[#e5c07b]/50 text-gray-800 hover:-translate-y-1 hover:shadow-md hover:rotate-2";
+                
+                const btn = document.createElement('div');
+                btn.className = `${baseClass} ${isSelected ? selectedClass : defaultClass}`;
+                btn.onclick = () => toggleYearFilterNacional(year);
+                btn.innerHTML = `
+                    <span class="text-sm font-semibold opacity-90 tracking-wide">${year}</span>
+                    <span class="text-4xl font-bold mt-1">${count}</span>
+                `;
+                container.appendChild(btn);
+            });
+        }
+
+        function updateDataVisualsNacional() {
+            const baseData = appStateNac.data[appStateNac.activeTab] || [];
+            let dataForYears = baseData;
+            
+            if (appStateNac.currentFilter !== 'ALL' && appStateNac.activeTab !== 'otros') {
+                dataForYears = baseData.filter(item => getSubsectorValueNacional(item) === appStateNac.currentFilter);
+            }
+            renderYearsNacional(dataForYears);
+
+            let finalData = dataForYears;
+            if (appStateNac.selectedYear) {
+                finalData = finalData.filter(item => extractYearNacional(item) === appStateNac.selectedYear);
+            }
+
+            updateMapNacional(finalData);
+            if (appStateNac.activeTab !== 'otros') updateChartNacional(finalData);
+        }
+
+        function updateMapNacional(data) {
+            markersLayerNacional.clearLayers();
+            if (data.length === 0) return;
+
+            let deptCounts = {};
+            data.forEach(row => {
+                let dept = extractDepartmentNacional(row);
+                deptCounts[dept] = (deptCounts[dept] || 0) + 1;
+            });
+
+            for (const [dept, count] of Object.entries(deptCounts)) {
+                let coords = DEPARTMENTS_COORDS_NACIONAL[dept];
+                if (coords) {
+                    const iconHtml = `
+                        <div style="background-color: #0077b6; color: white; border-radius: 50%; 
+                                    width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; 
+                                    font-weight: bold; border: 2px solid white; box-shadow: 0 3px 6px rgba(0,0,0,0.4); font-size: 13px;">
+                            ${count}
+                        </div>`;
+                    const customIcon = L.divIcon({ html: iconHtml, className: '', iconSize: [32, 32], iconAnchor: [16, 16] });
+                    L.marker(coords, { icon: customIcon }).bindPopup(`<strong>${dept}</strong><br>Registros: ${count}`).addTo(markersLayerNacional);
+                }
+            }
+        }
+
+        function updateChartNacional(data) {
+            const ctx = $('chart-nacional').getContext('2d');
+            if (data.length === 0) {
+                if (chartInstanceNacional) chartInstanceNacional.destroy(); return;
+            }
+
+            let sectorCounts = {};
+            data.forEach(row => {
+                let s = getSubsectorValueNacional(row);
+                if (s && s !== 'No definido') sectorCounts[s] = (sectorCounts[s] || 0) + 1;
+            });
+
+            const sortedSectors = Object.keys(sectorCounts).sort((a, b) => sectorCounts[b] - sectorCounts[a]);
+            const labels = sortedSectors;
+            const values = sortedSectors.map(s => sectorCounts[s]);
+
+            if (chartInstanceNacional) chartInstanceNacional.destroy();
+
+            chartInstanceNacional = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Número de registros', data: values,
+                        backgroundColor: '#0077b6', borderRadius: 4, barPercentage: 0.6 // Color Guajira Sea
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { ticks: { maxRotation: 45, minRotation: 45 } } }
+                }
+            });
+        }
+
+        async function initNacional() {
+            initMapNacional();
+            try {
+                const [dataConf, dataAlert, dataOtros] = await Promise.all([
+                    fetchCsvDataNacional(RAW_URLS_NACIONAL.conflictividades),
+                    fetchCsvDataNacional(RAW_URLS_NACIONAL.alertas),
+                    fetchCsvDataNacional(RAW_URLS_NACIONAL.otros)
+                ]);
+
+                appStateNac.data.conflictividades = dataConf;
+                appStateNac.data.alertas = dataAlert;
+                appStateNac.data.otros = dataOtros;
+
+                validateColumnsNacional();
+                renderCurrentViewNacional();
+            } catch (error) {
+                console.error("Nacional Error:", error);
+                $('nacional-error-container').classList.remove('hidden');
+                $('nacional-error-message').innerText = error.message || error;
+            }
+        }
+
+        /* =========================================================
+           NAMESPACE JAVASCRIPT: DASHBOARD GUAJIRA
+           ========================================================= */
+        const coordenadasGuajira = {
             "uribia": {lat: 11.733, lng: -72.266}, "maicao": {lat: 11.378, lng: -72.243},
             "albania": {lat: 11.161, lng: -72.589}, "riohacha": {lat: 11.544, lng: -72.907},
             "dibulla": {lat: 11.272, lng: -73.308}, "villanueva": {lat: 10.603, lng: -72.980},
@@ -209,7 +634,7 @@
             "barrancas": {lat: 10.957, lng: -72.784}, "manaure": {lat: 11.775, lng: -72.445}
         };
 
-        const urls = {
+        const urlsGuajira = {
             resumen: "https://docs.google.com/spreadsheets/d/1O_NhRMpZZFkwIWZU0Yd1ttY_ZhS1EKHAnY23JPv79BM/gviz/tq?tqx=out:csv",
             municipios: "https://docs.google.com/spreadsheets/d/1wy432HcQDG7-ALc-WFXYbEEh_SrZg8X0A3KU_15i9OY/gviz/tq?tqx=out:csv",
             tipologias: "https://docs.google.com/spreadsheets/d/1RKpRCVwdQEs82MvZy14gK0SXXQOF5kwCHFIhFcwh4Fk/gviz/tq?tqx=out:csv",
@@ -220,17 +645,15 @@
         let dbResumen = [], dbMunicipios = [], dbTipologias = [], dbEmpresas = [], dbProyectos = []; 
         let mapConf, marcadoresConflictos = [], graficoEmpresasInstance = null, añosDisponibles = ["Todos"];
 
-        // Utilidades de limpieza de texto y búsqueda de columnas
         const normalizar = t => t ? String(t).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : "";
         const getVal = (row, words) => row[Object.keys(row).find(k => words.some(w => normalizar(k).includes(w)))] || null;
 
-        async function cargarDatosGoogleSheets() {
+        async function cargarDatosGuajira() {
             const syncUI = $('sync-status');
             try {
                 const fetchCSV = url => new Promise((resolve, reject) => Papa.parse(url, { download: true, header: true, skipEmptyLines: true, complete: res => resolve(res.data), error: reject }));
-                const [dRes, dMun, dTip, dEmp, dPro] = await Promise.all(Object.values(urls).map(fetchCSV));
+                const [dRes, dMun, dTip, dEmp, dPro] = await Promise.all(Object.values(urlsGuajira).map(fetchCSV));
 
-                // Procesamiento compacto de datos usando helpers
                 dbResumen = dRes.map(r => ({
                     año: getVal(r, ['ano'])?.toString().trim() || '',
                     casos: parseInt(getVal(r, ['caso', 'priorizado', 'conflicto'])) || 0,
@@ -241,7 +664,7 @@
 
                 dbMunicipios = dMun.map(r => {
                     let muni = getVal(r, ['municipio', 'lugar'])?.toString().trim() || 'Desconocido';
-                    let coord = coordenadas[normalizar(muni)] || coordenadas["riohacha"];
+                    let coord = coordenadasGuajira[normalizar(muni)] || coordenadasGuajira["riohacha"];
                     return { año: getVal(r, ['ano'])?.toString().trim() || '', municipio: muni, conflictos: parseInt(getVal(r, ['conflicto', 'cantidad', 'numero'])) || 0, lat: coord.lat, lng: coord.lng };
                 }).filter(i => i.año && i.conflictos > 0);
 
@@ -264,20 +687,18 @@
                 })).filter(i => i.año);
 
                 syncUI.style.display = 'none';
-                renderTimeline();
-                generarBotonesFiltro();
-                aplicarFiltro('Todos'); 
+                renderTimeline(); generarBotonesFiltroGuajira(); aplicarFiltroGuajira('Todos'); 
 
             } catch (err) {
-                console.error("Error CSV:", err);
+                console.error("Error Guajira:", err);
                 syncUI.className = 'mb-4 text-sm text-red-600 bg-red-50 p-3 rounded flex items-center shadow-sm';
-                syncUI.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-500 mr-2 text-lg"></i> <span class="font-semibold">Error al conectar con Google Sheets. Verifica los permisos de los enlaces.</span>`;
+                syncUI.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-500 mr-2 text-lg"></i> <span class="font-semibold">Error al conectar Guajira.</span>`;
             }
         }
 
-        function initMap() {
+        function initMapGuajira() {
             mapConf = L.map('map-conflictos').setView([11.5444, -72.9072], 8);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap &copy; CARTO', maxZoom: 19 }).addTo(mapConf);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap', maxZoom: 19 }).addTo(mapConf);
         }
 
         function renderTimeline() {
@@ -293,41 +714,36 @@
                         </div>
                     </div>
                 </div>
-            `).join('') : '<p class="text-sm text-gray-500 italic p-4">No hay datos históricos disponibles.</p>';
+            `).join('') : '';
         }
 
-        function generarBotonesFiltro() {
-            $('botones-filtro-container').innerHTML = añosDisponibles.map(año => 
-                `<button class="filtro-btn px-5 py-2 text-sm font-semibold border shadow-sm rounded-lg transition-all whitespace-nowrap ${año === 'Todos' ? 'bg-guajira-sea text-white border-transparent' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}" data-year="${año}" onclick="aplicarFiltro('${año}')">${año}</button>`
-            ).join('');
-        }
-
-        function aplicarFiltro(year) {
+        window.aplicarFiltroGuajira = function(year) {
             $$('.filtro-btn').forEach(b => b.className = `filtro-btn px-5 py-2 text-sm font-semibold border shadow-sm rounded-lg transition-all whitespace-nowrap ${b.dataset.year === year ? 'bg-guajira-sea text-white border-transparent' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`);
-            
             const t = year === 'Todos' ? 'Todos los años' : year;
             ['mapa', 'tipologia', 'empresas'].forEach(id => $(`${id}-titulo-ano`).innerText = id === 'mapa' ? t : `(${t})`);
 
             let datosFiltrados = year === 'Todos' ? dbMunicipios : dbMunicipios.filter(d => d.año === year);
-            renderMapa(datosFiltrados); renderTipologias(year); renderEmpresasYProyectos(year);
+            renderMapaGuajira(datosFiltrados); renderTipologias(year); renderEmpresasYProyectos(year);
         }
 
-        function renderMapa(datosFiltrados) {
-            if(!mapConf) return;
-            marcadoresConflictos.forEach(m => mapConf.removeLayer(m));
-            marcadoresConflictos = [];
+        function generarBotonesFiltroGuajira() {
+            $('botones-filtro-container').innerHTML = añosDisponibles.map(año => 
+                `<button class="filtro-btn px-5 py-2 text-sm font-semibold border shadow-sm rounded-lg transition-all whitespace-nowrap ${año === 'Todos' ? 'bg-guajira-sea text-white border-transparent' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}" data-year="${año}" onclick="aplicarFiltroGuajira('${año}')">${año}</button>`
+            ).join('');
+        }
 
+        function renderMapaGuajira(datosFiltrados) {
+            if(!mapConf) return;
+            marcadoresConflictos.forEach(m => mapConf.removeLayer(m)); marcadoresConflictos = [];
             const agrupados = datosFiltrados.reduce((acc, d) => {
                 acc[d.municipio] = acc[d.municipio] || { lat: d.lat, lng: d.lng, total: 0 };
-                acc[d.municipio].total += d.conflictos;
-                return acc;
+                acc[d.municipio].total += d.conflictos; return acc;
             }, {});
 
             Object.entries(agrupados).forEach(([muni, data]) => {
                 const size = Math.min(Math.max(35, 25 + (data.total * 1.5)), 80); 
-                const marker = L.marker([data.lat, data.lng], {icon: L.divIcon({ html: `<div class="bg-red-500 text-white rounded-full flex items-center justify-center font-bold shadow-lg border-2 border-white transform transition-transform hover:scale-110" style="width: ${size}px; height: ${size}px;">${data.total}</div>`, className: '', iconSize: [size, size], iconAnchor: [size/2, size/2] })})
-                    .bindPopup(`<div class="text-center p-1"><b class="text-lg text-gray-800 uppercase">${muni}</b><br><span class="text-red-600 font-black text-2xl leading-none">${data.total}</span><br><span class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Conflictos Registrados</span></div>`)
-                    .addTo(mapConf);
+                const marker = L.marker([data.lat, data.lng], {icon: L.divIcon({ html: `<div class="bg-red-500 text-white rounded-full flex items-center justify-center font-bold shadow-lg border-2 border-white" style="width: ${size}px; height: ${size}px;">${data.total}</div>`, className: '', iconSize: [size, size], iconAnchor: [size/2, size/2] })})
+                    .bindPopup(`<div class="text-center p-1"><b class="text-lg uppercase">${muni}</b><br><span class="text-red-600 font-black text-2xl">${data.total}</span><br><span class="text-[10px] text-gray-500 uppercase">Conflictos</span></div>`).addTo(mapConf);
                 marcadoresConflictos.push(marker);
             });
         }
@@ -336,17 +752,16 @@
             const datos = year === 'Todos' ? dbTipologias : dbTipologias.filter(d => d.año === year);
             let total = 0;
             const agrupados = datos.reduce((acc, d) => { acc[d.tipo] = (acc[d.tipo] || 0) + d.conflictos; total += d.conflictos; return acc; }, {});
-            const colors = ['bg-red-500', 'bg-guajira-sun', 'bg-guajira-sea', 'bg-gray-600', 'bg-indigo-500', 'bg-teal-500'];
+            const colors = ['bg-red-500', 'bg-guajira-sun', 'bg-guajira-sea', 'bg-gray-600', 'bg-indigo-500'];
 
             $('tipologia-content').innerHTML = Object.entries(agrupados)
                 .map(([tipo, count]) => ({tipo, count, pct: total ? ((count / total) * 100).toFixed(1) : 0}))
                 .sort((a, b) => b.count - a.count)
                 .map((item, i) => `
                     <div class="mb-3">
-                        <div class="flex justify-between text-sm mb-1 items-end"><span class="font-semibold text-gray-700 truncate pr-2">${item.tipo}</span><span class="font-bold text-gray-900 whitespace-nowrap">${item.count} <span class="text-gray-400 font-normal text-xs ml-1 bg-gray-100 px-1.5 rounded">(${item.pct}%)</span></span></div>
+                        <div class="flex justify-between text-sm mb-1"><span class="font-semibold text-gray-700">${item.tipo}</span><span class="font-bold text-gray-900">${item.count}</span></div>
                         <div class="w-full bg-gray-100 rounded-full h-2"><div class="${colors[i % colors.length]} h-2 rounded-full" style="width: ${item.pct}%"></div></div>
-                    </div>
-                `).join('') || '<p class="text-sm text-gray-500 italic p-4 text-center">No hay tipologías para este filtro.</p>';
+                    </div>`).join('') || '';
         }
 
         function renderEmpresasYProyectos(year) {
@@ -354,41 +769,37 @@
             const agrupadoEmp = empFiltrados.reduce((acc, d) => { acc[d.empresa] = (acc[d.empresa] || 0) + d.conflictos; return acc; }, {});
             const empresasOrds = Object.keys(agrupadoEmp).sort((a,b) => agrupadoEmp[b] - agrupadoEmp[a]);
             
-            $('chart-container').style.height = Math.max(250, empresasOrds.length * 35) + 'px';
+            $('chart-container-guajira').style.height = Math.max(250, empresasOrds.length * 35) + 'px';
             if(graficoEmpresasInstance) graficoEmpresasInstance.destroy();
             
             if(empresasOrds.length) {
                 graficoEmpresasInstance = new Chart($('empresasChart').getContext('2d'), {
                     type: 'bar',
-                    data: { labels: empresasOrds, datasets: [{ label: 'Conflictos', data: empresasOrds.map(e => agrupadoEmp[e]), backgroundColor: '#0077b6', borderRadius: 4, barThickness: 15 }] },
-                    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
+                    data: { labels: empresasOrds, datasets: [{ data: empresasOrds.map(e => agrupadoEmp[e]), backgroundColor: '#0077b6', borderRadius: 4, barThickness: 15 }] },
+                    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
                 });
             }
 
             const proyFiltrados = year === 'Todos' ? dbProyectos : dbProyectos.filter(d => d.año === year);
-            $('tabla-proyectos-content').innerHTML = proyFiltrados.length ? proyFiltrados.sort((a, b) => {
-                let rankA = empresasOrds.indexOf(a.empresa), rankB = empresasOrds.indexOf(b.empresa);
-                return (rankA !== -1 ? rankA : 9999) - (rankB !== -1 ? rankB : 9999) || b.conflictos - a.conflictos;
-            }).map(d => `
-                <tr class="bg-white border-b hover:bg-blue-50 transition-colors">
+            $('tabla-proyectos-content').innerHTML = proyFiltrados.sort((a, b) => (b.conflictos - a.conflictos)).map(d => `
+                <tr class="bg-white border-b hover:bg-blue-50">
                     <td class="px-4 py-3 font-bold text-gray-800 text-[11px] uppercase">${d.empresa}</td>
                     <td class="px-4 py-3 text-gray-600 text-xs">${d.empresa_ejecutora}</td>
                     <td class="px-4 py-3 text-gray-700 text-sm">${d.proyecto}</td>
-                </tr>
-            `).join('') : '<tr><td colspan="3" class="px-4 py-8 text-center text-gray-500 italic">No hay proyectos para este filtro.</td></tr>';
+                </tr>`).join('');
         }
 
-        function openTab(evt, tabName) {
-            $$(".tab-content").forEach(el => { el.style.display = "none"; el.classList.remove("active"); });
-            $$(".tab-btn").forEach(btn => btn.classList.remove("active"));
-            
-            $(tabName).style.display = "block";
-            setTimeout(() => $(tabName).classList.add("active"), 10);
-            evt.currentTarget.classList.add("active");
-            if(tabName === 'conflictividades' && mapConf) mapConf.invalidateSize();
+        function initGuajira() {
+            initMapGuajira();
+            cargarDatosGuajira();
         }
 
-        window.onload = () => { initMap(); cargarDatosGoogleSheets(); };
+        // Lanzador Maestro
+        window.onload = () => {
+            initGuajira();
+            initNacional();
+        };
+
     </script>
 </body>
 </html>
