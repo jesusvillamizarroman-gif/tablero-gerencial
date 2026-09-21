@@ -5,12 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Estrategia de Relacionamiento Territorial - Consolidado</title>
     
+    <!-- Fuentes -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
+                    fontFamily: { sans: ['Inter', 'Segoe UI', 'Tahoma', 'sans-serif'] },
                     colors: {
                         'guajira-sand': '#e5c07b',
                         'guajira-sun': '#f9a826',
@@ -22,7 +26,7 @@
             }
         }
     </script>
-    
+
     <!-- Librerías Externas Unificadas -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
@@ -31,54 +35,51 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     
     <style>
-        body { background-color: #fdfbf7; font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #fdfbf7; display: flex; flex-direction: column; min-height: 100vh; }
         
-        /* Utilidades para los Tabs Principales y Accesibilidad */
+        /* Utilidades para los Tabs Principales */
         .main-tab-content { display: none; }
         .main-tab-content.active { display: block; animation: fadeIn 0.5s ease-in-out; }
         .main-tab-btn.active { border-bottom-width: 4px; border-color: #0077b6; color: #0077b6; font-weight: 600; }
-        .main-tab-btn:focus-visible { outline: 2px solid #0077b6; outline-offset: -2px; }
         
-        /* Utilidades Sub-Tabs */
+        /* Utilidades Sub-Tabs (Nacional y Mesas/Diálogos) */
         .sub-tab-btn, .md-sub-btn { transition: all 0.2s ease-in-out; cursor: pointer; }
         .sub-tab-btn.active, .md-sub-btn[aria-pressed="true"] { background-color: #0077b6; color: white; border-color: #0077b6; }
         .sub-tab-btn.inactive, .md-sub-btn[aria-pressed="false"] { background-color: white; color: #4b5563; border-color: #d1d5db; }
         .sub-tab-btn.inactive:hover, .md-sub-btn[aria-pressed="false"]:hover { background-color: #f3f4f6; }
-        
         .md-sub-btn[aria-pressed="true"] { background-color: #f9a826; color: #fff; border-color: #f9a826; font-weight: 700; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* Estilos de Elementos Compartidos */
-        .d-none { display: none !important; }
-        .map-container { height: 400px; width: 100%; border-radius: 0.5rem; z-index: 10; }
-        .map-container-large { height: 550px; width: 100%; border-radius: 0.5rem; z-index: 10; }
-        .leaflet-container { background: #f8f9fa; font-family: inherit; }
-        
-        .timeline-container { display: flex; overflow-x: auto; padding-bottom: 1rem; scroll-snap-type: x mandatory; }
-        .timeline-item { flex: 0 0 auto; width: 200px; scroll-snap-align: start; }
-        .timeline-dot { width: 16px; height: 16px; background-color: #f9a826; border-radius: 50%; margin: 0 auto; position: relative; z-index: 2; }
-        .timeline-line { height: 4px; background-color: #e5e7eb; position: absolute; top: 24px; left: 0; right: 0; z-index: 1; }
-        
-        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #0077b6; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 8px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        /* Scrollbars personalizados */
-        .custom-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
-        .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        
-        /* Botones Principales Mesas/Dialogos */
         .md-btn-main { transition: all 0.2s ease; cursor: pointer; }
         .md-btn-main[aria-pressed="true"] { background-color: #0077b6; color: white; border-color: #0077b6; }
         .md-btn-main[aria-pressed="false"] { background-color: #f9fafb; color: #4b5563; border-color: #d1d5db; }
         .md-btn-main[aria-pressed="false"]:hover { background-color: #e5e7eb; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Utilidades Globales */
+        .d-none { display: none !important; }
+        .leaflet-container { background: #f8f9fa; font-family: inherit; }
+        .map-container { height: 400px; width: 100%; border-radius: 0.5rem; z-index: 10; }
+        .map-container-large { height: 550px; width: 100%; border-radius: 0.5rem; z-index: 10; }
+        
+        .loader { border: 3px solid #e5e7eb; border-top: 3px solid #0077b6; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 8px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Scrollbars personalizados */
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Estilos Guajira */
+        .timeline-container { display: flex; overflow-x: auto; padding-bottom: 1rem; scroll-snap-type: x mandatory; }
+        .timeline-item { flex: 0 0 auto; width: 200px; scroll-snap-align: start; }
+        .timeline-dot { width: 16px; height: 16px; background-color: #f9a826; border-radius: 50%; margin: 0 auto; position: relative; z-index: 2; }
+        .timeline-line { height: 4px; background-color: #e5e7eb; position: absolute; top: 24px; left: 0; right: 0; z-index: 1; }
     </style>
 </head>
-<body class="text-gray-800 antialiased flex flex-col min-h-screen">
+<body class="text-gray-800 antialiased">
 
-    <!-- Header -->
+    <!-- Header Principal -->
     <header class="bg-white shadow-md border-b-4 border-guajira-sun sticky top-0 z-50">
         <div class="container mx-auto px-4 py-6 flex flex-col md:flex-row items-center justify-between">
             <div class="flex items-center space-x-4">
@@ -93,7 +94,7 @@
             <div class="mt-4 md:mt-0 flex bg-blue-50 border border-blue-100 p-3 rounded-lg shadow-sm items-center">
                 <i class="fa-solid fa-calendar-check text-guajira-sea text-xl mr-3"></i>
                 <div>
-                    <p class="text-sm font-bold text-guajira-sea">Plataforma Activa</p>
+                    <p class="text-sm font-bold text-guajira-sea">Informe a corte del 18 de septiembre del 2026</p>
                 </div>
             </div>
         </div>
@@ -101,7 +102,7 @@
         <div class="container mx-auto px-4 mt-4">
             <nav class="flex overflow-x-auto border-b border-gray-200" role="tablist">
                 <button id="nav-tab-1" role="tab" aria-selected="true" aria-controls="tab-prevencion" tabindex="0" class="main-tab-btn active px-6 py-3 text-gray-600 hover:text-guajira-sea focus:outline-none transition-colors whitespace-nowrap" style="border-bottom-width: 4px;" onclick="openTabMain(event, 'tab-prevencion')">
-                    <i class="fa-solid fa-shield-halved mr-2"></i>1. Prevención y Diálogo Social
+                    <i class="fa-solid fa-shield-halved mr-2"></i>1. Acciones preventivas
                 </button>
                 <button id="nav-tab-2" role="tab" aria-selected="false" aria-controls="tab-nacional" tabindex="-1" class="main-tab-btn px-6 py-3 text-gray-600 hover:text-guajira-sea focus:outline-none transition-colors whitespace-nowrap" style="border-bottom-width: 0px;" onclick="openTabMain(event, 'tab-nacional')">
                     <i class="fa-solid fa-earth-americas mr-2"></i>2. Gestión Nacional
@@ -116,39 +117,171 @@
         </div>
     </header>
 
-    <main class="container mx-auto px-4 py-8 flex-grow max-w-7xl">
+    <main class="container mx-auto px-4 py-8 flex-grow max-w-7xl flex flex-col gap-6">
         
-        <!-- PESTAÑA 1: Prevención -->
+        <!-- PESTAÑA 1: ACCIONES PREVENTIVAS -->
         <section id="tab-prevencion" role="tabpanel" aria-labelledby="nav-tab-1" class="main-tab-content active">
+            
             <div class="mb-6">
-                <h2 class="text-2xl font-semibold text-gray-800 border-l-4 border-guajira-sea pl-3 mb-2">Ruta de Prevención (Embudo de Gestión)</h2>
-                <p class="text-gray-600 mb-6">Información correspondiente a los procesos de diálogo, conformación de comités y planes de acción resultantes a nivel general.</p>
-                
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 border-t-4 border-t-blue-500">
-                        <h3 class="text-gray-500 text-xs font-bold uppercase">Diálogos Realizados</h3>
-                        <p class="text-3xl font-bold mt-2 text-gray-800">120</p>
+                <h2 class="text-2xl font-semibold text-gray-800 border-l-4 border-guajira-sea pl-3 mb-2">Acciones preventivas</h2>
+                <p class="text-gray-600 mb-6">Consulta histórica y territorial de las acciones preventivas por año, subsector, departamento y actividad.</p>
+            </div>
+
+            <!-- Overlay de carga interno -->
+            <div id="ap-loading-overlay" class="bg-blue-50 border border-blue-100 p-4 rounded-lg flex items-center justify-center mb-6 shadow-sm">
+                <div class="loader"></div>
+                <h2 class="text-sm font-semibold text-guajira-sea">Conectando con Google Sheets y descargando datos...</h2>
+            </div>
+
+            <!-- Contenedor de Error interno -->
+            <div id="ap-error-container" class="hidden bg-red-50 border-l-4 border-red-500 p-4 rounded-md shadow-sm mb-6 flex items-center justify-between">
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-triangle text-red-500 text-xl mr-3"></i>
+                    <div>
+                        <h3 class="text-sm font-bold text-red-800">No se pudo cargar el tablero</h3>
+                        <p id="ap-error-message" class="text-sm text-red-700 mt-1">Error desconocido.</p>
                     </div>
-                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 border-t-4 border-t-guajira-sun">
-                        <h3 class="text-gray-500 text-xs font-bold uppercase">Comités Conformados</h3>
-                        <p class="text-3xl font-bold mt-2 text-gray-800">85</p>
+                </div>
+                <button id="ap-btn-retry" class="bg-white text-gray-700 border border-gray-300 px-4 py-1.5 rounded shadow-sm hover:bg-gray-50 text-sm font-semibold transition">Reintentar</button>
+            </div>
+
+            <div id="ap-warning-badge" class="hidden mb-6 bg-yellow-50 text-yellow-800 border border-yellow-200 text-sm font-bold px-4 py-3 rounded-lg flex items-center gap-2 shadow-sm">
+                <i class="fas fa-info-circle text-guajira-sun text-lg"></i> <span id="ap-warning-text"></span>
+            </div>
+
+            <!-- Panel de Filtros -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-6">
+                <h2 class="text-md font-bold text-gray-800 border-b pb-3 mb-4"><i class="fa-solid fa-filter text-guajira-sun mr-2"></i>Filtros de Búsqueda</h2>
+                <div class="flex flex-col md:flex-row gap-4 items-end">
+                    <div class="w-full md:w-1/3">
+                        <label for="ap-filter-year" class="block text-sm font-bold text-gray-700 mb-2">Año</label>
+                        <select id="ap-filter-year" class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 focus:ring-guajira-sea focus:outline-none cursor-pointer">
+                            <option value="ALL">Todos los años</option>
+                        </select>
                     </div>
-                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 border-t-4 border-t-green-500">
-                        <h3 class="text-gray-500 text-xs font-bold uppercase">Planes de Acción Activos</h3>
-                        <p class="text-3xl font-bold mt-2 text-gray-800">62</p>
+                    <div class="w-full md:w-1/3">
+                        <label for="ap-filter-subsector" class="block text-sm font-bold text-gray-700 mb-2">Subsector</label>
+                        <select id="ap-filter-subsector" class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 focus:ring-guajira-sea focus:outline-none cursor-pointer">
+                            <option value="ALL">Todos los subsectores</option>
+                        </select>
+                    </div>
+                    <div class="w-full md:w-1/3 flex justify-end">
+                        <button id="ap-btn-reset-filters" class="w-full md:w-auto bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300 font-semibold py-2.5 px-5 rounded-lg transition flex items-center justify-center gap-2 shadow-sm">
+                            <i class="fas fa-eraser text-gray-500"></i> Limpiar filtros
+                        </button>
                     </div>
                 </div>
             </div>
+
+            <!-- Total y Actividades Destacadas -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-6">
+                <div class="flex flex-col lg:flex-row gap-6">
+                    <!-- Indicador Total -->
+                    <div class="lg:w-1/4 flex flex-col justify-center items-center p-4 bg-blue-50 rounded-xl border border-blue-100 shadow-inner">
+                        <p class="text-xs text-blue-800 font-bold uppercase text-center mb-2 tracking-wide">Total Acciones</p>
+                        <p id="ap-ind-total" class="text-5xl font-black text-guajira-sea">0</p>
+                        <i class="fas fa-shield-alt text-4xl text-blue-200 mt-2"></i>
+                    </div>
+                    
+                    <!-- Grid de Top 10 Actividades -->
+                    <div class="lg:w-3/4 flex flex-col justify-center">
+                        <div class="flex justify-between items-end mb-3 border-b pb-2 border-gray-100">
+                            <div>
+                                <h3 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-list-ol text-guajira-sun mr-2"></i>Actividades Destacadas</h3>
+                                <p class="text-xs text-gray-500 mt-1">Haz clic en una actividad para filtrar el tablero de manera específica.</p>
+                            </div>
+                            <span class="text-xs text-gray-600 font-bold bg-gray-100 px-3 py-1 rounded-full shadow-sm border border-gray-200">Top 10</span>
+                        </div>
+                        
+                        <div id="ap-top-activities-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+                            <!-- Tarjetas de actividades -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráfica y Mapa -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- Gráfica -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-col">
+                    <h3 class="text-md font-bold text-gray-800 mb-4 border-b border-gray-100 pb-3 flex items-center">
+                        <i class="fa-solid fa-chart-column text-guajira-sea mr-2"></i> Evolución Histórica
+                    </h3>
+                    <div class="relative flex-grow min-h-[350px] w-full">
+                        <canvas id="ap-historical-chart"></canvas>
+                        <div id="ap-no-chart-data" class="hidden absolute inset-0 flex items-center justify-center bg-gray-50 text-gray-500 font-medium rounded z-10 border border-gray-100">
+                            <i class="fas fa-chart-bar text-2xl mr-2 opacity-50"></i> No se encontraron acciones para los filtros seleccionados.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mapa -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-col">
+                    <h3 class="text-md font-bold text-gray-800 mb-4 border-b border-gray-100 pb-3 flex items-center justify-between">
+                        <span><i class="fa-solid fa-map-location-dot text-guajira-sun mr-2"></i> Distribución Territorial</span>
+                    </h3>
+                    <div id="ap-map" class="map-container flex-grow relative" style="min-height: 350px;">
+                        <div id="ap-no-map-data" class="hidden absolute inset-0 z-[1000] flex items-center justify-center bg-gray-50 text-gray-500 font-medium rounded border border-gray-200">
+                            <i class="fas fa-map text-2xl mr-2 opacity-50"></i> No se encontraron acciones mapeables.
+                        </div>
+                    </div>
+                    <div class="p-3 border-t border-gray-100 bg-gray-50 text-xs text-gray-500 mt-2 rounded flex justify-center items-center font-medium shadow-inner">
+                        <i class="fas fa-info-circle text-guajira-sea mr-1.5"></i> Tamaño del círculo indica volumen. Color indica subsector predominante.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel de Detalle -->
+            <div id="ap-details-panel" class="hidden border-t-4 border-guajira-sea bg-white flex flex-col transition-all duration-300 shadow-inner rounded-b-xl border-l border-r border-b border-gray-200 mb-8">
+                <div class="bg-gray-50 p-4 border-b border-gray-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h3 id="ap-table-title" class="text-lg font-bold text-gray-800"><i class="fa-solid fa-table-list text-guajira-sea mr-2"></i>Detalle de Acciones</h3>
+                        <p id="ap-table-subtitle" class="text-sm text-gray-600 mt-1 font-medium bg-white px-2 py-0.5 rounded shadow-sm inline-block border border-gray-200">Seleccione un departamento</p>
+                    </div>
+                    <div class="flex gap-3 w-full md:w-auto">
+                        <div class="relative w-full md:w-64" id="ap-search-container">
+                            <input type="text" id="ap-search-input" placeholder="Buscar en la tabla..." class="w-full border border-gray-300 rounded-lg pl-9 pr-3 py-2 text-sm focus:ring-2 focus:ring-guajira-sea focus:outline-none shadow-sm">
+                            <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
+                        </div>
+                        <button id="ap-btn-close-table" class="bg-white hover:bg-red-50 text-gray-600 hover:text-red-600 border border-gray-300 px-4 py-2 rounded-lg text-sm font-bold transition shadow-sm flex items-center">
+                            <i class="fas fa-times mr-1.5"></i> Cerrar
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto custom-scroll relative min-h-[150px] p-0">
+                    <table class="w-full text-sm text-left text-gray-600" id="ap-data-table">
+                        <thead class="text-xs text-gray-700 uppercase bg-white sticky top-0 shadow-sm z-10">
+                            <tr class="border-b-2 border-gray-200">
+                                <th class="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-50 border-r border-gray-100 transition-colors ap-sortable" data-col="0">AÑO <i class="fas fa-sort text-gray-400 ml-1"></i></th>
+                                <th class="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-50 border-r border-gray-100 transition-colors ap-sortable" data-col="1">SUBSECTOR <i class="fas fa-sort text-gray-400 ml-1"></i></th>
+                                <th class="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-50 border-r border-gray-100 transition-colors ap-sortable" data-col="2">DEPARTAMENTO <i class="fas fa-sort text-gray-400 ml-1"></i></th>
+                                <th class="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-50 border-r border-gray-100 transition-colors ap-sortable" data-col="3">MUNICIPIO <i class="fas fa-sort text-gray-400 ml-1"></i></th>
+                                <th class="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-50 border-r border-gray-100 transition-colors ap-sortable" data-col="4">ACTIVIDAD <i class="fas fa-sort text-gray-400 ml-1"></i></th>
+                                <th class="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-50 transition-colors ap-sortable" data-col="5">PARTICIPACIÓN <i class="fas fa-sort text-gray-400 ml-1"></i></th>
+                            </tr>
+                        </thead>
+                        <tbody id="ap-table-body" class="divide-y divide-gray-100 bg-white">
+                            <tr><td colspan="6" class="text-center py-8 text-gray-500 italic">Esperando selección...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Paginación -->
+                <div id="ap-pagination-controls" class="hidden p-3 border-t border-gray-200 bg-gray-50 flex justify-between items-center text-sm">
+                    <span id="ap-page-info" class="text-gray-600 font-medium bg-white px-3 py-1 border border-gray-200 rounded shadow-sm">Mostrando 0 - 0 de 0</span>
+                    <div class="flex gap-2">
+                        <button id="ap-btn-prev-page" class="px-4 py-1.5 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 rounded shadow-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition">Anterior</button>
+                        <button id="ap-btn-next-page" class="px-4 py-1.5 bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 rounded shadow-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition">Siguiente</button>
+                    </div>
+                </div>
+            </div>
+
         </section>
 
-        <!-- PESTAÑA 2: Dashboard Nacional -->
+        <!-- PESTAÑA 2: Dashboard Nacional (Código Base) -->
         <section id="tab-nacional" role="tabpanel" aria-labelledby="nav-tab-2" class="main-tab-content">
-            <div class="mb-6">
-                <h2 class="text-2xl font-semibold text-gray-800 border-l-4 border-guajira-sea pl-3 mb-2">Gestión de Conflictividades Nacional</h2>
-                <p class="text-gray-600 mb-6">Consolidado general de alertas tempranas y conflictividades en el territorio nacional.</p>
-            </div>
+            <!-- (Contenido mantenido intacto) -->
             <div class="space-y-6">
-                
                 <!-- Sub Navegación Nacional -->
                 <div class="bg-white rounded-2xl shadow-sm p-4 border border-gray-200">
                     <div class="flex flex-col sm:flex-row gap-3" id="nacional-tab-container">
@@ -193,12 +326,12 @@
                 </div>
 
                 <!-- Filtro Subsector Nacional -->
-                <div class="bg-white rounded-2xl shadow-sm p-4 border border-gray-200 hidden z-20" id="nacional-filter-section">
+                <div class="bg-white rounded-2xl shadow-sm p-4 border border-gray-200 hidden sticky top-0 z-20" id="nacional-filter-section">
                     <div>
                         <label for="nacional-subsector-filter" class="block text-sm font-bold text-guajira-earth mb-2">
                             <i class="fa-solid fa-filter text-guajira-sun mr-1"></i> Filtrar por <span id="nacional-filter-label-text">Subsector</span>
                         </label>
-                        <select id="nacional-subsector-filter" onchange="applyFilterNacional()" class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-guajira-sea focus:border-guajira-sea block p-3 shadow-sm transition-colors">
+                        <select id="nacional-subsector-filter" class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-guajira-sea focus:border-guajira-sea block p-3 shadow-sm transition-colors">
                             <option value="ALL">Todos los subsectores</option>
                         </select>
                     </div>
@@ -211,7 +344,7 @@
                             <i class="fa-solid fa-map-location text-guajira-sea mr-2"></i>
                             <h3 class="font-semibold text-gray-700">Distribución Departamental</h3>
                         </div>
-                        <div id="map-nacional" class="map-container flex-grow" style="z-index:1;"></div>
+                        <div id="map-nacional" class="w-full flex-grow" style="min-height: 400px; z-index:1;"></div>
                     </div>
 
                     <div id="nacional-chart-container" class="bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col p-4 hidden">
@@ -221,19 +354,18 @@
                         </div>
                     </div>
                 </div>
-
             </div>
         </section>
 
-        <!-- PESTAÑA 3 (2.1): Dashboard Guajira -->
+        <!-- PESTAÑA 2.1: Dashboard Guajira (Código Base) -->
         <section id="tab-guajira" role="tabpanel" aria-labelledby="nav-tab-3" class="main-tab-content">
+            <!-- (Contenido mantenido intacto) -->
             <div id="sync-status" class="mb-4 text-sm text-blue-600 bg-blue-50 p-3 rounded flex items-center shadow-sm border border-blue-100">
                 <div class="loader border-t-guajira-sea"></div> <span class="font-semibold text-guajira-sea">Sincronizando datos territoriales de La Guajira...</span>
             </div>
 
             <div class="mb-6">
-                <h2 class="text-2xl font-semibold text-gray-800 border-l-4 border-red-500 pl-3 mb-2">Gestión de Conflictividades en Territorio (La Guajira)</h2>
-                <p class="text-gray-600 mb-6">Detalle específico y mapeo de proyectos territoriales enfocados en la región.</p>
+                <h2 class="text-2xl font-semibold text-gray-800 border-l-4 border-red-500 pl-3">Gestión de Conflictividades en Territorio (La Guajira)</h2>
             </div>
 
             <!-- Evolución Histórica Guajira -->
@@ -248,7 +380,7 @@
             </div>
 
             <!-- Filtro Global Guajira -->
-            <div class="flex flex-col md:flex-row md:items-center bg-white p-4 mb-6 rounded-xl shadow-sm border border-gray-200 gap-4 z-20">
+            <div class="flex flex-col md:flex-row md:items-center bg-white p-4 mb-6 rounded-xl shadow-sm border border-gray-200 gap-4 sticky top-0 z-20">
                 <div class="flex items-center flex-wrap gap-2">
                     <span class="text-sm font-bold text-guajira-earth mr-2 uppercase whitespace-nowrap"><i class="fa-solid fa-filter text-guajira-sun mr-1"></i> Selecciona el año:</span>
                     <div id="botones-filtro-container" class="flex flex-wrap gap-2">
@@ -263,7 +395,7 @@
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-semibold text-gray-800"><i class="fa-solid fa-map-location text-red-500 mr-2"></i>Ubicación de Conflictos (Guajira) <span id="mapa-titulo-ano" class="text-sm font-normal bg-gray-100 px-2 py-1 rounded text-gray-600 ml-2">Todos</span></h3>
                     </div>
-                    <div id="map-conflictos" class="map-container border border-gray-200 flex-grow" style="z-index: 1;"></div>
+                    <div id="map-conflictos" class="map-container border border-gray-200 flex-grow" style="min-height: 400px; z-index: 1;"></div>
                 </div>
 
                 <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col">
@@ -307,21 +439,20 @@
             </div>
         </section>
 
-        <!-- PESTAÑA 4 (3): Mesas y Diálogos (MÓDULO NUEVO INTEGRADO) -->
+        <!-- PESTAÑA 3: Mesas y Diálogos (Módulo Integrado Previamente) -->
         <section id="tab-mesas-dialogos" role="tabpanel" aria-labelledby="nav-tab-4" class="main-tab-content">
+            
             <div class="mb-6">
                 <h2 class="text-2xl font-semibold text-gray-800 border-l-4 border-guajira-sea pl-3 mb-2">Mesas de Concertación y Espacios de Diálogo</h2>
                 <p class="text-gray-600 mb-6">Consulta territorial de mesas, espacios de diálogo, participantes y entidades vinculadas.</p>
             </div>
             
-            <!-- ESTADO DE CARGA Y ERRORES MD -->
             <div id="md-alertas-container" class="mb-6 space-y-3" aria-live="polite">
                 <div id="md-sync-status" class="text-sm text-blue-700 bg-blue-50 px-4 py-3 rounded-lg flex items-center shadow-sm border border-blue-100">
                     <div class="loader"></div> <span class="font-semibold text-base">Descargando registros y sincronizando tableros...</span>
                 </div>
             </div>
 
-            <!-- BOTONES PRINCIPALES MD -->
             <div class="flex justify-center mb-8">
                 <div class="inline-flex rounded-md shadow-sm overflow-hidden" role="group" aria-label="Selección de vista principal">
                     <button type="button" id="md-btn-toggle-mesas" class="md-btn-main px-6 md:px-8 py-3 text-sm md:text-base font-medium border" aria-pressed="true">
@@ -333,23 +464,16 @@
                 </div>
             </div>
 
-            <!-- PANELES DE INFORMACIÓN Y FILTROS MD -->
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
-                
-                <!-- PANEL IZQUIERDO: Filtros y KPI MD -->
                 <div class="lg:col-span-1 space-y-6 flex flex-col">
-                    
-                    <!-- FILTROS MD -->
                     <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
                         <h2 class="text-md font-bold text-gray-800 border-b pb-3 mb-4"><i class="fa-solid fa-filter text-guajira-sun mr-2"></i>Filtros de Búsqueda</h2>
-                        
                         <div class="mb-5">
                             <label for="md-filtro-ano" class="block text-sm font-bold text-gray-700 mb-2">Año:</label>
                             <select id="md-filtro-ano" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 block w-full p-2.5 outline-none cursor-pointer">
                                 <option value="Todos">Cargando...</option>
                             </select>
                         </div>
-                        
                         <div>
                             <label for="md-filtro-subsector" class="block text-sm font-bold text-gray-700 mb-2">Subsector:</label>
                             <select id="md-filtro-subsector" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 block w-full p-2.5 outline-none cursor-pointer">
@@ -357,8 +481,6 @@
                             </select>
                         </div>
                     </div>
-
-                    <!-- POST-IT (MESAS) MD -->
                     <div id="md-kpi-mesas" class="bg-blue-50 border-l-4 border-blue-500 p-5 rounded shadow-sm flex items-center justify-between transition-all flex-grow">
                        <div>
                           <h3 class="text-xs font-bold text-blue-800 uppercase tracking-wide">Total Mesas</h3>
@@ -366,8 +488,6 @@
                        </div>
                        <i class="fa-solid fa-users-rectangle text-5xl text-blue-200"></i>
                     </div>
-
-                    <!-- POST-IT (DIÁLOGOS) MD -->
                     <div id="md-kpi-dialogos" class="d-none bg-yellow-50 border-l-4 border-yellow-500 p-5 rounded shadow-sm flex items-center justify-between transition-all flex-grow">
                        <div>
                           <h3 class="text-xs font-bold text-yellow-800 uppercase tracking-wide">Total Diálogos</h3>
@@ -377,10 +497,7 @@
                     </div>
                 </div>
 
-                <!-- PANEL DERECHO: Mapa y Gráfica MD -->
                 <div class="lg:col-span-3 flex flex-col">
-                    
-                    <!-- BOTONES SUB-FILTRO (SOLO MESAS) MD -->
                     <div id="md-contenedor-subfiltro-mesas" class="flex justify-center mb-4 transition-opacity duration-300">
                         <div class="inline-flex rounded-md shadow-sm p-1 bg-gray-100 border border-gray-200" role="group" aria-label="Filtro Tipo de Mesa">
                             <button type="button" class="md-sub-btn px-6 py-2 text-sm rounded-md" aria-pressed="true" data-tipo="Todas">Todas</button>
@@ -390,10 +507,7 @@
                         </div>
                     </div>
 
-                    <!-- CONTENEDOR PRINCIPAL DE VISUALIZACIÓN MD -->
                     <div class="bg-white p-1 rounded-xl shadow-sm border border-gray-200 flex-grow flex flex-col">
-                        
-                        <!-- Barra de Título Visualización MD -->
                         <div class="p-3 flex justify-between items-center border-b border-gray-100">
                             <h2 class="text-md font-semibold text-gray-800 flex items-center">
                                 <i id="md-vis-icon" class="fa-solid fa-map-location-dot text-guajira-sea mr-2"></i>
@@ -403,21 +517,14 @@
                                 <i class="fa-solid fa-triangle-exclamation mr-1"></i> <span id="md-text-perdidas">0</span> sin ubicación
                             </span>
                         </div>
-                        
-                        <!-- Capa Mapa MD -->
                         <div id="md-map-nacional" class="map-container-large bg-gray-50 relative"></div>
-                        
-                        <!-- Capa Gráfica (Mesas Nacionales) MD -->
                         <div id="md-chart-nacional-container" class="d-none bg-white w-full h-[550px] p-4 flex-col justify-center relative">
                             <canvas id="md-chartNacional"></canvas>
-                            <!-- Mensaje Vacio MD -->
                             <div id="md-chart-no-data" class="d-none absolute inset-0 flex flex-col items-center justify-center bg-gray-50 z-10">
                                 <i class="fa-solid fa-chart-bar text-4xl text-gray-300 mb-2"></i>
                                 <p class="text-gray-500 font-medium text-sm">No hay mesas nacionales registradas para estos filtros.</p>
                             </div>
                         </div>
-                        
-                        <!-- Leyenda Mapa MD -->
                         <div id="md-leyenda-mapa" class="p-3 border-t border-gray-100 bg-gray-50 flex flex-wrap gap-4 text-xs font-semibold text-gray-600 justify-center">
                             <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-blue-500 mr-1.5 shadow-sm"></span>Hidrocarburos</span>
                             <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-yellow-500 mr-1.5 shadow-sm"></span>Energía Eléctrica</span>
@@ -425,7 +532,6 @@
                             <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-green-500 mr-1.5 shadow-sm"></span>Multisectorial / Otros</span>
                         </div>
 
-                        <!-- TABLA DE DETALLES MD (Oculta por defecto) -->
                         <div id="md-contenedor-detalles" class="d-none border-t-4 border-guajira-sea bg-white flex flex-col transition-all duration-300 shadow-inner">
                             <div class="bg-gray-50 p-3 border-b border-gray-200 flex justify-between items-center sticky top-0">
                                 <h3 class="text-sm font-bold text-gray-800"><i class="fa-solid fa-table-list text-guajira-sea mr-2"></i>Detalles de la Ubicación: <span id="md-detalles-titulo-ubicacion" class="text-guajira-sun uppercase ml-1"></span></h3>
@@ -436,12 +542,10 @@
                             <div class="max-h-[350px] overflow-y-auto custom-scroll p-0">
                                 <table class="w-full text-sm text-left text-gray-600">
                                     <thead class="text-xs text-gray-700 uppercase bg-white sticky top-0 shadow-sm z-10">
-                                        <tr id="md-tabla-detalles-head">
-                                            <!-- Encabezados dinámicos JS -->
-                                        </tr>
+                                        <tr id="md-tabla-detalles-head"></tr>
                                     </thead>
                                     <tbody id="md-tabla-detalles-body" class="divide-y divide-gray-100 bg-white">
-                                        <!-- Filas dinámicas generadas por JS -->
+                                        <tr><td colspan="6" class="text-center py-8 text-gray-500 italic">Esperando selección...</td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -456,11 +560,19 @@
 
     <!-- MAIN JAVASCRIPT LOGIC -->
     <script>
-        // UTILIDADES COMPARTIDAS DOM
         const $ = id => document.getElementById(id);
         const $$ = sel => document.querySelectorAll(sel);
+        
+        // Utilidad global de normalización y escape seguro
+        const mdEscapeHTML = str => { 
+            if(str === null || str === undefined) return '';
+            const t = document.createElement('div'); t.textContent = str; return t.innerHTML; 
+        };
+        const normalizar = str => (typeof str === 'string' ? str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : "");
 
-        // Control de Pestañas Globales Integrado
+        // =========================================================
+        // NAVEGADOR PRINCIPAL DE TABS
+        // =========================================================
         function openTabMain(evt, tabName) {
             $$(".main-tab-content").forEach(el => { 
                 el.style.display = "none"; 
@@ -475,19 +587,25 @@
             const targetTab = $(tabName);
             targetTab.style.display = "block";
             
-            // Animación de entrada suave
             requestAnimationFrame(() => {
                 targetTab.classList.add("active");
             });
             
-            evt.currentTarget.classList.add("active");
-            evt.currentTarget.style.borderBottomWidth = "4px";
-            evt.currentTarget.setAttribute("aria-selected", "true");
+            if(evt && evt.currentTarget) {
+                evt.currentTarget.classList.add("active");
+                evt.currentTarget.style.borderBottomWidth = "4px";
+                evt.currentTarget.setAttribute("aria-selected", "true");
+            }
 
             // Gestión de Invalidation y Redimensionamiento por Módulo
+            if(tabName === 'tab-prevencion') {
+                AccionesPreventivasModule.onTabActivated();
+            }
             if(tabName === 'tab-nacional') {
                 if(mapNacional) setTimeout(() => mapNacional.invalidateSize(), 50);
-                if(chartInstanceNacional) setTimeout(() => chartInstanceNacional.resize(), 50);
+                if(chartInstanceNacional && !$('nacional-chart-container').classList.contains('hidden')) {
+                    setTimeout(() => chartInstanceNacional.resize(), 50);
+                }
             }
             if(tabName === 'tab-guajira') {
                 if(mapConf) setTimeout(() => mapConf.invalidateSize(), 50);
@@ -499,7 +617,463 @@
         }
 
         /* =========================================================
-           NAMESPACE 1: DASHBOARD NACIONAL
+           NAMESPACE 0: ACCIONES PREVENTIVAS (MÓDULO NUEVO INTEGRADO)
+           ========================================================= */
+        const AccionesPreventivasModule = (() => {
+            let isInitialized = false;
+            
+            const SHEET_ID = '1QCKdYXhLQ7mI4taj_2GQK_fYAzh9lSJC';
+            const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
+
+            const apState = {
+                rawData: [], filteredData: [], tableData: [],
+                filters: { year: 'ALL', subsector: 'ALL', department: null, activity: 'ALL' },
+                colMap: {}, colors: {},
+                mapInstance: null, markersLayer: null, chartInstance: null,
+                tableCurrentPage: 1, tableRowsPerPage: 20, sortCol: -1, sortAsc: true
+            };
+
+            const apColors = ['#0077b6', '#f9a826', '#8b5a2b', '#22c55e', '#8b8c89', '#9333ea', '#db2777', '#0891b2', '#ea580c', '#4f46e5'];
+
+            const DeptCoords = {
+                "amazonas": [-1.442, -71.572], "antioquia": [6.538, -75.395], "arauca": [6.757, -70.783],
+                "atlantico": [10.655, -74.965], "bogota": [4.609, -74.081], "bolivar": [8.814, -74.349],
+                "boyaca": [5.602, -73.088], "caldas": [5.281, -75.367], "caqueta": [0.938, -73.926],
+                "casanare": [5.337, -71.951], "cauca": [2.404, -76.613], "cesar": [9.486, -73.559],
+                "choco": [5.556, -76.754], "cordoba": [8.223, -75.856], "cundinamarca": [4.715, -73.916],
+                "guainia": [2.637, -68.913], "guaviare": [2.146, -71.862], "huila": [2.535, -75.527],
+                "la guajira": [11.544, -72.906], "magdalena": [10.373, -74.254], "meta": [3.376, -72.923],
+                "narino": [1.709, -77.942], "norte de santander": [8.105, -72.937], "putumayo": [0.551, -75.523],
+                "quindio": [4.460, -75.673], "risaralda": [5.127, -75.982], "san andres y providencia": [12.564, -81.696],
+                "santander": [6.611, -73.203], "sucre": [9.052, -74.887], "tolima": [4.032, -75.250],
+                "valle del cauca": [3.800, -76.638], "vaupes": [0.855, -70.812], "vichada": [4.423, -69.805]
+            };
+
+            const apUtils = {
+                normalizeDepto: (str) => {
+                    let s = normalizar(str);
+                    if(s.includes("bogota") || s.includes("distrito capital")) return "bogota";
+                    if(s.includes("guajira")) return "la guajira";
+                    if(s.includes("norte santander") || s.includes("norte de santander")) return "norte de santander";
+                    if(s.includes("san andres") || s.includes("providencia")) return "san andres y providencia";
+                    if(s.includes("valle")) return "valle del cauca";
+                    return s;
+                },
+                showError: (msg) => {
+                    $('ap-loading-overlay').classList.add('hidden');
+                    $('ap-error-container').classList.remove('hidden');
+                    $('ap-error-message').textContent = msg;
+                },
+                debounce: (func, wait) => {
+                    let timeout;
+                    return function(...args) {
+                        const later = () => { clearTimeout(timeout); func(...args); };
+                        clearTimeout(timeout);
+                        timeout = setTimeout(later, wait);
+                    };
+                }
+            };
+
+            async function init() {
+                if(isInitialized) return;
+                
+                try {
+                    const res = await new Promise((resolve, reject) => {
+                        Papa.parse(CSV_URL, {
+                            download: true, header: true, skipEmptyLines: true,
+                            complete: resolve, error: reject
+                        });
+                    });
+                    
+                    processData(res);
+                    assignEvents();
+                    isInitialized = true;
+                } catch (e) {
+                    apUtils.showError("No se pudo descargar la información de Google Sheets o procesarla.");
+                    console.error("Error AP Module:", e);
+                }
+            }
+
+            function processData(parsed) {
+                const data = parsed.data;
+                const fields = parsed.meta.fields;
+                
+                if (!data || data.length === 0) throw new Error("La hoja de cálculo está vacía.");
+
+                fields.forEach(f => {
+                    let nf = normalizar(f);
+                    if(nf === 'ano' || nf === 'año') apState.colMap['AÑO'] = f;
+                    else if(nf.includes('subsector')) apState.colMap['SUBSECTOR'] = f;
+                    else if(nf.includes('departamento')) apState.colMap['DEPARTAMENTO'] = f;
+                    else if(nf.includes('ciudad') || nf.includes('municipio')) apState.colMap['MUNICIPIO'] = f;
+                    else if(nf.includes('actividad')) apState.colMap['ACTIVIDAD'] = f;
+                    else if(nf.includes('participacion')) apState.colMap['PARTICIPACIÓN'] = f;
+                });
+
+                if(!apState.colMap['AÑO'] || !apState.colMap['SUBSECTOR'] || !apState.colMap['DEPARTAMENTO']) {
+                    throw new Error("Faltan columnas obligatorias (AÑO, SUBSECTOR, DEPARTAMENTO).");
+                }
+
+                let invalidCount = 0;
+
+                data.forEach(row => {
+                    let y = row[apState.colMap['AÑO']] ? String(row[apState.colMap['AÑO']]).trim() : "";
+                    let s = row[apState.colMap['SUBSECTOR']] ? String(row[apState.colMap['SUBSECTOR']]).trim() : "";
+                    let d = row[apState.colMap['DEPARTAMENTO']] ? String(row[apState.colMap['DEPARTAMENTO']]).trim() : "";
+                    
+                    if (!y || !s || !d) { invalidCount++; return; }
+
+                    let cleanRow = {
+                        year: y, subsector: s, department: d, normDepto: apUtils.normalizeDepto(d),
+                        municipio: apState.colMap['MUNICIPIO'] && row[apState.colMap['MUNICIPIO']] ? String(row[apState.colMap['MUNICIPIO']]).trim() : "-",
+                        activity: apState.colMap['ACTIVIDAD'] && row[apState.colMap['ACTIVIDAD']] ? String(row[apState.colMap['ACTIVIDAD']]).trim() : "-",
+                        participation: apState.colMap['PARTICIPACIÓN'] && row[apState.colMap['PARTICIPACIÓN']] ? String(row[apState.colMap['PARTICIPACIÓN']]).trim() : "-"
+                    };
+
+                    if(!apState.colors[s]) apState.colors[s] = apColors[Object.keys(apState.colors).length % apColors.length];
+                    apState.rawData.push(cleanRow);
+                });
+
+                if (apState.rawData.length === 0) throw new Error("No se encontraron registros válidos tras la limpieza.");
+
+                if(invalidCount > 0) {
+                    $('ap-warning-badge').classList.remove('hidden');
+                    $('ap-warning-text').textContent = `${invalidCount} registros incompletos omitidos en mapa o histórico`;
+                }
+
+                $('ap-loading-overlay').classList.add('hidden');
+                
+                buildFilterOptions();
+                initMap();
+                applyFilters();
+            }
+
+            function assignEvents() {
+                $('ap-filter-year').addEventListener('change', (e) => { apState.filters.year = e.target.value; applyFilters(); });
+                $('ap-filter-subsector').addEventListener('change', (e) => { apState.filters.subsector = e.target.value; applyFilters(); });
+                $('ap-btn-reset-filters').addEventListener('click', resetDashboard);
+                $('ap-btn-close-table').addEventListener('click', closeTable);
+                $('ap-search-input').addEventListener('input', apUtils.debounce(handleTableSearch, 300));
+                $('ap-btn-next-page').addEventListener('click', () => { apState.tableCurrentPage++; renderTableRows(); });
+                $('ap-btn-prev-page').addEventListener('click', () => { apState.tableCurrentPage--; renderTableRows(); });
+                $('ap-btn-retry').addEventListener('click', () => { $('ap-error-container').classList.add('hidden'); $('ap-loading-overlay').classList.remove('hidden'); isInitialized=false; init(); });
+
+                $$('.ap-sortable').forEach(th => {
+                    th.addEventListener('click', () => sortTable(parseInt(th.getAttribute('data-col'))));
+                });
+            }
+
+            function buildFilterOptions() {
+                let years = [...new Set(apState.rawData.map(r => r.year))].sort((a,b) => b.localeCompare(a));
+                let subsectors = [...new Set(apState.rawData.map(r => r.subsector))].sort((a,b) => a.localeCompare(b));
+
+                const selYear = $('ap-filter-year');
+                const selSub = $('ap-filter-subsector');
+                
+                let fY = document.createDocumentFragment();
+                years.forEach(y => { let o = document.createElement('option'); o.value = y; o.textContent = y; fY.appendChild(o); });
+                selYear.appendChild(fY);
+
+                let fS = document.createDocumentFragment();
+                subsectors.forEach(s => { let o = document.createElement('option'); o.value = s; o.textContent = s; fS.appendChild(o); });
+                selSub.appendChild(fS);
+            }
+
+            function toggleActivityFilter(actName) {
+                apState.filters.activity = (apState.filters.activity === actName) ? 'ALL' : actName;
+                applyFilters();
+            }
+
+            function applyFilters() {
+                const { year, subsector, activity } = apState.filters;
+                
+                let baseDataForActivities = apState.rawData.filter(r => {
+                    return (year === 'ALL' || r.year === year) && (subsector === 'ALL' || r.subsector === subsector);
+                });
+
+                apState.filteredData = baseDataForActivities.filter(r => {
+                    return (activity === 'ALL' || r.activity === activity);
+                });
+
+                $('ap-ind-total').textContent = apState.filteredData.length.toLocaleString();
+
+                renderTopActivities(baseDataForActivities);
+                renderChart();
+                renderMapData();
+                
+                if (apState.filters.department) prepareTableData();
+            }
+
+            function renderTopActivities(data) {
+                const container = $('ap-top-activities-container');
+                container.innerHTML = '';
+
+                let actCounts = {};
+                data.forEach(d => {
+                    let act = d.activity || 'Sin especificar';
+                    actCounts[act] = (actCounts[act] || 0) + 1;
+                });
+
+                let sortedActs = Object.entries(actCounts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 10);
+
+                if (sortedActs.length === 0) {
+                    container.innerHTML = '<p class="text-gray-500 text-sm col-span-full">No se encontraron actividades.</p>'; return;
+                }
+
+                let frag = document.createDocumentFragment();
+                sortedActs.forEach((act, index) => {
+                    let isSelected = apState.filters.activity === act.name;
+                    let bgClass = isSelected ? 'bg-guajira-sea text-white shadow-md transform scale-[1.02]' : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200';
+                    let countClass = isSelected ? 'text-guajira-sun' : 'text-gray-800';
+                    
+                    let div = document.createElement('div');
+                    div.className = `flex justify-between items-center p-3 rounded-lg cursor-pointer transition-all duration-200 select-none ${bgClass}`;
+                    div.addEventListener('click', () => toggleActivityFilter(act.name));
+
+                    div.innerHTML = `
+                        <div class="flex items-center gap-2 overflow-hidden pr-2">
+                            <span class="font-bold text-xs opacity-70">#${index + 1}</span>
+                            <span class="text-sm font-semibold truncate" title="${mdEscapeHTML(act.name)}">${mdEscapeHTML(act.name)}</span>
+                        </div>
+                        <span class="font-bold text-lg ${countClass}">${act.count}</span>
+                    `;
+                    frag.appendChild(div);
+                });
+                container.appendChild(frag);
+            }
+
+            function resetDashboard() {
+                apState.filters = { year: 'ALL', subsector: 'ALL', department: null, activity: 'ALL' };
+                $('ap-filter-year').value = 'ALL';
+                $('ap-filter-subsector').value = 'ALL';
+                closeTable();
+                applyFilters();
+                if(apState.mapInstance) apState.mapInstance.setView([4.5709, -74.2973], 5);
+            }
+
+            function renderChart() {
+                const data = apState.filteredData;
+                const container = $('ap-no-chart-data');
+                const canvas = $('ap-historical-chart');
+
+                if (apState.chartInstance) apState.chartInstance.destroy();
+
+                if (data.length === 0) {
+                    container.classList.remove('hidden');
+                    canvas.style.display = 'none';
+                    return;
+                } else {
+                    container.classList.add('hidden');
+                    canvas.style.display = 'block';
+                }
+
+                requestAnimationFrame(() => {
+                    let years = [...new Set(data.map(d => d.year))].sort();
+                    let subsectors = [...new Set(data.map(d => d.subsector))].sort();
+                    
+                    let datasets = subsectors.map(sub => {
+                        let dataPoints = years.map(y => data.filter(d => d.year === y && d.subsector === sub).length);
+                        return { label: sub, data: dataPoints, backgroundColor: apState.colors[sub], borderColor: apState.colors[sub], borderWidth: 1 };
+                    });
+
+                    apState.chartInstance = new Chart(canvas.getContext('2d'), {
+                        type: 'bar',
+                        data: { labels: years, datasets: datasets },
+                        options: {
+                            responsive: true, maintainAspectRatio: false,
+                            plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { family: 'Inter' } } }, tooltip: { mode: 'index', intersect: false } },
+                            scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } } }
+                        }
+                    });
+                });
+            }
+
+            function initMap() {
+                apState.mapInstance = L.map('ap-map').setView([4.5709, -74.2973], 5);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CARTO', maxZoom: 19 }).addTo(apState.mapInstance);
+                apState.markersLayer = L.layerGroup().addTo(apState.mapInstance);
+                
+                // Event Delegation map popup buttons
+                $('ap-map').addEventListener('click', function(e) {
+                    if(e.target && e.target.classList.contains('ap-view-details-btn')) {
+                        selectDepartment(e.target.getAttribute('data-dept'));
+                    }
+                });
+            }
+
+            function renderMapData() {
+                apState.markersLayer.clearLayers();
+                const data = apState.filteredData;
+                const container = $('ap-no-map-data');
+
+                if(data.length === 0) { container.classList.remove('hidden'); return; } 
+                else { container.classList.add('hidden'); }
+
+                let deptGroup = {};
+                data.forEach(d => {
+                    if(!DeptCoords[d.normDepto]) return;
+                    if(!deptGroup[d.normDepto]) deptGroup[d.normDepto] = { name: d.department, total: 0, subs: {} };
+                    deptGroup[d.normDepto].total++;
+                    deptGroup[d.normDepto].subs[d.subsector] = (deptGroup[d.normDepto].subs[d.subsector] || 0) + 1;
+                });
+
+                let maxTotal = Math.max(...Object.values(deptGroup).map(g => g.total), 1);
+
+                for (const [normD, info] of Object.entries(deptGroup)) {
+                    let coords = DeptCoords[normD];
+                    let domSub = Object.keys(info.subs).reduce((a, b) => info.subs[a] > info.subs[b] ? a : b);
+                    let radius = Math.max(8, (info.total / maxTotal) * 25);
+
+                    let subsHtml = Object.entries(info.subs).sort((a,b) => b[1] - a[1]).map(e => `<li><span class="inline-block w-2 h-2 rounded-full mr-1" style="background:${apState.colors[e[0]]}"></span> ${mdEscapeHTML(e[0])}: <b>${e[1]}</b></li>`).join('');
+
+                    let popupDom = document.createElement('div');
+                    popupDom.className = 'font-sans';
+                    popupDom.innerHTML = `
+                        <h4 class="font-bold text-guajira-sea border-b pb-1 mb-2">${mdEscapeHTML(info.name)}</h4>
+                        <p class="text-sm mb-1">Total Acciones: <b>${info.total}</b></p>
+                        <p class="text-xs text-gray-500 mb-1">Desglose por subsector:</p>
+                        <ul class="text-xs max-h-32 overflow-y-auto custom-scroll">${subsHtml}</ul>
+                        <button class="ap-view-details-btn mt-2 w-full bg-guajira-sea text-white text-xs py-1.5 rounded hover:bg-blue-800 transition font-bold shadow-sm" data-dept="${mdEscapeHTML(info.name)}">Ver Detalles</button>
+                    `;
+
+                    let marker = L.circleMarker(coords, { radius: radius, fillColor: apState.colors[domSub], color: '#fff', weight: 1.5, opacity: 1, fillOpacity: 0.8 });
+                    marker.bindPopup(popupDom);
+                    marker.addTo(apState.markersLayer);
+                }
+            }
+
+            function selectDepartment(deptName) {
+                apState.filters.department = deptName;
+                apState.mapInstance.closePopup();
+                
+                $('ap-table-title').textContent = `Acciones en ${deptName}`;
+                $('ap-table-subtitle').textContent = `Filtrado por departamento`;
+                $('ap-search-container').classList.remove('hidden');
+                $('ap-btn-close-table').classList.remove('hidden');
+                $('ap-search-input').value = "";
+                $('ap-details-panel').classList.remove('hidden');
+                
+                prepareTableData();
+                setTimeout(() => { $('ap-details-panel').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 150);
+            }
+
+            function closeTable() {
+                apState.filters.department = null;
+                $('ap-table-title').textContent = "Detalle de Acciones";
+                $('ap-table-subtitle').textContent = "Seleccione un departamento";
+                $('ap-search-container').classList.add('hidden');
+                $('ap-btn-close-table').classList.add('hidden');
+                $('ap-pagination-controls').classList.add('hidden');
+                $('ap-details-panel').classList.add('hidden');
+                $('ap-table-body').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-500 italic">Esperando selección...</td></tr>';
+            }
+
+            function prepareTableData() {
+                const { department } = apState.filters;
+                let rawTable = apState.filteredData.filter(d => d.department === department);
+                
+                if (rawTable.length === 0) {
+                    $('ap-table-subtitle').textContent = "No se encontraron acciones en este departamento.";
+                    apState.tableData = []; renderTableRows(); return;
+                }
+
+                $('ap-table-subtitle').textContent = `Total registros departamentales: ${rawTable.length}`;
+                
+                const searchTerm = normalizar($('ap-search-input').value);
+                if (searchTerm) {
+                    apState.tableData = rawTable.filter(r => 
+                        normalizar(r.municipio).includes(searchTerm) || normalizar(r.activity).includes(searchTerm) ||
+                        normalizar(r.participation).includes(searchTerm) || normalizar(r.subsector).includes(searchTerm) || normalizar(r.year).includes(searchTerm)
+                    );
+                } else { apState.tableData = [...rawTable]; }
+
+                if(apState.sortCol !== -1) {
+                    const keys = ['year', 'subsector', 'department', 'municipio', 'activity', 'participation'];
+                    const k = keys[apState.sortCol];
+                    apState.tableData.sort((a, b) => {
+                        let valA = String(a[k]).toLowerCase(); let valB = String(b[k]).toLowerCase();
+                        if(valA < valB) return apState.sortAsc ? -1 : 1;
+                        if(valA > valB) return apState.sortAsc ? 1 : -1;
+                        return 0;
+                    });
+                }
+                apState.tableCurrentPage = 1;
+                renderTableRows();
+            }
+
+            function renderTableRows() {
+                const tbody = $('ap-table-body');
+                tbody.innerHTML = '';
+
+                const data = apState.tableData;
+                
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-500 italic">No hay resultados para mostrar.</td></tr>';
+                    $('ap-pagination-controls').classList.add('hidden'); return;
+                }
+
+                const totalRows = data.length;
+                const totalPages = Math.ceil(totalRows / apState.tableRowsPerPage);
+                
+                if (apState.tableCurrentPage < 1) apState.tableCurrentPage = 1;
+                if (apState.tableCurrentPage > totalPages) apState.tableCurrentPage = totalPages;
+
+                const startIdx = (apState.tableCurrentPage - 1) * apState.tableRowsPerPage;
+                const endIdx = Math.min(startIdx + apState.tableRowsPerPage, totalRows);
+                const pageData = data.slice(startIdx, endIdx);
+                
+                let frag = document.createDocumentFragment();
+                pageData.forEach(r => {
+                    let tr = document.createElement('tr');
+                    tr.className = "hover:bg-blue-50/50 transition-colors";
+                    tr.innerHTML = `
+                        <td class="py-2 px-4 border-r border-gray-100 font-semibold text-xs whitespace-nowrap">${mdEscapeHTML(r.year)}</td>
+                        <td class="py-2 px-4 border-r border-gray-100 text-xs">
+                            <span class="inline-block w-2 h-2 rounded-full mr-1" style="background:${apState.colors[r.subsector]}"></span>${mdEscapeHTML(r.subsector)}
+                        </td>
+                        <td class="py-2 px-4 border-r border-gray-100 text-xs">${mdEscapeHTML(r.department)}</td>
+                        <td class="py-2 px-4 border-r border-gray-100 text-xs">${mdEscapeHTML(r.municipio)}</td>
+                        <td class="py-2 px-4 border-r border-gray-100 text-xs max-w-xs truncate" title="${mdEscapeHTML(r.activity)}">${mdEscapeHTML(r.activity)}</td>
+                        <td class="py-2 px-4 text-xs font-bold text-gray-700 max-w-xs truncate" title="${mdEscapeHTML(r.participation)}">${mdEscapeHTML(r.participation)}</td>
+                    `;
+                    frag.appendChild(tr);
+                });
+                tbody.appendChild(frag);
+
+                $('ap-pagination-controls').classList.remove('hidden');
+                $('ap-page-info').textContent = `Mostrando ${startIdx + 1} - ${endIdx} de ${totalRows}`;
+                $('ap-btn-prev-page').disabled = apState.tableCurrentPage === 1;
+                $('ap-btn-next-page').disabled = apState.tableCurrentPage === totalPages;
+            }
+
+            function sortTable(colIndex) {
+                if(apState.sortCol === colIndex) apState.sortAsc = !apState.sortAsc;
+                else { apState.sortCol = colIndex; apState.sortAsc = true; }
+                
+                $$('.ap-sortable i').forEach(icon => icon.className = 'fas fa-sort text-gray-400 ml-1');
+                const activeTh = $$('.ap-sortable')[colIndex].querySelector('i');
+                activeTh.className = apState.sortAsc ? 'fas fa-sort-up text-guajira-sea ml-1' : 'fas fa-sort-down text-guajira-sea ml-1';
+                
+                if(apState.filters.department) prepareTableData();
+            }
+
+            function handleTableSearch() { if(apState.filters.department) prepareTableData(); }
+
+            const onTabActivated = () => {
+                if(!isInitialized) init();
+                else {
+                    if(apState.mapInstance) setTimeout(() => apState.mapInstance.invalidateSize(), 50);
+                    if(apState.chartInstance && !$('ap-no-chart-data').classList.contains('hidden') === false) {
+                        setTimeout(() => apState.chartInstance.resize(), 50);
+                    }
+                }
+            };
+
+            return { onTabActivated };
+        })();
+
+        /* =========================================================
+           NAMESPACE JAVASCRIPT: DASHBOARD NACIONAL (Base)
            ========================================================= */
         const DEPARTMENTS_COORDS_NACIONAL = {
             "ANTIOQUIA": [6.2518, -75.5636], "ATLANTICO": [10.9685, -74.7813], "BOGOTA": [4.6097, -74.0817], 
@@ -523,12 +1097,9 @@
         };
 
         let appStateNac = {
-            activeTab: 'conflictividades',
-            currentFilter: 'ALL',
-            selectedYear: null,
+            activeTab: 'conflictividades', currentFilter: 'ALL', selectedYear: null,
             data: { conflictividades: [], alertas: [], otros: [] }
         };
-
         let mapNacional, markersLayerNacional, chartInstanceNacional;
 
         function extractYearNacional(row) {
@@ -553,16 +1124,10 @@
             let val = '';
             if (appStateNac.activeTab === 'conflictividades') {
                 if (row['Subsector']) val = row['Subsector'];
-                else {
-                    const key = keys.find(k => k && k.toLowerCase().includes('subsector'));
-                    if (key) val = row[key];
-                }
+                else { const key = keys.find(k => k && k.toLowerCase().includes('subsector')); if (key) val = row[key]; }
             } else if (appStateNac.activeTab === 'alertas') {
                 if (row['Subsector generador de la Alerta Temprana']) val = row['Subsector generador de la Alerta Temprana'];
-                else {
-                    const key = keys.find(k => k && k.toLowerCase().includes('subsector'));
-                    if (key) val = row[key];
-                }
+                else { const key = keys.find(k => k && k.toLowerCase().includes('subsector')); if (key) val = row[key]; }
             }
             return val ? String(val).trim() : 'No definido';
         }
@@ -580,11 +1145,13 @@
         }
 
         function initMapNacional() {
-            mapNacional = L.map('map-nacional').setView([4.5709, -74.2973], 5);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; CARTO', maxZoom: 19
-            }).addTo(mapNacional);
-            markersLayerNacional = L.layerGroup().addTo(mapNacional);
+            if ($('map-nacional') && !mapNacional) {
+                mapNacional = L.map('map-nacional').setView([4.5709, -74.2973], 5);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                    attribution: '&copy; CARTO', maxZoom: 19
+                }).addTo(mapNacional);
+                markersLayerNacional = L.layerGroup().addTo(mapNacional);
+            }
         }
 
         function validateColumnsNacional() {
@@ -617,11 +1184,8 @@
             
             ['conflictividades', 'alertas', 'otros'].forEach(t => {
                 const btn = $(`nacional-btn-${t}`);
-                if (t === tabName) {
-                    btn.classList.remove('inactive'); btn.classList.add('active');
-                } else {
-                    btn.classList.remove('active'); btn.classList.add('inactive');
-                }
+                if (t === tabName) { btn.classList.remove('inactive'); btn.classList.add('active'); } 
+                else { btn.classList.remove('active'); btn.classList.add('inactive'); }
             });
             renderCurrentViewNacional();
         }
@@ -638,13 +1202,9 @@
             const filterS = $('nacional-subsector-filter');
             const filterSec = $('nacional-filter-section');
 
-            if (appStateNac.activeTab === 'conflictividades') {
-                filterSec.classList.remove('hidden'); chartC.classList.remove('hidden'); filterL.innerText = "Subsector";
-            } else if (appStateNac.activeTab === 'alertas') {
-                filterSec.classList.remove('hidden'); chartC.classList.remove('hidden'); filterL.innerText = "Subsector generador de la Alerta Temprana";
-            } else {
-                filterSec.classList.add('hidden'); chartC.classList.add('hidden');
-            }
+            if (appStateNac.activeTab === 'conflictividades') { filterSec.classList.remove('hidden'); chartC.classList.remove('hidden'); filterL.innerText = "Subsector"; } 
+            else if (appStateNac.activeTab === 'alertas') { filterSec.classList.remove('hidden'); chartC.classList.remove('hidden'); filterL.innerText = "Subsector generador de la Alerta Temprana"; } 
+            else { filterSec.classList.add('hidden'); chartC.classList.add('hidden'); }
 
             if (appStateNac.activeTab !== 'otros' && currentData.length > 0) {
                 const uniqueSectors = [...new Set(currentData.map(item => getSubsectorValueNacional(item)).filter(val => val && val !== 'No definido'))].sort();
@@ -659,24 +1219,18 @@
             updateDataVisualsNacional();
         }
 
-        window.applyFilterNacional = function() {
-            appStateNac.currentFilter = $('nacional-subsector-filter').value;
+        $('nacional-subsector-filter')?.addEventListener('change', function() {
+            appStateNac.currentFilter = this.value;
             updateDataVisualsNacional();
-        }
+        });
 
         function renderYearsNacional(data) {
             const container = $('nacional-years-container');
             container.innerHTML = '';
-
-            if (data.length === 0) {
-                container.innerHTML = '<p class="text-gray-400 text-sm">No hay datos disponibles.</p>'; return;
-            }
+            if (data.length === 0) { container.innerHTML = '<p class="text-gray-400 text-sm">No hay datos disponibles.</p>'; return; }
 
             const yearCounts = {};
-            data.forEach(row => {
-                const year = extractYearNacional(row);
-                yearCounts[year] = (yearCounts[year] || 0) + 1;
-            });
+            data.forEach(row => { const year = extractYearNacional(row); yearCounts[year] = (yearCounts[year] || 0) + 1; });
 
             const sortedYears = Object.keys(yearCounts).sort((a, b) => {
                 if(a === 'Desconocido') return 1; if(b === 'Desconocido') return -1;
@@ -686,7 +1240,6 @@
             sortedYears.forEach(year => {
                 const count = yearCounts[year];
                 const isSelected = appStateNac.selectedYear === year;
-                
                 const baseClass = "w-28 h-28 flex flex-col items-center justify-center rounded-xl cursor-pointer transition-all duration-300 shadow-sm border select-none";
                 const selectedClass = "bg-[#0077b6] border-[#0077b6] text-white shadow-lg scale-110 ring-4 ring-blue-200 z-10 rotate-2";
                 const defaultClass = "bg-[#e5c07b]/30 border-[#f9a826] hover:bg-[#e5c07b]/50 text-gray-800 hover:-translate-y-1 hover:shadow-md hover:rotate-2";
@@ -694,10 +1247,7 @@
                 const btn = document.createElement('div');
                 btn.className = `${baseClass} ${isSelected ? selectedClass : defaultClass}`;
                 btn.onclick = () => toggleYearFilterNacional(year);
-                btn.innerHTML = `
-                    <span class="text-sm font-semibold opacity-90 tracking-wide">${year}</span>
-                    <span class="text-4xl font-bold mt-1">${count}</span>
-                `;
+                btn.innerHTML = `<span class="text-sm font-semibold opacity-90 tracking-wide">${year}</span><span class="text-4xl font-bold mt-1">${count}</span>`;
                 container.appendChild(btn);
             });
         }
@@ -717,14 +1267,11 @@
             }
 
             updateMapNacional(finalData);
-            if (appStateNac.activeTab !== 'otros') {
-                // Previene instanciación si el contenedor está oculto (falla en Chart.js)
-                requestAnimationFrame(() => updateChartNacional(finalData));
-            }
+            if (appStateNac.activeTab !== 'otros') updateChartNacional(finalData);
         }
 
         function updateMapNacional(data) {
-            markersLayerNacional.clearLayers();
+            markersLayerNacional?.clearLayers();
             if (data.length === 0) return;
 
             let deptCounts = {};
@@ -736,12 +1283,7 @@
             for (const [dept, count] of Object.entries(deptCounts)) {
                 let coords = DEPARTMENTS_COORDS_NACIONAL[dept];
                 if (coords) {
-                    const iconHtml = `
-                        <div style="background-color: #0077b6; color: white; border-radius: 50%; 
-                                    width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; 
-                                    font-weight: bold; border: 2px solid white; box-shadow: 0 3px 6px rgba(0,0,0,0.4); font-size: 13px;">
-                            ${count}
-                        </div>`;
+                    const iconHtml = `<div style="background-color: #0077b6; color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid white; box-shadow: 0 3px 6px rgba(0,0,0,0.4); font-size: 13px;">${count}</div>`;
                     const customIcon = L.divIcon({ html: iconHtml, className: '', iconSize: [32, 32], iconAnchor: [16, 16] });
                     L.marker(coords, { icon: customIcon }).bindPopup(`<strong>${dept}</strong><br>Registros: ${count}`).addTo(markersLayerNacional);
                 }
@@ -749,12 +1291,9 @@
         }
 
         function updateChartNacional(data) {
-            if ($('nacional-chart-container').classList.contains('hidden')) return;
+            if($('tab-nacional').style.display === 'none') return;
             const ctx = $('chart-nacional').getContext('2d');
-            
-            if (chartInstanceNacional) { chartInstanceNacional.destroy(); chartInstanceNacional = null; }
-            
-            if (data.length === 0) return;
+            if (data.length === 0) { if (chartInstanceNacional) chartInstanceNacional.destroy(); return; }
 
             let sectorCounts = {};
             data.forEach(row => {
@@ -766,19 +1305,14 @@
             const labels = sortedSectors;
             const values = sortedSectors.map(s => sectorCounts[s]);
 
-            chartInstanceNacional = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Número de registros', data: values,
-                        backgroundColor: '#0077b6', borderRadius: 4, barPercentage: 0.6
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { ticks: { maxRotation: 45, minRotation: 45 } } }
-                }
+            if (chartInstanceNacional) chartInstanceNacional.destroy();
+
+            requestAnimationFrame(() => {
+                chartInstanceNacional = new Chart(ctx, {
+                    type: 'bar',
+                    data: { labels: labels, datasets: [{ label: 'Número de registros', data: values, backgroundColor: '#0077b6', borderRadius: 4, barPercentage: 0.6 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { ticks: { maxRotation: 45, minRotation: 45 } } } }
+                });
             });
         }
 
@@ -805,7 +1339,7 @@
         }
 
         /* =========================================================
-           NAMESPACE 2: DASHBOARD GUAJIRA
+           NAMESPACE JAVASCRIPT: DASHBOARD GUAJIRA (Base)
            ========================================================= */
         const coordenadasGuajira = {
             "uribia": {lat: 11.733, lng: -72.266}, "maicao": {lat: 11.378, lng: -72.243},
@@ -826,9 +1360,7 @@
         let dbResumen = [], dbMunicipios = [], dbTipologias = [], dbEmpresas = [], dbProyectos = []; 
         let mapConf, marcadoresLayerConf, graficoEmpresasInstance = null, añosDisponibles = ["Todos"];
 
-        const guajiraNormalizar = t => t ? String(t).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : "";
-        const guajiraGetVal = (row, words) => row[Object.keys(row).find(k => words.some(w => guajiraNormalizar(k).includes(w)))] || null;
-        const escapeHTMLBase = str => { const t = document.createElement('div'); t.textContent = str; return t.innerHTML; };
+        const getVal = (row, words) => row[Object.keys(row).find(k => words.some(w => normalizar(k).includes(w)))] || null;
 
         async function cargarDatosGuajira() {
             const syncUI = $('sync-status');
@@ -837,36 +1369,35 @@
                 const [dRes, dMun, dTip, dEmp, dPro] = await Promise.all(Object.values(urlsGuajira).map(fetchCSV));
 
                 dbResumen = dRes.map(r => ({
-                    año: guajiraGetVal(r, ['ano'])?.toString().trim() || '',
-                    casos: parseInt(guajiraGetVal(r, ['caso', 'priorizado', 'conflicto'])) || 0,
-                    comunidades: parseInt(guajiraGetVal(r, ['comunidad', 'impacta'])) || 0
+                    año: getVal(r, ['ano'])?.toString().trim() || '',
+                    casos: parseInt(getVal(r, ['caso', 'priorizado', 'conflicto'])) || 0,
+                    comunidades: parseInt(getVal(r, ['comunidad', 'impacta'])) || 0
                 })).filter(i => i.año && i.casos > 0);
 
-                // No mutamos original, creamos Set y ordenamos
-                añosDisponibles = ["Todos", ...[...new Set(dbResumen.map(d => d.año))].sort()];
+                añosDisponibles = ["Todos", ...new Set(dbResumen.map(d => d.año))].sort();
 
                 dbMunicipios = dMun.map(r => {
-                    let muni = guajiraGetVal(r, ['municipio', 'lugar'])?.toString().trim() || 'Desconocido';
-                    let coord = coordenadasGuajira[guajiraNormalizar(muni)] || null; // Fix: No Riohacha por defecto si no existe
-                    return { año: guajiraGetVal(r, ['ano'])?.toString().trim() || '', municipio: muni, conflictos: parseInt(guajiraGetVal(r, ['conflicto', 'cantidad', 'numero'])) || 0, lat: coord?.lat, lng: coord?.lng };
+                    let muni = getVal(r, ['municipio', 'lugar'])?.toString().trim() || 'Desconocido';
+                    let coord = coordenadasGuajira[normalizar(muni)] || null;
+                    return { año: getVal(r, ['ano'])?.toString().trim() || '', municipio: muni, conflictos: parseInt(getVal(r, ['conflicto', 'cantidad', 'numero'])) || 0, lat: coord?.lat, lng: coord?.lng };
                 }).filter(i => i.año && i.conflictos > 0);
 
                 dbTipologias = dTip.map(r => ({
-                    año: guajiraGetVal(r, ['ano'])?.toString().trim() || '', tipo: guajiraGetVal(r, ['tipolog', 'tipo'])?.toString().trim() || 'Otros', conflictos: parseInt(guajiraGetVal(r, ['conflicto', 'cantidad'])) || 0
+                    año: getVal(r, ['ano'])?.toString().trim() || '', tipo: getVal(r, ['tipolog', 'tipo'])?.toString().trim() || 'Otros', conflictos: parseInt(getVal(r, ['conflicto', 'cantidad'])) || 0
                 })).filter(i => i.año && i.conflictos > 0);
 
                 dbEmpresas = dEmp.map(r => ({
-                    año: guajiraGetVal(r, ['ano'])?.toString().trim() || '',
-                    empresa: guajiraGetVal(r, ['empresa', 'compania'])?.toString().trim() || 'N/A',
-                    conflictos: parseInt(guajiraGetVal(r, ['conflicto', 'cantidad'])) || 0
+                    año: getVal(r, ['ano'])?.toString().trim() || '',
+                    empresa: getVal(r, ['empresa', 'compania'])?.toString().trim() || 'N/A',
+                    conflictos: parseInt(getVal(r, ['conflicto', 'cantidad'])) || 0
                 })).filter(i => i.año && i.conflictos > 0);
 
                 dbProyectos = dPro.map(r => ({
-                    año: guajiraGetVal(r, ['ano'])?.toString().trim() || '',
-                    empresa: guajiraGetVal(r, ['empresa'])?.toString().trim() || 'No Especificada',
-                    empresa_ejecutora: guajiraGetVal(r, ['ejecutora', 'ejecutor', 'contratista'])?.toString().trim() || 'N/A',
-                    proyecto: guajiraGetVal(r, ['proyecto', 'bloque', 'contrato', 'nombre', 'detalle'])?.toString().trim() || 'N/A',
-                    conflictos: parseInt(guajiraGetVal(r, ['conflicto', 'cantidad', 'casos', 'total', 'numero'])) || 0
+                    año: getVal(r, ['ano'])?.toString().trim() || '',
+                    empresa: getVal(r, ['empresa'])?.toString().trim() || 'No Especificada',
+                    empresa_ejecutora: getVal(r, ['ejecutora', 'ejecutor', 'contratista'])?.toString().trim() || 'N/A',
+                    proyecto: getVal(r, ['proyecto', 'bloque', 'contrato', 'nombre', 'detalle'])?.toString().trim() || 'N/A',
+                    conflictos: parseInt(getVal(r, ['conflicto', 'cantidad', 'casos', 'total', 'numero'])) || 0
                 })).filter(i => i.año);
 
                 syncUI.style.display = 'none';
@@ -880,9 +1411,11 @@
         }
 
         function initMapGuajira() {
-            mapConf = L.map('map-conflictos').setView([11.5444, -72.9072], 8);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CARTO', maxZoom: 19 }).addTo(mapConf);
-            marcadoresLayerConf = L.layerGroup().addTo(mapConf); // Fix: Uso de capa para limpieza
+            if ($('map-conflictos') && !mapConf) {
+                mapConf = L.map('map-conflictos').setView([11.5444, -72.9072], 8);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CARTO', maxZoom: 19 }).addTo(mapConf);
+                marcadoresLayerConf = L.layerGroup().addTo(mapConf);
+            }
         }
 
         function renderTimeline() {
@@ -890,7 +1423,7 @@
                 <div class="timeline-item text-center">
                     <div class="pt-6"><div class="timeline-dot shadow-md ring-4 ring-white"></div></div>
                     <div class="mt-4 mx-2">
-                        <h4 class="text-4xl font-black text-gray-800 drop-shadow-sm mb-2">${escapeHTMLBase(item.año)}</h4>
+                        <h4 class="text-4xl font-black text-gray-800 drop-shadow-sm mb-2">${mdEscapeHTML(item.año)}</h4>
                         <div class="inline-flex justify-center space-x-3 bg-blue-50/80 backdrop-blur-sm rounded-full py-1.5 px-4 border border-blue-100 shadow-sm">
                             <div class="text-center"><span class="font-black text-guajira-sea text-xl leading-none">${item.casos}</span><span class="text-[9px] text-gray-500 uppercase font-bold block leading-none mt-1">Casos</span></div>
                             <div class="border-l border-blue-200"></div>
@@ -907,23 +1440,20 @@
             ['mapa', 'tipologia', 'empresas'].forEach(id => $(`${id}-titulo-ano`).innerText = id === 'mapa' ? t : `(${t})`);
 
             let datosFiltrados = year === 'Todos' ? dbMunicipios : dbMunicipios.filter(d => d.año === year);
-            renderMapaGuajira(datosFiltrados); 
-            renderTipologias(year); 
-            // Deferred chart render
-            requestAnimationFrame(() => renderEmpresasYProyectos(year));
+            renderMapaGuajira(datosFiltrados); renderTipologias(year); renderEmpresasYProyectos(year);
         }
 
         function generarBotonesFiltroGuajira() {
             $('botones-filtro-container').innerHTML = añosDisponibles.map(año => 
-                `<button class="filtro-btn px-5 py-2 text-sm font-semibold border shadow-sm rounded-lg transition-all whitespace-nowrap ${año === 'Todos' ? 'bg-guajira-sea text-white border-transparent' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}" data-year="${año}" onclick="aplicarFiltroGuajira('${año}')">${escapeHTMLBase(año)}</button>`
+                `<button class="filtro-btn px-5 py-2 text-sm font-semibold border shadow-sm rounded-lg transition-all whitespace-nowrap ${año === 'Todos' ? 'bg-guajira-sea text-white border-transparent' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}" data-year="${año}" onclick="aplicarFiltroGuajira('${año}')">${mdEscapeHTML(año)}</button>`
             ).join('');
         }
 
         function renderMapaGuajira(datosFiltrados) {
-            if(!mapConf || !marcadoresLayerConf) return;
+            if(!mapConf) return;
             marcadoresLayerConf.clearLayers();
             const agrupados = datosFiltrados.reduce((acc, d) => {
-                if(d.lat && d.lng) { // Solo si tiene coordenadas válidas
+                if(d.lat && d.lng) {
                     acc[d.municipio] = acc[d.municipio] || { lat: d.lat, lng: d.lng, total: 0 };
                     acc[d.municipio].total += d.conflictos; 
                 }
@@ -933,8 +1463,7 @@
             Object.entries(agrupados).forEach(([muni, data]) => {
                 const size = Math.min(Math.max(35, 25 + (data.total * 1.5)), 80); 
                 const marker = L.marker([data.lat, data.lng], {icon: L.divIcon({ html: `<div class="bg-red-500 text-white rounded-full flex items-center justify-center font-bold shadow-lg border-2 border-white" style="width: ${size}px; height: ${size}px;">${data.total}</div>`, className: '', iconSize: [size, size], iconAnchor: [size/2, size/2] })})
-                    .bindPopup(`<div class="text-center p-1"><b class="text-lg uppercase">${escapeHTMLBase(muni)}</b><br><span class="text-red-600 font-black text-2xl">${data.total}</span><br><span class="text-[10px] text-gray-500 uppercase">Conflictos</span></div>`);
-                marcadoresLayerConf.addLayer(marker);
+                    .bindPopup(`<div class="text-center p-1"><b class="text-lg uppercase">${mdEscapeHTML(muni)}</b><br><span class="text-red-600 font-black text-2xl">${data.total}</span><br><span class="text-[10px] text-gray-500 uppercase">Conflictos</span></div>`).addTo(marcadoresLayerConf);
             });
         }
 
@@ -949,37 +1478,36 @@
                 .sort((a, b) => b.count - a.count)
                 .map((item, i) => `
                     <div class="mb-3">
-                        <div class="flex justify-between text-sm mb-1"><span class="font-semibold text-gray-700">${escapeHTMLBase(item.tipo)}</span><span class="font-bold text-gray-900">${item.count}</span></div>
+                        <div class="flex justify-between text-sm mb-1"><span class="font-semibold text-gray-700">${mdEscapeHTML(item.tipo)}</span><span class="font-bold text-gray-900">${item.count}</span></div>
                         <div class="w-full bg-gray-100 rounded-full h-2"><div class="${colors[i % colors.length]} h-2 rounded-full" style="width: ${item.pct}%"></div></div>
                     </div>`).join('') || '';
         }
 
         function renderEmpresasYProyectos(year) {
-            // Prevent render if container hidden
-            if ($('tab-guajira').style.display === 'none') return;
-
+            if($('tab-guajira').style.display === 'none') return;
             const empFiltrados = year === 'Todos' ? dbEmpresas : dbEmpresas.filter(d => d.año === year);
             const agrupadoEmp = empFiltrados.reduce((acc, d) => { acc[d.empresa] = (acc[d.empresa] || 0) + d.conflictos; return acc; }, {});
             const empresasOrds = Object.keys(agrupadoEmp).sort((a,b) => agrupadoEmp[b] - agrupadoEmp[a]);
             
             $('chart-container-guajira').style.height = Math.max(250, empresasOrds.length * 35) + 'px';
-            if(graficoEmpresasInstance) { graficoEmpresasInstance.destroy(); graficoEmpresasInstance = null; }
+            if(graficoEmpresasInstance) graficoEmpresasInstance.destroy();
             
-            if(empresasOrds.length) {
-                graficoEmpresasInstance = new Chart($('empresasChart').getContext('2d'), {
-                    type: 'bar',
-                    data: { labels: empresasOrds, datasets: [{ data: empresasOrds.map(e => agrupadoEmp[e]), backgroundColor: '#0077b6', borderRadius: 4, barThickness: 15 }] },
-                    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-                });
-            }
+            requestAnimationFrame(() => {
+                if(empresasOrds.length) {
+                    graficoEmpresasInstance = new Chart($('empresasChart').getContext('2d'), {
+                        type: 'bar',
+                        data: { labels: empresasOrds, datasets: [{ data: empresasOrds.map(e => agrupadoEmp[e]), backgroundColor: '#0077b6', borderRadius: 4, barThickness: 15 }] },
+                        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                    });
+                }
+            });
 
             const proyFiltrados = year === 'Todos' ? dbProyectos : dbProyectos.filter(d => d.año === year);
-            const clonProy = [...proyFiltrados]; // Evitar mutar el array original con sort()
-            $('tabla-proyectos-content').innerHTML = clonProy.sort((a, b) => (b.conflictos - a.conflictos)).map(d => `
+            $('tabla-proyectos-content').innerHTML = [...proyFiltrados].sort((a, b) => (b.conflictos - a.conflictos)).map(d => `
                 <tr class="bg-white border-b hover:bg-blue-50">
-                    <td class="px-4 py-3 font-bold text-gray-800 text-[11px] uppercase">${escapeHTMLBase(d.empresa)}</td>
-                    <td class="px-4 py-3 text-gray-600 text-xs">${escapeHTMLBase(d.empresa_ejecutora)}</td>
-                    <td class="px-4 py-3 text-gray-700 text-sm">${escapeHTMLBase(d.proyecto)}</td>
+                    <td class="px-4 py-3 font-bold text-gray-800 text-[11px] uppercase">${mdEscapeHTML(d.empresa)}</td>
+                    <td class="px-4 py-3 text-gray-600 text-xs">${mdEscapeHTML(d.empresa_ejecutora)}</td>
+                    <td class="px-4 py-3 text-gray-700 text-sm">${mdEscapeHTML(d.proyecto)}</td>
                 </tr>`).join('');
         }
 
@@ -989,7 +1517,7 @@
         }
 
         /* =========================================================
-           NAMESPACE 3: MÓDULO MESAS Y DIÁLOGOS (NUEVO)
+           NAMESPACE 3: MESAS Y DIÁLOGOS (Nacional Integrado)
            ========================================================= */
         const MesasDialogosModule = (() => {
             let isInitialized = false;
@@ -1000,60 +1528,12 @@
             };
 
             const mdState = {
-                vistaActual: 'mesas', 
-                tipoMesaActual: 'Todas',
-                dataMesas: [],
-                dataDialogos: [],
-                map: null,
-                layerGroup: null,
-                chartInstance: null
-            };
-
-            // Coordenadas extendidas
-            const MD_COORDENADAS = {
-                "amazonas": {lat: -1.442, lng: -71.575}, "antioquia": {lat: 6.958, lng: -75.405}, "arauca": {lat: 6.643, lng: -70.762},
-                "atlantico": {lat: 10.654, lng: -74.965}, "bolivar": {lat: 8.874, lng: -74.195}, "boyaca": {lat: 5.567, lng: -72.936},
-                "caldas": {lat: 5.340, lng: -75.293}, "caqueta": {lat: 1.139, lng: -73.666}, "casanare": {lat: 5.390, lng: -71.914},
-                "cauca": {lat: 2.378, lng: -76.620}, "cesar": {lat: 9.387, lng: -73.541}, "choco": {lat: 5.485, lng: -76.812},
-                "cordoba": {lat: 8.353, lng: -75.698}, "cundinamarca": {lat: 4.887, lng: -74.004}, "guainia": {lat: 2.531, lng: -69.213},
-                "guaviare": {lat: 1.956, lng: -71.745}, "huila": {lat: 2.519, lng: -75.529}, "la guajira": {lat: 11.544, lng: -72.907},
-                "magdalena": {lat: 10.334, lng: -74.195}, "meta": {lat: 3.655, lng: -72.907}, "narino": {lat: 1.636, lng: -77.728},
-                "norte de santander": {lat: 8.169, lng: -72.955}, "putumayo": {lat: 0.692, lng: -76.046}, "quindio": {lat: 4.475, lng: -75.668},
-                "risaralda": {lat: 5.093, lng: -75.879}, "san andres": {lat: 12.551, lng: -81.700}, "santander": {lat: 6.641, lng: -73.308},
-                "sucre": {lat: 8.895, lng: -74.965}, "tolima": {lat: 3.905, lng: -75.293}, "valle del cauca": {lat: 3.738, lng: -76.241},
-                "vaupes": {lat: 0.449, lng: -70.470}, "vichada": {lat: 4.545, lng: -69.458}, "bogota": {lat: 4.609, lng: -74.081},
-                "uribia": {lat: 11.733, lng: -72.266}, "maicao": {lat: 11.378, lng: -72.243}, "albania": {lat: 11.161, lng: -72.589},
-                "riohacha": {lat: 11.544, lng: -72.907}, "dibulla": {lat: 11.272, lng: -73.308}, "villanueva": {lat: 10.603, lng: -72.980}, 
-                "fonseca": {lat: 10.893, lng: -72.852}, "san juan del cesar": {lat: 10.768, lng: -73.003}, "barrancas": {lat: 10.957, lng: -72.784},
-                "manaure": {lat: 11.775, lng: -72.445}, "hato nuevo": {lat: 11.066, lng: -72.759}
-            };
-
-            const mdEscapeHTML = str => { const t = document.createElement('div'); t.textContent = str; return t.innerHTML; };
-            const mdNormalizar = str => (typeof str === 'string' ? str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : "");
-            
-            const mdExtraerAno = val => {
-                if (!val) return "Sin año";
-                const match = String(val).match(/\d{4}/);
-                return match ? match[0] : "Sin año";
-            };
-
-            // Regla estricta Columna B
-            const getColumnaB = row => {
-                const keys = Object.keys(row || {});
-                return keys.length > 1 && row[keys[1]] ? String(row[keys[1]]).trim() : "Sin clasificar";
-            };
-
-            const mdGetDeptoCoords = strNorm => {
-                if(!strNorm) return null;
-                if(MD_COORDENADAS[strNorm]) return { ...MD_COORDENADAS[strNorm], nombreMostrado: strNorm };
-                for (const [key, val] of Object.entries(MD_COORDENADAS)) {
-                    if (strNorm.includes(key)) return { ...val, nombreMostrado: key };
-                }
-                return null;
+                vistaActual: 'mesas', tipoMesaActual: 'Todas', dataMesas: [], dataDialogos: [],
+                map: null, layerGroup: null, chartInstance: null
             };
 
             const mdGetColorSubsector = sub => {
-                const val = mdNormalizar(sub);
+                const val = normalizar(sub);
                 if(val.includes("hidro") || val.includes("petro")) return "#3b82f6";
                 if(val.includes("energ") || val.includes("electr")) return "#eab308";
                 if(val.includes("mine") || val.includes("carbon")) return "#6b7280";
@@ -1069,21 +1549,19 @@
                     const keys = Object.keys(r);
                     if (keys.length === 0) return null;
 
-                    const safeKeys = keys.map(k => ({ orig: k, safe: mdNormalizar(k).replace(/\s+/g, '') }));
+                    const safeKeys = keys.map(k => ({ orig: k, safe: normalizar(k).replace(/\s+/g, '') }));
 
                     let kId = safeKeys.find(k => k.safe === '_id' || k.safe === 'id');
                     let idVal = (kId && r[kId.orig] && String(r[kId.orig]).trim() !== "") ? r[kId.orig] : `${prefijoID}-AUTO-${index}`;
 
-                    let subsectorVal = getColumnaB(r);
+                    let subsectorVal = keys.length > 1 && r[keys[1]] ? String(r[keys[1]]).trim() : "Sin clasificar";
 
                     let kFecha = safeKeys.find(k => k.safe.includes('fecha') || k.safe.includes('registro') || k.safe.includes('ano'));
-                    let anoVal = kFecha && r[kFecha.orig] ? mdExtraerAno(r[kFecha.orig]) : "Sin año";
+                    let anoVal = kFecha && r[kFecha.orig] && String(r[kFecha.orig]).match(/\d{4}/) ? String(r[kFecha.orig]).match(/\d{4}/)[0] : "Sin año";
 
                     let tipoMesaVal = "Sin clasificar";
                     let kTipo = safeKeys.find(k => k.safe.includes('tipodemesa'));
-                    if (kTipo && r[kTipo.orig] && String(r[kTipo.orig]).trim() !== "") {
-                        tipoMesaVal = String(r[kTipo.orig]).trim();
-                    }
+                    if (kTipo && r[kTipo.orig] && String(r[kTipo.orig]).trim() !== "") tipoMesaVal = String(r[kTipo.orig]).trim();
 
                     let deptoKeys = safeKeys.filter(k => k.safe.includes('departamento') || k.safe.includes('regional') || k.safe.includes('municipio') || k.safe.includes('lugar'));
                     let locValues = deptoKeys.map(k => r[k.orig]).filter(v => v && String(v).trim() !== "");
@@ -1101,7 +1579,7 @@
 
                     return {
                         id: String(idVal).trim(), ano: anoVal, subsector: subsectorVal, tipoMesa: tipoMesaVal,
-                        deptoOriginal: deptoVal, deptoNorm: mdNormalizar(deptoVal), actores: actoresVal,
+                        deptoOriginal: deptoVal, deptoNorm: normalizar(deptoVal), actores: actoresVal,
                         entidades: entidadesVal, instituciones: institucionesVal, participantes: participantesVal
                     };
                 }).filter(d => d !== null);
@@ -1114,6 +1592,20 @@
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CARTO', maxZoom: 10, minZoom: 4 }).addTo(mdState.map);
                 mdState.layerGroup = L.layerGroup().addTo(mdState.map);
                 
+                // Event Delegation map popup buttons
+                $('md-map-nacional').addEventListener('click', function(e) {
+                    if(e.target && e.target.classList.contains('md-view-details-btn')) {
+                        const deptOriginal = e.target.getAttribute('data-dept');
+                        const dataForMap = (mdState.vistaActual === 'mesas' ? mdState.dataMesas : mdState.dataDialogos).filter(d => 
+                            ($('md-filtro-ano').value === 'Todos' || d.ano === $('md-filtro-ano').value) && 
+                            ($('md-filtro-subsector').value === 'Todos' || d.subsector === $('md-filtro-subsector').value) &&
+                            (mdState.vistaActual !== 'mesas' || mdState.tipoMesaActual === 'Todas' || normalizar(d.tipoMesa) === normalizar(mdState.tipoMesaActual)) &&
+                            d.deptoOriginal === deptOriginal
+                        );
+                        mdMostrarTablaDetalles(dataForMap, deptOriginal);
+                    }
+                });
+
                 try {
                     const [resMesas, resDialogos] = await Promise.allSettled([ mdParseCSV(MD_URLS.mesas), mdParseCSV(MD_URLS.dialogos) ]);
 
@@ -1205,9 +1697,7 @@
                     (y === 'Todos' || d.ano === y) && (s === 'Todos' || d.subsector === s)
                 );
 
-                if (v === 'mesas' && tm !== 'Todas') {
-                    datosFiltrados = datosFiltrados.filter(d => mdNormalizar(d.tipoMesa) === mdNormalizar(tm));
-                }
+                if (v === 'mesas' && tm !== 'Todas') datosFiltrados = datosFiltrados.filter(d => normalizar(d.tipoMesa) === normalizar(tm));
 
                 const idsUnicos = new Set();
                 datosFiltrados.forEach(d => { if (!d.id.includes('AUTO-')) idsUnicos.add(d.id); });
@@ -1217,9 +1707,8 @@
 
                 $('md-contenedor-detalles').classList.add('d-none');
 
-                if (v === 'mesas' && tm === 'Nacional') {
-                    mdMostrarGrafica(datosFiltrados);
-                } else {
+                if (v === 'mesas' && tm === 'Nacional') mdMostrarGrafica(datosFiltrados);
+                else {
                     $('md-chart-nacional-container').classList.add('d-none');
                     $('md-map-nacional').classList.remove('d-none');
                     $('md-leyenda-mapa').classList.remove('d-none');
@@ -1237,49 +1726,53 @@
                 let sinUbicacion = 0;
                 const sFiltro = $('md-filtro-subsector').value;
                 
+                const getCoords = strNorm => {
+                    for (const [key, val] of Object.entries(DEPARTMENTS_COORDS_NACIONAL)) {
+                        if (strNorm.includes(key.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""))) return { lat: val[0], lng: val[1] };
+                    }
+                    return null;
+                };
+
                 const agrupado = datos.reduce((acc, d) => {
-                    const coord = mdGetDeptoCoords(d.deptoNorm);
+                    const coord = getCoords(d.deptoNorm);
                     if(coord) {
                         const key = `${coord.lat},${coord.lng}`;
-                        if(!acc[key]) {
-                            acc[key] = { nombre: d.deptoOriginal, lat: coord.lat, lng: coord.lng, total: 0, registros: [], conteoSubsectores: {} };
-                        }
+                        if(!acc[key]) acc[key] = { nombre: d.deptoOriginal, lat: coord.lat, lng: coord.lng, total: 0, conteoSubsectores: {} };
                         acc[key].total++;
-                        acc[key].registros.push(d);
                         acc[key].conteoSubsectores[d.subsector] = (acc[key].conteoSubsectores[d.subsector] || 0) + 1;
-                    } else {
-                        sinUbicacion++;
-                    }
+                    } else sinUbicacion++;
                     return acc;
                 }, {});
 
-                if (sinUbicacion > 0) {
-                    $('md-badge-ubicaciones-perdidas').classList.remove('d-none');
-                    $('md-text-perdidas').textContent = sinUbicacion;
-                } else $('md-badge-ubicaciones-perdidas').classList.add('d-none');
+                if (sinUbicacion > 0) { $('md-badge-ubicaciones-perdidas').classList.remove('d-none'); $('md-text-perdidas').textContent = sinUbicacion; } 
+                else $('md-badge-ubicaciones-perdidas').classList.add('d-none');
 
                 Object.values(agrupado).forEach(data => {
                     let pinColor = "#3b82f6";
-                    if (sFiltro !== "Todos") {
-                        pinColor = mdGetColorSubsector(sFiltro);
-                    } else {
+                    if (sFiltro !== "Todos") pinColor = mdGetColorSubsector(sFiltro);
+                    else {
                         let max = 0; let subPred = "";
                         Object.entries(data.conteoSubsectores).forEach(([sub, qty]) => { if(qty > max) { max = qty; subPred = sub; } });
                         pinColor = mdGetColorSubsector(subPred);
                     }
 
-                    const svgIcon = `
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" style="width: 38px; height: 38px; filter: drop-shadow(0px 5px 4px rgba(0,0,0,0.4)); transition: transform 0.2s;">
-                            <path fill="${pinColor}" stroke="#ffffff" stroke-width="12" d="M215.7 499.2C267 435 384 279.4 384 192C384 86 298 0 192 0S0 86 0 192c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 128a64 64 0 1 1 0 128 64 64 0 1 1 0-128z"/>
-                        </svg>
-                    `;
-
-                    const marker = L.marker([data.lat, data.lng], {
-                        icon: L.divIcon({ html: svgIcon, className: 'bg-transparent cursor-pointer hover:scale-110', iconSize: [38, 38], iconAnchor: [19, 38], popupAnchor: [0, -38] })
-                    });
+                    const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" style="width: 38px; height: 38px; filter: drop-shadow(0px 5px 4px rgba(0,0,0,0.4));"><path fill="${pinColor}" stroke="#ffffff" stroke-width="12" d="M215.7 499.2C267 435 384 279.4 384 192C384 86 298 0 192 0S0 86 0 192c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 128a64 64 0 1 1 0 128 64 64 0 1 1 0-128z"/></svg>`;
+                    const marker = L.marker([data.lat, data.lng], { icon: L.divIcon({ html: svgIcon, className: 'bg-transparent cursor-pointer hover:scale-110 transition-transform', iconSize: [38, 38], iconAnchor: [19, 38], popupAnchor: [0, -38] }) });
                     
-                    marker.bindPopup(`<div class="text-center p-2 min-w-[150px]"><b class="text-gray-800 text-sm uppercase block mb-1 border-b pb-1">${mdEscapeHTML(data.nombre)}</b><span class="text-gray-800 font-bold block mt-1.5"><i class="fa-solid fa-list-ol mr-1"></i> ${data.total} Registros</span><span class="text-[10px] text-blue-600 font-bold block mt-2 uppercase underline">Haz clic en el pin para detalles</span></div>`);
-                    marker.on('click', () => mdMostrarTablaDetalles(data.registros, data.nombre));
+                    let popupDom = document.createElement('div');
+                    popupDom.className = "text-center p-2 min-w-[150px]";
+                    popupDom.innerHTML = `<b class="text-gray-800 text-sm uppercase block mb-1 border-b pb-1">${mdEscapeHTML(data.nombre)}</b><span class="text-gray-800 font-bold block mt-1.5"><i class="fa-solid fa-list-ol mr-1"></i> ${data.total} Registros</span><span class="text-[10px] text-blue-600 font-bold block mt-2 uppercase underline">Haz clic en el pin para detalles</span>`;
+                    marker.bindPopup(popupDom);
+                    
+                    marker.on('click', () => {
+                        const dataForMap = (mdState.vistaActual === 'mesas' ? mdState.dataMesas : mdState.dataDialogos).filter(d => 
+                            ($('md-filtro-ano').value === 'Todos' || d.ano === $('md-filtro-ano').value) && 
+                            ($('md-filtro-subsector').value === 'Todos' || d.subsector === $('md-filtro-subsector').value) &&
+                            (mdState.vistaActual !== 'mesas' || mdState.tipoMesaActual === 'Todas' || normalizar(d.tipoMesa) === normalizar(mdState.tipoMesaActual)) &&
+                            d.deptoOriginal === data.nombre
+                        );
+                        mdMostrarTablaDetalles(dataForMap, data.nombre);
+                    });
                     mdState.layerGroup.addLayer(marker);
                 });
             }
@@ -1290,128 +1783,68 @@
                 const headTr = $('md-tabla-detalles-head');
 
                 if (esMesas) {
-                    headTr.innerHTML = `
-                        <th scope="col" class="px-4 py-3 border-b border-r border-gray-200 w-24">ID</th>
-                        <th scope="col" class="px-4 py-3 border-b border-r border-gray-200">Principales Actores</th>
-                        <th scope="col" class="px-4 py-3 border-b border-r border-gray-200">Principales Entidades</th>
-                        <th scope="col" class="px-4 py-3 border-b border-gray-200 w-32 text-center">Nº Participantes</th>
-                    `;
+                    headTr.innerHTML = `<th class="px-4 py-3 border-b border-r border-gray-200 w-24">ID</th><th class="px-4 py-3 border-b border-r border-gray-200">Principales Actores</th><th class="px-4 py-3 border-b border-r border-gray-200">Principales Entidades</th><th class="px-4 py-3 border-b border-gray-200 w-32 text-center">Nº Participantes</th>`;
                 } else {
-                    headTr.innerHTML = `
-                        <th scope="col" class="px-4 py-3 border-b border-r border-gray-200 w-24">ID</th>
-                        <th scope="col" class="px-4 py-3 border-b border-r border-gray-200">ACTORES SOCIALES/ECONOMICOS</th>
-                        <th scope="col" class="px-4 py-3 border-b border-r border-gray-200">Instituciones participantes</th>
-                        <th scope="col" class="px-4 py-3 border-b border-r border-gray-200">Entidades Participantes</th>
-                        <th scope="col" class="px-4 py-3 border-b border-gray-200 w-32 text-center">PARTICIPANTES</th>
-                    `;
+                    headTr.innerHTML = `<th class="px-4 py-3 border-b border-r border-gray-200 w-24">ID</th><th class="px-4 py-3 border-b border-r border-gray-200">ACTORES SOCIALES/ECONOMICOS</th><th class="px-4 py-3 border-b border-r border-gray-200">Instituciones participantes</th><th class="px-4 py-3 border-b border-r border-gray-200">Entidades Participantes</th><th class="px-4 py-3 border-b border-gray-200 w-32 text-center">PARTICIPANTES</th>`;
                 }
                 
                 const htmlFilas = registros.map(r => {
-                    if (esMesas) {
-                        return `
-                        <tr class="hover:bg-blue-50/50 transition-colors">
-                            <td class="px-4 py-3 font-semibold text-xs border-r border-gray-200 text-gray-800 break-all">${mdEscapeHTML(r.id)}</td>
-                            <td class="px-4 py-3 text-xs border-r border-gray-200 text-gray-600">${mdEscapeHTML(r.actores)}</td>
-                            <td class="px-4 py-3 text-xs border-r border-gray-200 text-gray-600">${mdEscapeHTML(r.entidades)}</td>
-                            <td class="px-4 py-3 text-xs text-center font-bold text-gray-700">${mdEscapeHTML(r.participantes)}</td>
-                        </tr>`;
-                    } else {
-                        return `
-                        <tr class="hover:bg-blue-50/50 transition-colors">
-                            <td class="px-4 py-3 font-semibold text-xs border-r border-gray-200 text-gray-800 break-all">${mdEscapeHTML(r.id)}</td>
-                            <td class="px-4 py-3 text-xs border-r border-gray-200 text-gray-600">${mdEscapeHTML(r.actores)}</td>
-                            <td class="px-4 py-3 text-xs border-r border-gray-200 text-gray-600">${mdEscapeHTML(r.instituciones)}</td>
-                            <td class="px-4 py-3 text-xs border-r border-gray-200 text-gray-600">${mdEscapeHTML(r.entidades)}</td>
-                            <td class="px-4 py-3 text-xs text-center font-bold text-gray-700">${mdEscapeHTML(r.participantes)}</td>
-                        </tr>`;
-                    }
+                    if (esMesas) return `<tr class="hover:bg-blue-50/50 transition-colors"><td class="px-4 py-3 font-semibold text-xs border-r border-gray-200 text-gray-800 break-all">${mdEscapeHTML(r.id)}</td><td class="px-4 py-3 text-xs border-r border-gray-200 text-gray-600">${mdEscapeHTML(r.actores)}</td><td class="px-4 py-3 text-xs border-r border-gray-200 text-gray-600">${mdEscapeHTML(r.entidades)}</td><td class="px-4 py-3 text-xs text-center font-bold text-gray-700">${mdEscapeHTML(r.participantes)}</td></tr>`;
+                    else return `<tr class="hover:bg-blue-50/50 transition-colors"><td class="px-4 py-3 font-semibold text-xs border-r border-gray-200 text-gray-800 break-all">${mdEscapeHTML(r.id)}</td><td class="px-4 py-3 text-xs border-r border-gray-200 text-gray-600">${mdEscapeHTML(r.actores)}</td><td class="px-4 py-3 text-xs border-r border-gray-200 text-gray-600">${mdEscapeHTML(r.instituciones)}</td><td class="px-4 py-3 text-xs border-r border-gray-200 text-gray-600">${mdEscapeHTML(r.entidades)}</td><td class="px-4 py-3 text-xs text-center font-bold text-gray-700">${mdEscapeHTML(r.participantes)}</td></tr>`;
                 }).join('');
                 
                 $('md-tabla-detalles-body').innerHTML = htmlFilas;
                 $('md-contenedor-detalles').classList.remove('d-none');
-                
-                setTimeout(() => {
-                    $('md-contenedor-detalles').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }, 150);
+                setTimeout(() => $('md-contenedor-detalles').scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 150);
             }
 
             function mdMostrarGrafica(datos) {
-                $('md-map-nacional').classList.add('d-none');
-                $('md-leyenda-mapa').classList.add('d-none');
-                $('md-badge-ubicaciones-perdidas').classList.add('d-none');
-                
-                $('md-chart-nacional-container').classList.remove('d-none');
-                $('md-chart-nacional-container').classList.add('flex'); 
-                
-                $('md-vis-title').textContent = "Mesas Nacionales por Subsector";
-                $('md-vis-icon').className = "fa-solid fa-chart-column text-guajira-sea mr-2";
+                $('md-map-nacional').classList.add('d-none'); $('md-leyenda-mapa').classList.add('d-none'); $('md-badge-ubicaciones-perdidas').classList.add('d-none');
+                $('md-chart-nacional-container').classList.remove('d-none'); $('md-chart-nacional-container').classList.add('flex'); 
+                $('md-vis-title').textContent = "Mesas Nacionales por Subsector"; $('md-vis-icon').className = "fa-solid fa-chart-column text-guajira-sea mr-2";
                 
                 requestAnimationFrame(() => {
                     if(mdState.chartInstance) { mdState.chartInstance.destroy(); mdState.chartInstance = null; }
-
-                    if(datos.length === 0) {
-                        $('md-chartNacional').classList.add('d-none');
-                        $('md-chart-no-data').classList.remove('d-none');
-                        return;
-                    }
-
-                    $('md-chartNacional').classList.remove('d-none');
-                    $('md-chart-no-data').classList.add('d-none');
+                    if(datos.length === 0) { $('md-chartNacional').classList.add('d-none'); $('md-chart-no-data').classList.remove('d-none'); return; }
+                    
+                    $('md-chartNacional').classList.remove('d-none'); $('md-chart-no-data').classList.add('d-none');
 
                     const agrupado = datos.reduce((acc, d) => {
                         const clave = d.subsector.length > 35 ? d.subsector.substring(0, 32) + '...' : d.subsector;
-                        acc[clave] = (acc[clave] || 0) + 1;
-                        return acc;
+                        acc[clave] = (acc[clave] || 0) + 1; return acc;
                     }, {});
 
                     const etiquetas = Object.keys(agrupado).sort((a,b) => agrupado[b] - agrupado[a]);
-                    const valores = etiquetas.map(k => agrupado[k]);
                     const ctx = $('md-chartNacional').getContext('2d');
-
                     mdState.chartInstance = new Chart(ctx, {
                         type: 'bar',
-                        data: {
-                            labels: etiquetas,
-                            datasets: [{
-                                label: 'Mesas Registradas',
-                                data: valores,
-                                backgroundColor: etiquetas.map(mdGetColorSubsector),
-                                borderRadius: 6
-                            }]
-                        },
-                        options: {
-                            indexAxis: 'y',
-                            responsive: true, maintainAspectRatio: false,
-                            plugins: { legend: { display: false } },
-                            scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } }
-                        }
+                        data: { labels: etiquetas, datasets: [{ label: 'Mesas Registradas', data: etiquetas.map(k => agrupado[k]), backgroundColor: etiquetas.map(mdGetColorSubsector), borderRadius: 6 }] },
+                        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } } }
                     });
                 });
             }
             
             const onTabActivated = () => {
-                if(!isInitialized) {
-                    init();
-                } else {
-                    if(mdState.map && !$('md-map-nacional').classList.contains('d-none')) {
-                        setTimeout(() => mdState.map.invalidateSize(), 50);
-                    }
-                    if(mdState.chartInstance && !$('md-chart-nacional-container').classList.contains('d-none')) {
-                        setTimeout(() => mdState.chartInstance.resize(), 50);
-                    }
+                if(!isInitialized) init();
+                else {
+                    if(mdState.map && !$('md-map-nacional').classList.contains('d-none')) setTimeout(() => mdState.map.invalidateSize(), 50);
+                    if(mdState.chartInstance && !$('md-chart-nacional-container').classList.contains('d-none')) setTimeout(() => mdState.chartInstance.resize(), 50);
                 }
             };
-
             return { onTabActivated };
         })();
 
-        // Lanzador Maestro Seguro
+        // =========================================================
+        // ARRANQUE SEGURO MAESTRO
+        // =========================================================
         document.addEventListener('DOMContentLoaded', () => {
             initGuajira();
             initNacional();
-            // Mesas y Dialogos usa Lazy Loading en onTabActivated
+            // Acciones Preventivas inicia en el primer tab activo
+            if($('tab-prevencion').classList.contains('active')){
+                AccionesPreventivasModule.onTabActivated();
+            }
         });
-
     </script>
 </body>
 </html>
