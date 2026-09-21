@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estrategia de Relacionamiento Territorial - La Guajira</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'guajira-sand': '#e5c07b',
+                        'guajira-sun': '#f9a826',
+                        'guajira-sea': '#0077b6',
+                        'guajira-earth': '#8b5a2b',
+                        'guajira-light': '#fdfbf7',
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lector CSV PapaParse -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    
+    <style>
+        body { background-color: #fdfbf7; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .map-container { height: 400px; width: 100%; border-radius: 0.5rem; z-index: 10; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .tab-btn.active { border-bottom-width: 4px; border-color: #0077b6; color: #0077b6; font-weight: 600; }
+        .timeline-container { display: flex; overflow-x: auto; padding-bottom: 1rem; scroll-snap-type: x mandatory; }
+        .timeline-item { flex: 0 0 auto; width: 200px; scroll-snap-align: start; }
+        .timeline-dot { width: 16px; height: 16px; background-color: #f9a826; border-radius: 50%; margin: 0 auto; position: relative; z-index: 2; }
+        .timeline-line { height: 4px; background-color: #e5e7eb; position: absolute; top: 24px; left: 0; right: 0; z-index: 1; }
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #0077b6; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 8px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Scrollbar styling para la tabla y gráfico */
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <!-- Header -->
+    <header class="bg-white shadow-md border-b-4 border-guajira-sun">
+        <div class="container mx-auto px-4 py-6 flex flex-col md:flex-row items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <div class="bg-guajira-sun text-white p-3 rounded-full">
+                    <i class="fa-solid fa-sun text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-3xl font-bold text-guajira-earth">Estrategia de Relacionamiento Territorial</h1>
+                    <p class="text-gray-600 text-sm mt-1"><i class="fa-solid fa-map-location-dot mr-1 text-guajira-sea"></i> Departamento de La Guajira</p>
+                </div>
+            </div>
+            
+            <div class="mt-4 md:mt-0 flex bg-blue-50 border border-blue-100 p-3 rounded-lg shadow-sm items-center">
+                <i class="fa-solid fa-calendar-check text-guajira-sea text-xl mr-3"></i>
+                <div>
+                    <p class="text-lg font-bold text-guajira-sea">Informe a corte del 18 de Septiembre del 2026</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="container mx-auto px-4 mt-4">
+            <nav class="flex overflow-x-auto border-b border-gray-200">
+                <button class="tab-btn px-6 py-3 text-gray-600 hover:text-guajira-sea focus:outline-none transition-colors whitespace-nowrap" onclick="openTab(event, 'prevencion')">
+                    <i class="fa-solid fa-shield-halved mr-2"></i>1. Prevención y Diálogo Social
+                </button>
+                <button class="tab-btn active px-6 py-3 text-gray-600 hover:text-guajira-sea focus:outline-none transition-colors whitespace-nowrap" onclick="openTab(event, 'conflictividades')">
+                    <i class="fa-solid fa-fire mr-2"></i>2. Gestión de Conflictividades
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        
+        <!-- Sección 1: Prevención -->
+        <section id="prevencion" class="tab-content">
+            <div class="mb-6">
+                <h2 class="text-2xl font-semibold text-gray-800 border-l-4 border-guajira-sea pl-3 mb-4">Ruta de Prevención (Embudo de Gestión)</h2>
+                <p class="text-gray-600 mb-6">Información correspondiente a los procesos de diálogo, conformación de comités y planes de acción resultantes.</p>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 border-t-4 border-t-blue-500">
+                        <h3 class="text-gray-500 text-xs font-bold uppercase">Diálogos Realizados</h3>
+                        <p class="text-3xl font-bold mt-2 text-gray-800">120</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 border-t-4 border-t-yellow-500">
+                        <h3 class="text-gray-500 text-xs font-bold uppercase">Comités Conformados</h3>
+                        <p class="text-3xl font-bold mt-2 text-gray-800">85</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 border-t-4 border-t-green-500">
+                        <h3 class="text-gray-500 text-xs font-bold uppercase">Planes de Acción Activos</h3>
+                        <p class="text-3xl font-bold mt-2 text-gray-800">62</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sección 2: Conflictividades -->
+        <section id="conflictividades" class="tab-content active">
+            
+            <div id="sync-status" class="mb-4 text-sm text-blue-600 bg-blue-50 p-3 rounded flex items-center shadow-sm">
+                <div class="loader"></div> <span id="sync-text" class="font-semibold">Sincronizando datos con Google Sheets en vivo...</span>
+            </div>
+
+            <div class="mb-6">
+                <h2 class="text-2xl font-semibold text-gray-800 border-l-4 border-red-500 pl-3">Gestión de Conflictividades en Territorio</h2>
+            </div>
+
+            <!-- Evolución Histórica -->
+            <div class="mb-6 bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative">
+                <h3 class="text-gray-800 font-semibold mb-6 text-lg"><i class="fa-solid fa-chart-line text-guajira-earth mr-2"></i>Evolución Histórica</h3>
+                <div class="relative">
+                    <div class="timeline-line"></div>
+                    <div id="timeline-content" class="timeline-container gap-4 relative z-10 custom-scroll">
+                        <!-- Generado dinámicamente -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filtro Global y Post-it Total -->
+            <div class="flex flex-col md:flex-row md:items-center bg-white p-4 mb-6 rounded-xl shadow-sm border border-gray-200 gap-4 sticky top-0 z-20">
+                <div class="flex items-center flex-wrap gap-2">
+                    <span class="text-sm font-bold text-gray-700 mr-2 uppercase whitespace-nowrap"><i class="fa-solid fa-filter text-guajira-sun mr-1"></i> Selecciona el año:</span>
+                    <div id="botones-filtro-container" class="flex flex-wrap gap-2">
+                        <!-- Botones generados dinámicamente -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Mapa y Tipologías -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Mapa -->
+                <div class="lg:col-span-2 bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-gray-800"><i class="fa-solid fa-map-location text-red-500 mr-2"></i>Ubicación de Conflictividades <span id="mapa-titulo-ano" class="text-sm font-normal bg-gray-100 px-2 py-1 rounded text-gray-600 ml-2">Todos</span></h3>
+                    </div>
+                    <div id="map-conflictos" class="map-container border border-gray-200 flex-grow" style="min-height: 400px; z-index: 1;"></div>
+                </div>
+
+                <!-- Tipologías -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2"><i class="fa-solid fa-chart-pie text-guajira-sun mr-2"></i>Por Tipología <span id="tipologia-titulo-ano" class="text-sm font-normal text-gray-500 ml-1">(Todos)</span></h3>
+                    <div id="tipologia-content" class="space-y-4 flex-grow overflow-y-auto pr-2 custom-scroll">
+                        <!-- Generado dinámicamente -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empresas y Proyectos -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h3 class="text-lg font-semibold text-gray-800 mb-6 border-b pb-2"><i class="fa-solid fa-building-flag text-guajira-sea mr-2"></i>Relación por Empresa y Proyectos <span id="empresas-titulo-ano" class="text-sm font-normal text-gray-500 ml-1">(Todos)</span></h3>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Gráfico Horizontal de TODAS las Empresas -->
+                    <div class="lg:col-span-1 flex flex-col h-full">
+                        <h4 class="text-sm font-semibold text-gray-600 mb-4 uppercase text-center">Conflictos por Empresa</h4>
+                        <div class="w-full overflow-y-auto custom-scroll flex-grow border border-gray-100 rounded-lg p-2" style="max-height: 450px;">
+                            <div id="chart-container" class="relative w-full" style="min-height: 250px;">
+                                <canvas id="empresasChart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <!-- Nuevo Post-it Resumen de Proyectos Únicos -->
+                        <div class="mt-4 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg shadow-sm">
+                            <div class="flex items-start">
+                                <i class="fa-solid fa-lightbulb text-yellow-500 mt-1 mr-3 text-lg"></i>
+                                <div>
+                                    <p class="text-xs text-yellow-700 font-bold uppercase tracking-wider mb-1">Resumen del Periodo</p>
+                                    <p id="resumen-empresas-text" class="text-sm text-gray-700 leading-snug"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tabla Detallada de Proyectos -->
+                    <div class="lg:col-span-2 overflow-x-auto flex flex-col h-full">
+                        <h4 class="text-sm font-semibold text-gray-600 mb-4 uppercase">Detalle de Proyectos (Ordenados por jerarquía)</h4>
+                        <div class="overflow-y-auto custom-scroll border border-gray-100 rounded-lg" style="max-height: 450px;">
+                            <table class="w-full text-sm text-left text-gray-500">
+                                <thead class="text-[10px] text-gray-700 uppercase bg-gray-50 border-b sticky top-0 z-10 shadow-sm">
+                                    <tr>
+                                        <th scope="col" class="px-4 py-3">Empresa</th>
+                                        <th scope="col" class="px-4 py-3">Empresa Ejecutora</th>
+                                        <th scope="col" class="px-4 py-3">Proyecto</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabla-proyectos-content"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Map Library -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    
+    <script>
+        // --- COORDENADAS BASE (Aproximadas para visualización en La Guajira) ---
+        const coordenadas = {
+            "uribia": { lat: 11.733, lng: -72.266 },
+            "maicao": { lat: 11.378, lng: -72.243 },
+            "albania": { lat: 11.161, lng: -72.589 },
+            "riohacha": { lat: 11.544, lng: -72.907 },
+            "dibulla": { lat: 11.272, lng: -73.308 },
+            "villanueva": { lat: 10.603, lng: -72.980 },
+            "fonseca": { lat: 10.893, lng: -72.852 },
+            "san juan del cesar": {lat: 10.768, lng: -73.003},
+            "barrancas": {lat: 10.957, lng: -72.784},
+            "manaure": {lat: 11.775, lng: -72.445}
+        };
+
+        // --- ENLACES CSV (Forzando la descarga en formato CSV mediante API gviz) ---
+        const urls = {
+            resumen: "https://docs.google.com/spreadsheets/d/1O_NhRMpZZFkwIWZU0Yd1ttY_ZhS1EKHAnY23JPv79BM/gviz/tq?tqx=out:csv",
+            municipios: "https://docs.google.com/spreadsheets/d/1wy432HcQDG7-ALc-WFXYbEEh_SrZg8X0A3KU_15i9OY/gviz/tq?tqx=out:csv",
+            tipologias: "https://docs.google.com/spreadsheets/d/1RKpRCVwdQEs82MvZy14gK0SXXQOF5kwCHFIhFcwh4Fk/gviz/tq?tqx=out:csv",
+            empresas: "https://docs.google.com/spreadsheets/d/1hLVvAoAUnbNJZqdKEJNPXpiPS64kO7HZEGaiopBhdO4/gviz/tq?tqx=out:csv",
+            proyectos: "https://docs.google.com/spreadsheets/d/1ZfoR9D_ptVfTIJVOJc-aoQI9WxgLa4YecnhaOc3GAys/gviz/tq?tqx=out:csv"
+        };
+
+        // --- BASES DE DATOS EN MEMORIA ---
+        let dbResumen = [];
+        let dbMunicipios = [];
+        let dbTipologias = [];
+        let dbEmpresas = []; 
+        let dbProyectos = []; 
+        
+        let mapConf;
+        let marcadoresConflictos = [];
+        let graficoEmpresasInstance = null;
+        let añosDisponibles = ["Todos"];
+
+        // Normalizador de texto estricto (quita tildes, minúsculas, espacios extra)
+        const normalizar = (texto) => {
+            if(!texto) return "";
+            return texto.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+        };
+
+        // Buscador de columnas
+        const findColumn = (row, palabrasClave) => {
+            return Object.keys(row).find(key => {
+                const keyNorm = normalizar(key);
+                return palabrasClave.some(palabra => keyNorm.includes(palabra));
+            });
+        };
+
+        // --- CARGA Y PROCESAMIENTO DE DATOS ---
+        async function cargarDatosGoogleSheets() {
+            const syncUI = document.getElementById('sync-status');
+            
+            try {
+                const fetchCSV = (url) => new Promise((resolve, reject) => {
+                    Papa.parse(url, { download: true, header: true, skipEmptyLines: true, 
+                        complete: res => resolve(res.data), error: err => reject(err)
+                    });
+                });
+
+                const [dataResumen, dataMuni, dataTipo, dataEmp, dataProy] = await Promise.all([
+                    fetchCSV(urls.resumen), fetchCSV(urls.municipios), fetchCSV(urls.tipologias),
+                    fetchCSV(urls.empresas), fetchCSV(urls.proyectos)
+                ]);
+
+                // 1. Resumen Anual
+                dbResumen = dataResumen.map(row => {
+                    let yearCol = findColumn(row, ['ano']);
+                    let casosCol = findColumn(row, ['caso', 'priorizado', 'conflicto']);
+                    let comunCol = findColumn(row, ['comunidad', 'impacta']);
+                    return {
+                        año: row[yearCol] ? row[yearCol].toString().trim() : '',
+                        casos: row[casosCol] ? parseInt(row[casosCol]) || 0 : 0,
+                        comunidades: row[comunCol] ? parseInt(row[comunCol]) || 0 : 0
+                    };
+                }).filter(item => item.año && item.casos > 0);
+
+                let añosEncontrados = [...new Set(dbResumen.map(d => d.año))].sort();
+                añosDisponibles = ["Todos", ...añosEncontrados];
+
+                // 2. Municipios
+                dbMunicipios = dataMuni.map(row => {
+                    let yearCol = findColumn(row, ['ano']);
+                    let muniCol = findColumn(row, ['municipio', 'lugar']);
+                    let confCol = findColumn(row, ['conflicto', 'cantidad', 'numero']);
+                    
+                    let nombreMuni = row[muniCol] ? row[muniCol].toString().trim() : 'Desconocido';
+                    let coord = coordenadas[normalizar(nombreMuni)] || { lat: 11.544, lng: -72.907 }; 
+
+                    return {
+                        año: row[yearCol] ? row[yearCol].toString().trim() : '',
+                        municipio: nombreMuni,
+                        conflictos: row[confCol] ? parseInt(row[confCol]) || 0 : 0,
+                        lat: coord.lat, lng: coord.lng
+                    };
+                }).filter(item => item.año && item.conflictos > 0);
+
+                // 3. Tipologías
+                dbTipologias = dataTipo.map(row => {
+                    let yearCol = findColumn(row, ['ano']);
+                    let tipoCol = findColumn(row, ['tipolog', 'tipo']);
+                    let confCol = findColumn(row, ['conflicto', 'cantidad']);
+                    return {
+                        año: row[yearCol] ? row[yearCol].toString().trim() : '',
+                        tipo: row[tipoCol] ? row[tipoCol].toString().trim() : 'Otros',
+                        conflictos: row[confCol] ? parseInt(row[confCol]) || 0 : 0
+                    };
+                }).filter(item => item.año && item.conflictos > 0);
+
+                // 4. Empresas
+                dbEmpresas = dataEmp.map(row => {
+                    let yearCol = findColumn(row, ['ano']);
+                    // Cuidar que no se confunda con "Empresa Ejecutora" si por error lo pusieron aquí
+                    let empCol = Object.keys(row).find(key => normalizar(key) === 'empresa' || normalizar(key) === 'compania');
+                    let confCol = findColumn(row, ['conflicto', 'cantidad']);
+                    
+                    if(!empCol) empCol = findColumn(row, ['empresa']); // Fallback
+
+                    return {
+                        año: row[yearCol] ? row[yearCol].toString().trim() : '',
+                        empresa: row[empCol] ? row[empCol].toString().trim() : 'N/A',
+                        conflictos: row[confCol] ? parseInt(row[confCol]) || 0 : 0
+                    };
+                }).filter(item => item.año && item.conflictos > 0);
+
+                // 5. Proyectos (Con distinción entre Empresa y Empresa Ejecutora)
+                dbProyectos = dataProy.map(row => {
+                    let yearCol = findColumn(row, ['ano']);
+                    
+                    // Lógica estricta para diferenciar "Empresa" de "Empresa ejecutora"
+                    let empEjecCol = Object.keys(row).find(key => normalizar(key).includes('ejecutora') || normalizar(key).includes('ejecutor') || normalizar(key).includes('contratista'));
+                    let empCol = Object.keys(row).find(key => normalizar(key) === 'empresa' || (normalizar(key).includes('empresa') && !normalizar(key).includes('ejecutor')));
+                    
+                    let proyCol = findColumn(row, ['proyecto', 'bloque', 'contrato', 'nombre', 'detalle']);
+                    let confCol = findColumn(row, ['conflicto', 'cantidad', 'casos', 'total', 'numero']);
+                    
+                    return {
+                        año: row[yearCol] ? row[yearCol].toString().trim() : '',
+                        empresa: empCol && row[empCol] ? row[empCol].toString().trim() : 'No Especificada',
+                        empresa_ejecutora: empEjecCol && row[empEjecCol] ? row[empEjecCol].toString().trim() : 'N/A',
+                        proyecto: proyCol && row[proyCol] ? row[proyCol].toString().trim() : 'N/A',
+                        conflictos: confCol && row[confCol] ? parseInt(row[confCol]) || 0 : 0
+                    };
+                }).filter(item => item.año);
+
+                syncUI.style.display = 'none';
+                renderTimeline();
+                generarBotonesFiltro();
+                aplicarFiltro('Todos'); 
+
+            } catch (error) {
+                console.error("Error al sincronizar CSVs:", error);
+                syncUI.className = 'mb-4 text-sm text-red-600 bg-red-50 p-3 rounded flex items-center border border-red-200 shadow-sm';
+                syncUI.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-500 mr-2 text-lg"></i> <span class="font-semibold">Error al conectar con Google Sheets. Verifica los permisos de los enlaces.</span>`;
+            }
+        }
+
+        // --- LÓGICA DE INTERFAZ Y MAPAS ---
+        function initMap() {
+            mapConf = L.map('map-conflictos').setView([11.5444, -72.9072], 8);
+            // Usando CartoDB Light para evitar bloqueos de CORS
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap &copy; CARTO',
+                maxZoom: 19
+            }).addTo(mapConf);
+        }
+
+        function renderTimeline() {
+            const container = document.getElementById('timeline-content');
+            container.innerHTML = '';
+            
+            if(dbResumen.length === 0) {
+                container.innerHTML = '<p class="text-sm text-gray-500 italic p-4">No hay datos históricos disponibles.</p>';
+                return;
+            }
+
+            dbResumen.forEach(item => {
+                container.innerHTML += `
+                    <div class="timeline-item text-center">
+                        <div class="pt-6">
+                            <div class="timeline-dot shadow-md ring-4 ring-white"></div>
+                        </div>
+                        <div class="mt-4 mx-2">
+                            <h4 class="text-3xl font-black text-guajira-sea drop-shadow-sm">${item.año}</h4>
+                            <div class="mt-3 flex justify-center space-x-3 bg-white/60 backdrop-blur-sm rounded-full py-2 px-3 shadow-sm border border-gray-100">
+                                <div class="text-center">
+                                    <span class="font-black text-red-500 text-lg">${item.casos}</span>
+                                    <span class="text-[9px] text-gray-500 uppercase font-bold block leading-none">Casos</span>
+                                </div>
+                                <div class="border-l border-gray-300"></div>
+                                <div class="text-center">
+                                    <span class="font-black text-gray-700 text-lg">${item.comunidades}</span>
+                                    <span class="text-[9px] text-gray-500 uppercase font-bold block leading-none">Comun.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function generarBotonesFiltro() {
+            const container = document.getElementById('botones-filtro-container');
+            container.innerHTML = '';
+            añosDisponibles.forEach(año => {
+                const isActive = año === 'Todos' ? 'bg-guajira-sea text-white border-transparent' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50';
+                container.innerHTML += `<button class="filtro-btn px-5 py-2 text-sm font-semibold border shadow-sm rounded-lg transition-all whitespace-nowrap ${isActive}" data-year="${año}" onclick="aplicarFiltro('${año}')">${año}</button>`;
+            });
+        }
+
+        function aplicarFiltro(year) {
+            // Estilos de botones
+            document.querySelectorAll('.filtro-btn').forEach(btn => {
+                if(btn.getAttribute('data-year') === year) {
+                    btn.classList.add('bg-guajira-sea', 'text-white', 'border-transparent');
+                    btn.classList.remove('bg-white', 'text-gray-600', 'border-gray-200', 'hover:bg-gray-50');
+                } else {
+                    btn.classList.remove('bg-guajira-sea', 'text-white', 'border-transparent');
+                    btn.classList.add('bg-white', 'text-gray-600', 'border-gray-200', 'hover:bg-gray-50');
+                }
+            });
+
+            const tituloText = year === 'Todos' ? 'Todos los años' : year;
+            document.getElementById('mapa-titulo-ano').innerText = tituloText;
+            document.getElementById('tipologia-titulo-ano').innerText = `(${tituloText})`;
+            document.getElementById('empresas-titulo-ano').innerText = `(${tituloText})`;
+
+            let datosFiltradosMap = year === 'Todos' ? dbMunicipios : dbMunicipios.filter(d => d.año === year);
+
+            renderMapa(datosFiltradosMap);
+            renderTipologias(year);
+            renderEmpresasYProyectos(year);
+        }
+
+        function renderMapa(datosFiltrados) {
+            if(!mapConf) return;
+            marcadoresConflictos.forEach(m => mapConf.removeLayer(m));
+            marcadoresConflictos = [];
+
+            const agrupados = {};
+            datosFiltrados.forEach(d => {
+                if(!agrupados[d.municipio]) agrupados[d.municipio] = { lat: d.lat, lng: d.lng, total: 0 };
+                agrupados[d.municipio].total += d.conflictos;
+            });
+
+            Object.keys(agrupados).forEach(muni => {
+                const data = agrupados[muni];
+                if(data.total === 0) return;
+
+                const size = Math.min(Math.max(35, 25 + (data.total * 1.5)), 80); 
+
+                const customMarker = L.divIcon({
+                    html: `<div class="bg-red-500 text-white rounded-full flex items-center justify-center font-bold shadow-lg border-2 border-white transform transition-transform hover:scale-110" style="width: ${size}px; height: ${size}px; opacity: 0.95;">${data.total}</div>`,
+                    className: '', iconSize: [size, size], iconAnchor: [size/2, size/2]
+                });
+
+                const marker = L.marker([data.lat, data.lng], {icon: customMarker})
+                    .bindPopup(`<div class="text-center p-1"><b class="text-lg text-gray-800 uppercase">${muni}</b><br><span class="text-red-600 font-black text-2xl leading-none">${data.total}</span><br><span class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Conflictos Registrados</span></div>`)
+                    .addTo(mapConf);
+                marcadoresConflictos.push(marker);
+            });
+        }
+
+        function renderTipologias(year) {
+            const container = document.getElementById('tipologia-content');
+            container.innerHTML = '';
+
+            let datosFiltrados = year === 'Todos' ? dbTipologias : dbTipologias.filter(d => d.año === year);
+
+            let totalConflictos = 0;
+            const agrupados = {};
+            
+            datosFiltrados.forEach(d => {
+                agrupados[d.tipo] = (agrupados[d.tipo] || 0) + d.conflictos;
+                totalConflictos += d.conflictos;
+            });
+
+            const arrayOrdenado = Object.keys(agrupados).map(tipo => {
+                let count = agrupados[tipo];
+                let porcentaje = totalConflictos > 0 ? ((count / totalConflictos) * 100).toFixed(1) : 0;
+                return { tipo, count, porcentaje };
+            }).sort((a, b) => b.count - a.count);
+
+            if(arrayOrdenado.length === 0) {
+                container.innerHTML = '<p class="text-sm text-gray-500 italic p-4 text-center">No hay tipologías para este año.</p>';
+                return;
+            }
+
+            const colors = ['bg-red-500', 'bg-guajira-sun', 'bg-guajira-sea', 'bg-gray-600', 'bg-indigo-500', 'bg-teal-500'];
+            arrayOrdenado.forEach((item, index) => {
+                const color = colors[index % colors.length];
+                container.innerHTML += `
+                    <div class="mb-3">
+                        <div class="flex justify-between text-sm mb-1 items-end">
+                            <span class="font-semibold text-gray-700 truncate pr-2">${item.tipo}</span>
+                            <span class="font-bold text-gray-900 whitespace-nowrap">${item.count} <span class="text-gray-400 font-normal text-xs ml-1 bg-gray-100 px-1.5 rounded">(${item.porcentaje}%)</span></span>
+                        </div>
+                        <div class="w-full bg-gray-100 rounded-full h-2">
+                            <div class="${color} h-2 rounded-full" style="width: ${item.porcentaje}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderEmpresasYProyectos(year) {
+            // --- 1. PROCESAMIENTO GRÁFICO EMPRESAS (Hoja 4) ---
+            let empFiltrados = year === 'Todos' ? dbEmpresas : dbEmpresas.filter(d => d.año === year);
+            const agrupadoEmpresa = {};
+            
+            empFiltrados.forEach(d => {
+                agrupadoEmpresa[d.empresa] = (agrupadoEmpresa[d.empresa] || 0) + d.conflictos;
+            });
+
+            // Arreglo con TODAS las empresas ordenadas de mayor a menor
+            const empresasOrdenadas = Object.keys(agrupadoEmpresa)
+                .sort((a,b) => agrupadoEmpresa[b] - agrupadoEmpresa[a]);
+            
+            // Ajustar altura del contenedor dinámicamente (mínimo 250px, si hay muchas suma altura)
+            const chartContainer = document.getElementById('chart-container');
+            const baseHeightPerBar = 35; 
+            chartContainer.style.height = Math.max(250, empresasOrdenadas.length * baseHeightPerBar) + 'px';
+
+            if(graficoEmpresasInstance) graficoEmpresasInstance.destroy();
+            const ctx = document.getElementById('empresasChart').getContext('2d');
+            
+            if(empresasOrdenadas.length > 0) {
+                graficoEmpresasInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: empresasOrdenadas,
+                        datasets: [{ 
+                            label: 'Conflictos', 
+                            data: empresasOrdenadas.map(emp => agrupadoEmpresa[emp]), 
+                            backgroundColor: '#0077b6', // Azul guajira
+                            borderRadius: 4, 
+                            barThickness: 15
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y', // Gráfico Horizontal (Barra Invertida)
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
+                    }
+                });
+            }
+
+            // --- 2. PROCESAMIENTO TABLA PROYECTOS (Hoja 5) ---
+            const tbody = document.getElementById('tabla-proyectos-content');
+            tbody.innerHTML = '';
+            
+            let proyFiltrados = year === 'Todos' ? dbProyectos : dbProyectos.filter(d => d.año === year);
+
+            if(proyFiltrados.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-500 italic">No hay proyectos para este filtro.</td></tr>';
+            } else {
+                // Ordenar la tabla basándose en el ranking del gráfico de empresas
+                proyFiltrados.sort((a, b) => {
+                    let rankA = empresasOrdenadas.indexOf(a.empresa);
+                    let rankB = empresasOrdenadas.indexOf(b.empresa);
+                    
+                    // Si no está en el gráfico, mandarlo al final
+                    if(rankA === -1) rankA = 9999;
+                    if(rankB === -1) rankB = 9999;
+                    
+                    if(rankA !== rankB) return rankA - rankB; // Ordena por posición de la empresa
+                    return b.conflictos - a.conflictos;       // Sub-ordena por conflictos
+                }).forEach(d => {
+                    tbody.innerHTML += `
+                        <tr class="bg-white border-b hover:bg-blue-50 transition-colors">
+                            <td class="px-4 py-3 font-bold text-gray-800 text-[11px] uppercase">${d.empresa}</td>
+                            <td class="px-4 py-3 text-gray-600 text-xs">${d.empresa_ejecutora}</td>
+                            <td class="px-4 py-3 text-gray-700 text-sm">${d.proyecto}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            // --- 3. ACTUALIZAR POST-IT DE RESUMEN ---
+            // Se calculan las empresas y proyectos únicos excluyendo valores vacíos o 'N/A'
+            const empresasUnicas = new Set(proyFiltrados.map(d => normalizar(d.empresa)).filter(e => e && e !== 'na' && e !== 'no especificada')).size;
+            const proyectosUnicos = new Set(proyFiltrados.map(d => normalizar(d.proyecto)).filter(p => p && p !== 'na')).size;
+            
+            document.getElementById('resumen-empresas-text').innerHTML = `Se identificaron <b>${empresasUnicas}</b> empresas participando en <b>${proyectosUnicos}</b> proyectos únicos durante este periodo.`;
+        }
+
+        function openTab(evt, tabName) {
+            document.querySelectorAll(".tab-content").forEach(el => {
+                el.style.display = "none";
+                el.classList.remove("active");
+            });
+            document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
+            
+            document.getElementById(tabName).style.display = "block";
+            setTimeout(() => document.getElementById(tabName).classList.add("active"), 10);
+            evt.currentTarget.classList.add("active");
+
+            if(tabName === 'conflictividades' && mapConf) mapConf.invalidateSize();
+        }
+
+        window.onload = () => {
+            initMap();
+            cargarDatosGoogleSheets(); 
+        };
+    </script>
+</body>
+</html>
