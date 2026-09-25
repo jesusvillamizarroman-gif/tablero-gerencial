@@ -280,7 +280,6 @@
 
         <!-- PESTAÑA 2: Dashboard Nacional (Código Base) -->
         <section id="tab-nacional" role="tabpanel" aria-labelledby="nav-tab-2" class="main-tab-content">
-            <!-- (Contenido mantenido intacto) -->
             <div class="space-y-6">
                 <!-- Sub Navegación Nacional -->
                 <div class="bg-white rounded-2xl shadow-sm p-4 border border-gray-200">
@@ -359,7 +358,6 @@
 
         <!-- PESTAÑA 2.1: Dashboard Guajira (Código Base) -->
         <section id="tab-guajira" role="tabpanel" aria-labelledby="nav-tab-3" class="main-tab-content">
-            <!-- (Contenido mantenido intacto) -->
             <div id="sync-status" class="mb-4 text-sm text-blue-600 bg-blue-50 p-3 rounded flex items-center shadow-sm border border-blue-100">
                 <div class="loader border-t-guajira-sea"></div> <span class="font-semibold text-guajira-sea">Sincronizando datos territoriales de La Guajira...</span>
             </div>
@@ -780,7 +778,23 @@
             }
 
             function toggleActivityFilter(actName) {
-                apState.filters.activity = (apState.filters.activity === actName) ? 'ALL' : actName;
+                if (apState.filters.activity === actName) {
+                    apState.filters.activity = 'ALL';
+                    closeTable();
+                } else {
+                    apState.filters.activity = actName;
+                    apState.filters.department = null; // Borra el filtro de departamento
+                    if(apState.mapInstance) apState.mapInstance.closePopup();
+                    
+                    // Abre la tabla con alcance nacional para esa actividad
+                    $('ap-table-title').textContent = `Acciones de: ${actName}`;
+                    $('ap-table-subtitle').textContent = `Consolidado Nacional`;
+                    $('ap-search-container').classList.remove('hidden');
+                    $('ap-btn-close-table').classList.remove('hidden');
+                    $('ap-search-input').value = "";
+                    $('ap-details-panel').classList.remove('hidden');
+                    setTimeout(() => { $('ap-details-panel').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 150);
+                }
                 applyFilters();
             }
 
@@ -801,7 +815,9 @@
                 renderChart();
                 renderMapData();
                 
-                if (apState.filters.department) prepareTableData();
+                if (apState.filters.department || apState.filters.activity !== 'ALL') {
+                    prepareTableData();
+                }
             }
 
             function renderTopActivities(data) {
@@ -890,7 +906,7 @@
 
             function initMap() {
                 apState.mapInstance = L.map('ap-map').setView([4.5709, -74.2973], 5);
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CARTO', maxZoom: 19 }).addTo(apState.mapInstance);
+                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ', maxZoom: 16 }).addTo(apState.mapInstance);
                 apState.markersLayer = L.layerGroup().addTo(apState.mapInstance);
                 
                 // Event Delegation map popup buttons
@@ -969,15 +985,23 @@
             }
 
             function prepareTableData() {
-                const { department } = apState.filters;
-                let rawTable = apState.filteredData.filter(d => d.department === department);
+                const { department, activity } = apState.filters;
+                
+                let rawTable = apState.filteredData;
+                if (department) {
+                    rawTable = rawTable.filter(d => d.department === department);
+                } else if (activity !== 'ALL') {
+                    rawTable = rawTable.filter(d => d.activity === activity);
+                } else {
+                    rawTable = [];
+                }
                 
                 if (rawTable.length === 0) {
-                    $('ap-table-subtitle').textContent = "No se encontraron acciones en este departamento.";
+                    $('ap-table-subtitle').textContent = "No se encontraron acciones para mostrar.";
                     apState.tableData = []; renderTableRows(); return;
                 }
 
-                $('ap-table-subtitle').textContent = `Total registros departamentales: ${rawTable.length}`;
+                $('ap-table-subtitle').textContent = `Total registros: ${rawTable.length}`;
                 
                 const searchTerm = normalizar($('ap-search-input').value);
                 if (searchTerm) {
@@ -1054,10 +1078,10 @@
                 const activeTh = $$('.ap-sortable')[colIndex].querySelector('i');
                 activeTh.className = apState.sortAsc ? 'fas fa-sort-up text-guajira-sea ml-1' : 'fas fa-sort-down text-guajira-sea ml-1';
                 
-                if(apState.filters.department) prepareTableData();
+                if(apState.filters.department || apState.filters.activity !== 'ALL') prepareTableData();
             }
 
-            function handleTableSearch() { if(apState.filters.department) prepareTableData(); }
+            function handleTableSearch() { if(apState.filters.department || apState.filters.activity !== 'ALL') prepareTableData(); }
 
             const onTabActivated = () => {
                 if(!isInitialized) init();
@@ -1147,8 +1171,8 @@
         function initMapNacional() {
             if ($('map-nacional') && !mapNacional) {
                 mapNacional = L.map('map-nacional').setView([4.5709, -74.2973], 5);
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                    attribution: '&copy; CARTO', maxZoom: 19
+                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+                    attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ', maxZoom: 16
                 }).addTo(mapNacional);
                 markersLayerNacional = L.layerGroup().addTo(mapNacional);
             }
@@ -1405,7 +1429,7 @@
 
             } catch (err) {
                 console.error("Error Guajira:", err);
-                syncUI.className = 'mb-4 text-sm text-red-600 bg-red-50 p-3 rounded flex items-center shadow-sm';
+                syncUI.className = 'mb-4 text-sm text-red-600 bg-red-50 p-3 rounded flex items-center shadow-sm border border-blue-100';
                 syncUI.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-500 mr-2 text-lg"></i> <span class="font-semibold">Error al conectar Guajira.</span>`;
             }
         }
@@ -1413,7 +1437,7 @@
         function initMapGuajira() {
             if ($('map-conflictos') && !mapConf) {
                 mapConf = L.map('map-conflictos').setView([11.5444, -72.9072], 8);
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CARTO', maxZoom: 19 }).addTo(mapConf);
+                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ', maxZoom: 16 }).addTo(mapConf);
                 marcadoresLayerConf = L.layerGroup().addTo(mapConf);
             }
         }
@@ -1589,7 +1613,7 @@
                 if (isInitialized) return;
                 
                 mdState.map = L.map('md-map-nacional').setView([4.5709, -74.2973], 5.5);
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CARTO', maxZoom: 10, minZoom: 4 }).addTo(mdState.map);
+                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ', maxZoom: 16, minZoom: 4 }).addTo(mdState.map);
                 mdState.layerGroup = L.layerGroup().addTo(mdState.map);
                 
                 // Event Delegation map popup buttons
