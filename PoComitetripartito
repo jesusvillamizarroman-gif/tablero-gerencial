@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Información - Gerencia Guajira - Plan operativo Comité Tripartito</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    
+    <style>
+        :root {
+            --azul-petroleo: #274953;
+            --verde-salvia: #607468;
+            --gris-oscuro: #303638;
+            --gris-claro: #DDE3E0;
+            --gris-medio: #B8B9B1;
+            --blanco: #FFFFFF;
+            --rojo-alerta: #A94438;
+        }
+
+        body { 
+            background-color: var(--gris-claro); 
+            font-family: 'Segoe UI', Aptos, Roboto, Helvetica, Arial, sans-serif;
+            color: var(--gris-oscuro);
+        }
+
+        /* Sobrescribiendo paleta nativa de Bootstrap con colores institucionales */
+        .text-primary { color: var(--azul-petroleo) !important; }
+        .bg-primary { background-color: var(--azul-petroleo) !important; }
+        .btn-primary { background-color: var(--azul-petroleo); border-color: var(--azul-petroleo); color: var(--blanco); }
+        .btn-primary:hover { background-color: #1a333a; border-color: #1a333a; }
+        .btn-outline-primary { color: var(--azul-petroleo); border-color: var(--azul-petroleo); }
+        .btn-outline-primary:hover { background-color: var(--azul-petroleo); color: var(--blanco); }
+        
+        .text-success { color: var(--verde-salvia) !important; }
+        .bg-success { background-color: var(--verde-salvia) !important; }
+        .text-danger { color: var(--rojo-alerta) !important; }
+        
+        /* Navegación y Pestañas */
+        .nav-tabs {
+            border-bottom: 2px solid var(--gris-medio);
+        }
+        .nav-tabs .nav-link {
+            font-weight: 600;
+            color: var(--gris-medio);
+            border: none;
+            padding: 12px 20px;
+        }
+        .nav-tabs .nav-link:hover {
+            color: var(--azul-petroleo);
+            border: none;
+        }
+        .nav-tabs .nav-link.active {
+            color: var(--azul-petroleo);
+            background-color: transparent;
+            border-bottom: 3px solid var(--azul-petroleo);
+        }
+
+        /* Tarjetas (Cards) Generales */
+        .card-institucional {
+            background: var(--blanco);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            height: 100%;
+        }
+
+        /* Estilo Institucional para Tablas */
+        .table-institucional th {
+            background-color: var(--azul-petroleo) !important;
+            color: var(--blanco) !important;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            border-bottom: none;
+        }
+        .table-institucional tbody tr:nth-child(odd) td {
+            background-color: var(--blanco);
+        }
+        .table-institucional tbody tr:nth-child(even) td {
+            background-color: var(--gris-claro);
+        }
+        .table-institucional td {
+            color: var(--gris-oscuro);
+            vertical-align: middle;
+            font-size: 0.9rem;
+            border-bottom: 1px solid var(--gris-medio);
+        }
+
+        /* Vista 1: Control PTE */
+        .v1-kpi-card {
+            background: var(--blanco);
+            border-radius: 12px;
+            padding: 24px 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.04);
+            text-align: center;
+            height: 100%;
+            border-bottom: 5px solid var(--azul-petroleo);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: flex; flex-direction: column; justify-content: center;
+        }
+        .v1-kpi-card:hover { transform: translateY(-5px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+        .v1-kpi-title { font-size: 0.85rem; color: var(--gris-oscuro); font-weight: 700; text-transform: uppercase; }
+        .v1-kpi-value { font-size: 2.5rem; font-weight: 800; color: var(--azul-petroleo); margin-top: 12px; line-height: 1; }
+        
+        .post-it-wrapper { flex: 0 0 auto; width: 190px; }
+        .post-it {
+            background: var(--blanco); padding: 15px; border: 1px solid var(--gris-medio);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-radius: 8px; cursor: pointer;
+            transition: all 0.2s ease; min-height: 90px; display: flex; flex-direction: column; text-align: center;
+        }
+        .post-it:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); border-color: var(--azul-petroleo); }
+        
+        /* Vista 2: Comunidades */
+        .bar-list-container { overflow-y: auto; flex-grow: 1; max-height: 400px; padding-right: 10px; }
+        .bar-list-container::-webkit-scrollbar { width: 6px; }
+        .bar-list-container::-webkit-scrollbar-thumb { background-color: var(--gris-medio); border-radius: 4px; }
+        .bar-track { background: var(--gris-claro); border-radius: 4px; height: 12px; width: 100%; overflow: hidden; }
+        .bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+        .bar-fill-community { background-color: var(--verde-salvia); }
+        .bar-fill-project { background-color: var(--azul-petroleo); }
+        .clickable-bar { cursor: pointer; transition: opacity 0.2s; }
+        .clickable-bar:hover { opacity: 0.8; }
+        
+        /* Vista 3: Empresas y Entidades (Adaptación de Tailwind a Bootstrap) */
+        .carousel-btn {
+            white-space: nowrap; transition: all 0.2s ease;
+            color: var(--gris-oscuro); border-color: var(--gris-medio);
+        }
+        .carousel-btn:hover { background-color: var(--gris-claro); }
+        .carousel-btn.active-empresas { background-color: var(--azul-petroleo); color: var(--blanco); border-color: var(--azul-petroleo); }
+        .carousel-btn.active-entidades { background-color: var(--verde-salvia); color: var(--blanco); border-color: var(--verde-salvia); }
+        .scroll-horizontal { overflow-x: auto; scroll-behavior: smooth; }
+        .scroll-horizontal::-webkit-scrollbar { height: 6px; }
+        .scroll-horizontal::-webkit-scrollbar-thumb { background-color: var(--gris-medio); border-radius: 4px; }
+
+        /* Vista 4: PTE Hoja 5 (Heatmap) */
+        .heatmap-table { width: 100%; border-collapse: separate; border-spacing: 4px; min-width: 800px; }
+        .heatmap-table th { font-size: 0.75rem; text-transform: uppercase; font-weight: 700; text-align: center; padding: 10px; }
+        .heatmap-cell {
+            background-color: var(--blanco); border: 2px solid var(--gris-claro); border-radius: 6px;
+            text-align: center; vertical-align: middle; font-weight: 700; cursor: pointer; transition: all 0.2s ease; height: 45px;
+        }
+        .heatmap-cell:hover { transform: scale(1.05); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .selected-filter { border-color: var(--rojo-alerta) !important; transform: scale(1.03); }
+        
+        /* Vista 5: Seguimiento y Gestión */
+        .gestor-btn {
+            background: var(--blanco); border: 1px solid var(--gris-medio); border-radius: 8px;
+            padding: 12px; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; justify-content: space-between;
+        }
+        .gestor-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); border-color: var(--azul-petroleo); }
+        .gestor-btn.active { background-color: rgba(39, 73, 83, 0.05); border-color: var(--azul-petroleo); box-shadow: 0 0 0 2px rgba(39, 73, 83, 0.3); }
+
+        #loading-screen { 
+            position: fixed; inset: 0; background: var(--gris-claro); z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Pantalla de carga global -->
+    <div id="loading-screen">
+        <div class="spinner-border text-primary" style="width: 4rem; height: 4rem;" role="status"></div>
+        <h4 class="mt-4 fw-bold" style="color: var(--azul-petroleo);">Sincronizando Sistema Central</h4>
+        <p class="text-muted">Procesando datos territoriales...</p>
+    </div>
+
+    <div id="app-container" class="container-fluid py-4 px-md-4 d-none">
+        
+        <!-- Encabezado Institucional -->
+        <header class="d-flex align-items-center mb-4 pb-3 border-bottom border-2 border-secondary">
+            <div>
+                <h2 class="fw-bold mb-1" style="color: var(--azul-petroleo);">Oficina de Asuntos Ambientales y Sociales</h2>
+                <h5 class="fw-semibold mb-0" style="color: var(--verde-salvia);">Sistema de Información - Gerencia Guajira - Plan operativo Comité Tripartito</h5>
+            </div>
+        </header>
+
+        <!-- Navegación de Vistas -->
+        <ul class="nav nav-tabs mb-4" id="mainTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="tab-v1" data-bs-toggle="tab" data-bs-target="#view-v1" type="button" role="tab">Panorama</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-v2" data-bs-toggle="tab" data-bs-target="#view-v2" type="button" role="tab">Comunidades</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-v3" data-bs-toggle="tab" data-bs-target="#view-v3" type="button" role="tab">Empresas y Entidades</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-v4" data-bs-toggle="tab" data-bs-target="#view-v4" type="button" role="tab">Compromisos</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-v5" data-bs-toggle="tab" data-bs-target="#view-v5" type="button" role="tab">Seguimiento y Gestión</button>
+            </li>
+        </ul>
+
+        <!-- Contenedor de Vistas -->
+        <div class="tab-content" id="mainTabsContent">
+            
+            <!-- ============================== VISTA 1: CONTROL PTE ============================== -->
+            <div class="tab-pane fade show active" id="view-v1" role="tabpanel">
+                <div class="row g-4 mb-4">
+                    <div class="col-lg-8">
+                        <div class="row g-3 h-100">
+                            <div class="col-sm-6 col-md-3"><div class="v1-kpi-card"><div class="v1-kpi-title">Acciones Estratégicas</div><div class="v1-kpi-value" id="v1-kpi-acciones">-</div></div></div>
+                            <div class="col-sm-6 col-md-3"><div class="v1-kpi-card"><div class="v1-kpi-title">Mesas Estratégicas</div><div class="v1-kpi-value" id="v1-kpi-mesas">-</div></div></div>
+                            <div class="col-sm-6 col-md-3"><div class="v1-kpi-card"><div class="v1-kpi-title">Macroacciones</div><div class="v1-kpi-value" id="v1-kpi-macro">-</div></div></div>
+                            <div class="col-sm-6 col-md-3"><div class="v1-kpi-card" style="border-color: var(--verde-salvia);"><div class="v1-kpi-title">% Cumplimiento</div><div class="v1-kpi-value" id="v1-kpi-cumplimiento" style="color: var(--verde-salvia);">-</div></div></div>
+                            <div class="col-sm-6 col-md-3"><div class="v1-kpi-card" style="border-color: var(--gris-oscuro);"><div class="v1-kpi-title">Proyectos Únicos</div><div class="v1-kpi-value" id="v1-kpi-proyectos" style="color: var(--gris-oscuro);">-</div></div></div>
+                            <div class="col-sm-6 col-md-3"><div class="v1-kpi-card" style="border-color: var(--verde-salvia);"><div class="v1-kpi-title">Comunidades</div><div class="v1-kpi-value" id="v1-kpi-comunidades" style="color: var(--verde-salvia);">-</div></div></div>
+                            <div class="col-sm-6 col-md-3"><div class="v1-kpi-card" style="border-color: var(--azul-petroleo);"><div class="v1-kpi-title">Empresas</div><div class="v1-kpi-value" id="v1-kpi-empresas" style="color: var(--azul-petroleo);">-</div></div></div>
+                            <div class="col-sm-6 col-md-3"><div class="v1-kpi-card" style="border-color: var(--rojo-alerta);"><div class="v1-kpi-title">Entidades</div><div class="v1-kpi-value" id="v1-kpi-entidades" style="color: var(--rojo-alerta);">-</div></div></div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 d-flex">
+                        <div class="card-institucional w-100 d-flex flex-column h-100">
+                            <h6 class="text-center fw-bold mb-2" style="color: var(--azul-petroleo);">Concentración de acciones</h6>
+                            <div id="v1-pieChart" style="width: 100%; min-height: 250px; flex-grow: 1;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-4">
+                    <div class="col-12">
+                        <div class="card-institucional">
+                            <h5 class="fw-bold mb-2" style="color: var(--azul-petroleo);">Mesas Estratégicas</h5>
+                            <p class="text-muted small mb-4">Seleccione una mesa para visualizar sus componentes.</p>
+                            <div class="d-flex flex-wrap pb-3 gap-3" id="v1-postits-container"></div>
+                            
+                            <div id="v1-mesa-detalle-container" class="mt-4 d-none p-4 rounded bg-white border">
+                                <div class="d-flex justify-content-end align-items-center mb-3 pb-2 border-bottom">
+                                    <span class="small fw-bold me-2">Ordenar por:</span>
+                                    <select id="v1-sort-macros" class="form-select form-select-sm w-auto shadow-none" onchange="ModControl.ordenarYRenderizarMacros()">
+                                        <option value="defecto">Orden numérico</option>
+                                        <option value="cumplimiento">Mayor cumplimiento</option>
+                                        <option value="peso">Mayor peso</option>
+                                    </select>
+                                </div>
+                                <div id="v1-mesa-detalle-body"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================== VISTA 2: COMUNIDADES ============================== -->
+            <div class="tab-pane fade" id="view-v2" role="tabpanel">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+                    <h3 class="fw-bold m-0" style="color: var(--azul-petroleo);">Comunidades y Territorios</h3>
+                    <div class="bg-white border rounded px-4 py-2 shadow-sm d-flex align-items-center">
+                        <div class="text-center pe-4">
+                            <span class="d-block text-muted mb-1" style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase;">Cumplimiento General</span>
+                            <span class="fs-4 fw-bold" style="color: var(--verde-salvia);" id="v2-stat-cumplimiento">0%</span>
+                        </div>
+                        <div class="text-center border-start ps-4">
+                            <span class="d-block text-muted mb-1" style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase;">Peso en el Plan</span>
+                            <span class="fs-5 fw-bold text-primary" id="v2-stat-peso">0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-institucional mb-4 py-3">
+                    <div class="row g-3 align-items-center">
+                        <div class="col-12 col-md-auto fw-bold">Filtros:</div>
+                        <div class="col-12 col-md-3"><select id="v2-filter-ubicacion" class="form-select form-select-sm" onchange="ModComunidades.onSelectChange('ubicacion')"><option value="">Todas las Ubicaciones</option></select></div>
+                        <div class="col-12 col-md-3"><select id="v2-filter-comunidad" class="form-select form-select-sm" onchange="ModComunidades.onSelectChange('comunidad')"><option value="">Todas las Comunidades</option></select></div>
+                        <div class="col-12 col-md-3"><select id="v2-filter-proyecto" class="form-select form-select-sm" onchange="ModComunidades.onSelectChange('proyecto')"><option value="">Todos los Proyectos</option></select></div>
+                        <div class="col-12 col-md-auto"><button class="btn btn-outline-secondary btn-sm" onclick="ModComunidades.limpiarFiltrosGlobales()">Limpiar Todo</button></div>
+                    </div>
+                </div>
+
+                <div class="row g-4 mb-4">
+                    <div class="col-lg-4 col-md-12 d-flex flex-column">
+                        <div class="card-institucional d-flex flex-column">
+                            <h6 class="fw-bold">Ubicación Geográfica</h6>
+                            <small class="text-muted mb-2 d-block">Volumen de acciones propuestas.</small>
+                            <div class="position-relative bg-light rounded flex-grow-1" style="min-height: 350px; border: 1px dashed var(--gris-medio);">
+                                <button class="btn btn-sm btn-primary position-absolute top-0 end-0 m-2 d-none" style="z-index: 10;" id="v2-btn-reset-bubble" onclick="ModComunidades.toggleFiltro('ubicacion', null, true)">Mostrar todo</button>
+                                <div id="v2-bubbleChart" style="width: 100%; height: 100%; min-height: 350px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6 d-flex flex-column">
+                        <div class="card-institucional d-flex flex-column">
+                            <h6 class="fw-bold">Comunidades Asociadas</h6>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <small class="text-muted" id="v2-subtitle-comunidades">Clic para filtrar</small>
+                                <select id="v2-sort-comunidades" class="form-select form-select-sm w-auto shadow-none" style="font-size: 0.75rem;" onchange="ModComunidades.aplicarFiltrosGlobales()">
+                                    <option value="acc_desc">Acciones (Mayor a menor)</option>
+                                    <option value="acc_asc">Acciones (Menor a mayor)</option>
+                                    <option value="cump_desc">% Cump (Mayor a menor)</option>
+                                    <option value="cump_asc">% Cump (Menor a mayor)</option>
+                                </select>
+                            </div>
+                            <div class="bar-list-container" id="v2-list-comunidades"></div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6 d-flex flex-column">
+                        <div class="card-institucional d-flex flex-column">
+                            <h6 class="fw-bold">Proyectos Asociados</h6>
+                            <small class="text-muted mb-3 d-block" id="v2-subtitle-proyecto">Clic para filtrar</small>
+                            <div class="bar-list-container" id="v2-list-proyectos"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-institucional">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold m-0">Acciones Estratégicas (<span id="v2-subtitle-tabla">0</span>)</h6>
+                        <select id="v2-sort-acciones" class="form-select form-select-sm w-auto" onchange="ModComunidades.aplicarFiltrosGlobales()">
+                            <option value="num_accion">Orden Numérico</option>
+                            <option value="mayor_cump">Mayor % Cumplimiento</option>
+                            <option value="menor_cump">Menor % Cumplimiento</option>
+                        </select>
+                    </div>
+                    <div class="table-responsive" style="max-height: 400px;">
+                        <table class="table table-institucional align-middle mb-0">
+                            <thead class="sticky-top">
+                                <tr>
+                                    <th class="text-center" width="8%">No.</th>
+                                    <th class="text-center" width="10%">Mesa</th>
+                                    <th class="text-center" width="12%">Macro</th>
+                                    <th width="55%">Descripción de la Acción</th>
+                                    <th class="text-center" width="15%">% Cump.</th>
+                                </tr>
+                            </thead>
+                            <tbody id="v2-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================== VISTA 3: EMPRESAS Y ENTIDADES ============================== -->
+            <div class="tab-pane fade" id="view-v3" role="tabpanel">
+                <div class="card-institucional mb-4 p-0 overflow-hidden">
+                    <div class="d-flex justify-content-between align-items-center p-3" style="background-color: var(--azul-petroleo); color: var(--blanco);">
+                        <h4 class="fw-bold m-0">Filtro Interactivo Corporativo</h4>
+                        <button onclick="ModEmpresas.limpiarFiltros()" class="btn btn-sm btn-outline-light">Limpiar Selección</button>
+                    </div>
+                    
+                    <div class="p-3 border-bottom d-flex align-items-center bg-white">
+                        <button onclick="ModEmpresas.seleccionarTodo('empresas')" class="btn btn-sm fw-bold me-3 text-primary border-0 shadow-none">Empresas:</button>
+                        <div id="v3-carousel-empresas" class="d-flex gap-2 scroll-horizontal flex-grow-1 pb-2"></div>
+                        <div class="ms-3 ps-3 border-start small text-end" style="min-width: 120px;">
+                            <div class="text-muted fw-bold mb-1">Cump: <span id="v3-cump-empresas" class="text-dark">0%</span></div>
+                            <div class="text-muted fw-bold">Peso: <span id="v3-peso-empresas" class="text-dark">0%</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="p-3 d-flex align-items-center bg-white">
+                        <button onclick="ModEmpresas.seleccionarTodo('entidades')" class="btn btn-sm fw-bold me-3 text-success border-0 shadow-none">Entidades:</button>
+                        <div id="v3-carousel-entidades" class="d-flex gap-2 scroll-horizontal flex-grow-1 pb-2"></div>
+                        <div class="ms-3 ps-3 border-start small text-end" style="min-width: 120px;">
+                            <div class="text-muted fw-bold mb-1">Cump: <span id="v3-cump-entidades" class="text-dark">0%</span></div>
+                            <div class="text-muted fw-bold">Peso: <span id="v3-peso-entidades" class="text-dark">0%</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-institucional">
+                    <h5 class="fw-bold mb-3" style="color: var(--azul-petroleo);">Detalle de Acciones (<span id="v3-contador-acciones">0</span>)</h5>
+                    <div class="table-responsive" style="max-height: 500px;">
+                        <table class="table table-institucional mb-0">
+                            <thead class="sticky-top">
+                                <tr>
+                                    <th class="text-center" width="8%">No.</th>
+                                    <th class="text-center" width="10%">Mesa</th>
+                                    <th class="text-center" width="12%">Macro</th>
+                                    <th width="55%">Descripción</th>
+                                    <th class="text-center" width="15%">% Cump.</th>
+                                </tr>
+                            </thead>
+                            <tbody id="v3-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================== VISTA 4: PACTOS PTE (HOJA 5) ============================== -->
+            <div class="tab-pane fade" id="view-v4" role="tabpanel">
+                <div class="card-institucional mb-4">
+                    <div class="d-flex justify-content-between align-items-end mb-3">
+                        <div>
+                            <h5 class="fw-bold m-0" style="color: var(--azul-petroleo);">Matriz de Cobertura de Compromisos</h5>
+                            <small class="text-muted">Intersección entre Compromiso y Mesa Estratégica.</small>
+                        </div>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="ModPTE5.limpiarFiltros()">Limpiar Matriz</button>
+                    </div>
+                    <div id="v4-matriz-container" class="overflow-auto pb-2"></div>
+                </div>
+
+                <div class="card-institucional">
+                    <h5 class="fw-bold mb-3" style="color: var(--azul-petroleo);">Detalles Acciones Estratégicas (<span id="v4-contador-acciones">0</span>)</h5>
+                    <div class="table-responsive" style="max-height: 400px;">
+                        <table class="table table-institucional mb-0">
+                            <thead class="sticky-top">
+                                <tr>
+                                    <th class="text-center" width="8%">Mesa</th>
+                                    <th class="text-center" width="12%">Macro</th>
+                                    <th class="text-center" width="8%">No.</th>
+                                    <th width="62%">Descripción de la Acción</th>
+                                    <th class="text-center" width="10%">Cump.</th>
+                                </tr>
+                            </thead>
+                            <tbody id="v4-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================== VISTA 5: SEGUIMIENTO Y GESTIÓN ============================== -->
+            <div class="tab-pane fade" id="view-v5" role="tabpanel">
+                <div class="mb-4">
+                    <h4 class="fw-bold" style="color: var(--azul-petroleo);">Seguimiento por Gestor</h4>
+                    <p class="text-muted">Seleccione uno o más responsables para analizar su carga operativa y efectividad.</p>
+                </div>
+
+                <div class="row g-3 mb-4" id="v5-gestores-container"></div>
+
+                <div id="v5-detalles-container" class="card-institucional d-none">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold m-0" style="color: var(--azul-petroleo);">Acciones del Gestor (<span id="v5-total-acciones">0</span>)</h5>
+                        <select id="v5-sort-select" class="form-select form-select-sm w-auto" onchange="ModSeguimiento.actualizarDetalles()">
+                            <option value="accion">N° de Acción (Defecto)</option>
+                            <option value="macro">N° de Macroacción</option>
+                            <option value="cumpMayor">% Cump. Mayor</option>
+                            <option value="cumpMenor">% Cump. Menor</option>
+                        </select>
+                    </div>
+                    
+                    <div class="table-responsive" style="max-height: 500px;">
+                        <table class="table table-institucional mb-0">
+                            <thead class="sticky-top">
+                                <tr>
+                                    <th class="text-center" width="8%">Mesa</th>
+                                    <th class="text-center" width="10%">Macro</th>
+                                    <th class="text-center" width="8%">No.</th>
+                                    <th width="59%">Descripción de la Acción</th>
+                                    <th class="text-center" width="15%">Cump.</th>
+                                </tr>
+                            </thead>
+                            <tbody id="v5-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Utilidad global de parseo numérico y de porcentaje
+        const parsePercent = (str) => {
+            if (!str) return 0;
+            let raw = str.toString().trim().replace(',', '.');
+            let justNumber = raw.replace(/[^\d.-]/g, ''); 
+            if (justNumber === '') return 0;
+            let val = parseFloat(justNumber);
+            if (val > 0 && val <= 1 && !raw.includes('%')) val *= 100;
+            if (val > 100) val = 100;
+            if (val < 0) val = 0;
+            return val;
+        };
+
+        const limpiarTexto = (texto) => {
+            if (!texto) return '';
+            let limpio = texto.trim().toUpperCase();
+            limpio = limpio.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Sin tildes
+            limpio = limpio.replace(/\s+/g, ' '); // Sin multiples espacios
+            return limpio;
+        };
+
+        const esDatoValido = (texto) => {
+            const excluidos = ['NO APLICA', 'N/A', 'NA', '-', '0', '', 'SIN DEFINIR'];
+            return !excluidos.includes(texto);
+        };
+
+        // Estado Global de la App
+        const AppState = {
+            rawData: [],
+            validData: [],
+            echartsInstances: []
+        };
+
+        // Llamada maestra de datos
+        const sheetId = '1stC9AglCpPNY8C5xwooDOBIw6glk2Py2B15NLLPJ_UY';
+        const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
+
+        Papa.parse(csvUrl, {
+            download: true,
+            header: false,
+            complete: function(results) {
+                if(results.data && results.data.length > 0) {
+                    // Ignorar cabecera y filas inválidas (sin id)
+                    AppState.rawData = results.data;
+                    AppState.validData = results.data.slice(1).filter(row => row[0] && row[0].trim() !== '');
+                    
+                    // Inicializar los 5 submódulos
+                    ModControl.init();
+                    ModComunidades.init();
+                    ModEmpresas.init();
+                    ModPTE5.init();
+                    ModSeguimiento.init();
+
+                    // Ocultar carga, mostrar app
+                    document.getElementById('loading-screen').classList.add('d-none');
+                    document.getElementById('app-container').classList.remove('d-none');
+
+                    // Disparar resize inicial del tab activo
+                    setTimeout(() => resizeActiveCharts(), 100);
+                }
+            }
+        });
+
+        // Gestor centralizado de ECharts
+        const resizeActiveCharts = () => {
+            AppState.echartsInstances.forEach(chart => {
+                if (chart.getDom().offsetWidth > 0) chart.resize();
+            });
+        };
+        window.addEventListener('resize', resizeActiveCharts);
+        document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(tab => {
+            tab.addEventListener('shown.bs.tab', resizeActiveCharts);
+        });
+
+        const ModControl = {
+            mesasEstructura: {},
+            mesaSeleccionada: null,
+            init: function() {
+                const filas = AppState.validData;
+                let maxMesa = 0, maxMacro = 0, sumCump = 0;
+                let proy = new Set(), com = new Set(), emp = new Set(), ent = new Set();
+                let contCom = 0, contEmp = 0, contEnt = 0;
+                
+                filas.forEach(row => {
+                    const mesa = parseInt(row[1]) || 0;
+                    const macro = parseInt(row[3]) || 0;
+                    if(mesa > maxMesa) maxMesa = mesa;
+                    if(macro > maxMacro) maxMacro = macro;
+
+                    const p1 = limpiarTexto(row[10]), p2 = limpiarTexto(row[11]);
+                    if (esDatoValido(p1)) proy.add(p1);
+                    if (esDatoValido(p2)) proy.add(p2);
+
+                    const clasificacion = limpiarTexto(row[8]);
+                    if (clasificacion === 'COMUNIDAD') contCom++;
+                    else if (clasificacion === 'EMPRESA') contEmp++;
+                    else if (clasificacion === 'ENTIDAD') contEnt++;
+
+                    for(let i = 17; i <= 41; i++) {
+                        let nombre = limpiarTexto(row[i]);
+                        if(esDatoValido(nombre)) {
+                            if (clasificacion === 'COMUNIDAD') com.add(nombre);
+                            else if (clasificacion === 'EMPRESA') emp.add(nombre);
+                            else if (clasificacion === 'ENTIDAD') ent.add(nombre);
+                        }
+                    }
+
+                    const nombreMesa = (row[2] || '').trim() || 'Sin Mesa';
+                    const nombreMacro = (row[4] || '').trim() || 'Sin Macro';
+                    const numCump = parsePercent(row[7]);
+                    sumCump += numCump;
+
+                    if (!this.mesasEstructura[nombreMesa]) this.mesasEstructura[nombreMesa] = { numero: mesa, macros: {} };
+                    if (!this.mesasEstructura[nombreMesa].macros[nombreMacro]) this.mesasEstructura[nombreMesa].macros[nombreMacro] = { numero: (row[3] || '').trim(), acciones: [] };
+                    
+                    this.mesasEstructura[nombreMesa].macros[nombreMacro].acciones.push({
+                        numero: (row[0] || '').trim(),
+                        accion: (row[6] || '').trim(),
+                        valorNum: numCump
+                    });
+                });
+
+                document.getElementById('v1-kpi-acciones').innerText = filas.length;
+                document.getElementById('v1-kpi-mesas').innerText = maxMesa;
+                document.getElementById('v1-kpi-macro').innerText = maxMacro;
+                document.getElementById('v1-kpi-cumplimiento').innerText = filas.length > 0 ? Math.round(sumCump/filas.length) + '%' : '0%';
+                document.getElementById('v1-kpi-proyectos').innerText = proy.size;
+                document.getElementById('v1-kpi-comunidades').innerText = com.size;
+                document.getElementById('v1-kpi-empresas').innerText = emp.size;
+                document.getElementById('v1-kpi-entidades').innerText = ent.size;
+
+                this.renderPie(contCom, contEmp, contEnt);
+                this.renderPostIts();
+            },
+            renderPie: function(c, e, en) {
+                const dom = document.getElementById('v1-pieChart');
+                const chart = echarts.init(dom);
+                chart.setOption({
+                    tooltip: { trigger: 'item' },
+                    legend: { top: 'bottom' },
+                    color: ['#607468', '#274953', '#A94438'],
+                    series: [{
+                        type: 'pie', radius: ['40%', '70%'],
+                        itemStyle: { borderRadius: 4, borderColor: '#fff', borderWidth: 2 },
+                        label: { show: true, formatter: '{b}\n{d}%', fontWeight: 'bold' },
+                        data: [{ value: c, name: 'Comunidad' }, { value: e, name: 'Empresa' }, { value: en, name: 'Entidad' }]
+                    }]
+                });
+                AppState.echartsInstances.push(chart);
+            },
+            renderPostIts: function() {
+                const container = document.getElementById('v1-postits-container');
+                const totalAppAcc = AppState.validData.length;
+                
+                Object.keys(this.mesasEstructura).sort((a,b) => this.mesasEstructura[a].numero - this.mesasEstructura[b].numero).forEach(mName => {
+                    const mData = this.mesasEstructura[mName];
+                    let tAcc = 0, sCump = 0;
+                    Object.values(mData.macros).forEach(mac => {
+                        mac.acciones.forEach(acc => { tAcc++; sCump += acc.valorNum; });
+                    });
+                    
+                    const el = document.createElement('div');
+                    el.className = 'post-it-wrapper';
+                    el.innerHTML = `
+                        <div class="post-it" onclick="ModControl.seleccionarMesa('${mName.replace(/'/g,"\\'")}')" ondblclick="ModControl.ocultarDetalle()">
+                            <h6 class="mb-2" style="color: var(--azul-petroleo);">Mesa ${mData.numero}</h6>
+                            <small class="mb-2 text-dark lh-sm">${mName}</small>
+                            <div class="mt-auto pt-2 border-top d-flex justify-content-between w-100 small">
+                                <span>Cump: <b>${tAcc>0?Math.round(sCump/tAcc):0}%</b></span>
+                                <span>Peso: <b>${totalAppAcc>0?((tAcc/totalAppAcc)*100).toFixed(1):0}%</b></span>
+                            </div>
+                        </div>`;
+                    container.appendChild(el);
+                });
+            },
+            seleccionarMesa: function(name) {
+                this.mesaSeleccionada = name;
+                document.getElementById('v1-mesa-detalle-container').classList.remove('d-none');
+                this.ordenarYRenderizarMacros();
+            },
+            ocultarDetalle: function() {
+                document.getElementById('v1-mesa-detalle-container').classList.add('d-none');
+            },
+            ordenarYRenderizarMacros: function() {
+                if(!this.mesaSeleccionada) return;
+                const macros = this.mesasEstructura[this.mesaSeleccionada].macros;
+                const sortBy = document.getElementById('v1-sort-macros').value;
+                const totalGlobal = AppState.validData.length;
+                
+                let arr = Object.keys(macros).map(k => {
+                    let accs = macros[k].acciones;
+                    let sc = 0; accs.forEach(a => sc+=a.valorNum);
+                    return {
+                        nombre: k, num: parseFloat(macros[k].numero)||0, accs: accs,
+                        prom: accs.length>0?Math.round(sc/accs.length):0,
+                        peso: totalGlobal>0?((accs.length/totalGlobal)*100):0
+                    };
+                });
+                
+                if(sortBy === 'cumplimiento') arr.sort((a,b)=>b.prom-a.prom);
+                else if(sortBy === 'peso') arr.sort((a,b)=>b.peso-a.peso);
+                else arr.sort((a,b)=>a.num-b.num);
+
+                let html = '<div class="accordion" id="v1-acc-macros">';
+                arr.forEach((mac, i) => {
+                    let lis = mac.accs.map(a => `
+                        <div class="d-flex justify-content-between py-2 border-bottom text-muted">
+                            <span class="small"><b class="text-primary">#${a.numero}</b> ${a.accion}</span>
+                            <span class="small fw-bold ms-3">${Math.round(a.valorNum)}%</span>
+                        </div>`).join('');
+                    html += `
+                        <div class="accordion-item border-0 border-bottom bg-transparent">
+                            <h2 class="accordion-header"><button class="accordion-button collapsed bg-transparent shadow-none px-0" data-bs-toggle="collapse" data-bs-target="#c-${i}">
+                                <div class="d-flex justify-content-between w-100 pe-3 small">
+                                    <span><b>${mac.num}</b> ${mac.nombre}</span>
+                                    <span class="text-end" style="min-width: 140px;">Cump: <b>${mac.prom}%</b> | Peso: <b>${mac.peso.toFixed(1)}%</b></span>
+                                </div>
+                            </button></h2>
+                            <div id="c-${i}" class="accordion-collapse collapse" data-bs-parent="#v1-acc-macros"><div class="accordion-body px-0 pt-0 pb-3">${lis}</div></div>
+                        </div>`;
+                });
+                document.getElementById('v1-mesa-detalle-body').innerHTML = html + '</div>';
+            }
+        };
+
+        const ModComunidades = {
+            dataLocal: [],
+            filtros: { ubicacion: new Set(), comunidad: new Set(), proyecto: new Set() },
+            chartInstance: null,
+            init: function() {
+                this.dataLocal = AppState.validData.filter(r => limpiarTexto(r[8]) === 'COMUNIDAD');
+                
+                let sumCump = 0;
+                this.dataLocal.forEach(r => sumCump += parsePercent(r[7]));
+                document.getElementById('v2-stat-cumplimiento').innerText = this.dataLocal.length>0 ? Math.round(sumCump/this.dataLocal.length)+'%' : '0%';
+                document.getElementById('v2-stat-peso').innerText = AppState.validData.length>0 ? ((this.dataLocal.length/AppState.validData.length)*100).toFixed(1)+'%' : '0%';
+
+                let ubi = new Set(), com = new Set(), proy = new Set();
+                this.dataLocal.forEach(r => {
+                    let u = limpiarTexto(r[9]); if(u) ubi.add(u);
+                    let p1 = limpiarTexto(r[10]), p2 = limpiarTexto(r[11]);
+                    if(esDatoValido(p1)) proy.add(p1); if(esDatoValido(p2)) proy.add(p2);
+                    for(let i=17;i<=41;i++){ let c = limpiarTexto(r[i]); if(esDatoValido(c)) com.add(c); }
+                });
+                
+                this.llenarSel('v2-filter-ubicacion', ubi);
+                this.llenarSel('v2-filter-comunidad', com);
+                this.llenarSel('v2-filter-proyecto', proy);
+                
+                this.aplicarFiltrosGlobales();
+            },
+            llenarSel: function(id, set) {
+                const s = document.getElementById(id);
+                Array.from(set).sort().forEach(op => { s.innerHTML += `<option value="${op}">${op}</option>`; });
+            },
+            onSelectChange: function(tipo) {
+                const val = document.getElementById(`v2-filter-${tipo}`).value;
+                this.filtros[tipo].clear();
+                if(val) this.filtros[tipo].add(val);
+                this.aplicarFiltrosGlobales();
+            },
+            toggleFiltro: function(tipo, valor, forceClear = false) {
+                if(forceClear) { this.filtros[tipo].clear(); }
+                else {
+                    if(this.filtros[tipo].has(valor)) this.filtros[tipo].delete(valor);
+                    else this.filtros[tipo].add(valor);
+                }
+                const sel = document.getElementById(`v2-filter-${tipo}`);
+                sel.value = this.filtros[tipo].size === 1 ? Array.from(this.filtros[tipo])[0] : '';
+                this.aplicarFiltrosGlobales();
+            },
+            limpiarFiltrosGlobales: function() {
+                ['ubicacion','comunidad','proyecto'].forEach(t => { this.filtros[t].clear(); document.getElementById(`v2-filter-${t}`).value=''; });
+                this.aplicarFiltrosGlobales();
+            },
+            aplicarFiltrosGlobales: function() {
+                document.getElementById('v2-btn-reset-bubble').classList.toggle('d-none', this.filtros.ubicacion.size === 0);
+
+                const checkU = r => this.filtros.ubicacion.size===0 || this.filtros.ubicacion.has(limpiarTexto(r[9]));
+                const checkP = r => {
+                    if(this.filtros.proyecto.size===0) return true;
+                    return this.filtros.proyecto.has(limpiarTexto(r[10])) || this.filtros.proyecto.has(limpiarTexto(r[11]));
+                };
+                const checkC = r => {
+                    if(this.filtros.comunidad.size===0) return true;
+                    for(let i=17;i<=41;i++) if(this.filtros.comunidad.has(limpiarTexto(r[i]))) return true; return false;
+                };
+
+                const dBurb = this.dataLocal.filter(r => checkP(r) && checkC(r));
+                const dCom = this.dataLocal.filter(r => checkU(r) && checkP(r));
+                const dProy = this.dataLocal.filter(r => checkU(r) && checkC(r));
+                const dTab = this.dataLocal.filter(r => checkU(r) && checkP(r) && checkC(r));
+
+                this.renderBurbujas(dBurb);
+                this.renderBarras('comunidades', dCom, 17, 41, 'v2-list-comunidades', 'bar-fill-community');
+                this.renderBarras('proyecto', dProy, 10, 11, 'v2-list-proyectos', 'bar-fill-project', true);
+                this.renderTabla(dTab);
+            },
+            renderBurbujas: function(data) {
+                let cnt = {}; let tot = 0;
+                data.forEach(r => { let u = limpiarTexto(r[9]) || 'SIN UBICACIÓN'; cnt[u]=(cnt[u]||0)+1; tot++; });
+                
+                let nodes = Object.entries(cnt).map(([n, v]) => {
+                    let ratio = tot>0?v/tot:0;
+                    let sz = 40 + (Math.sqrt(ratio)*100);
+                    let op = (this.filtros.ubicacion.size>0 && !this.filtros.ubicacion.has(n)) ? 0.3 : 1;
+                    return {
+                        name: n, value: v, symbolSize: sz,
+                        itemStyle: { color: '#c55a11', opacity: op },
+                        label: { show: true, formatter: `{t|${n}}\n{v|${v}}`, rich: { t:{color:'#fff', fontSize:10}, v:{color:'#fff', fontWeight:'bold', fontSize:14} }}
+                    };
+                });
+
+                if(!this.chartInstance) {
+                    this.chartInstance = echarts.init(document.getElementById('v2-bubbleChart'));
+                    this.chartInstance.on('click', p => { if(p.dataType==='node') this.toggleFiltro('ubicacion', p.name); });
+                    AppState.echartsInstances.push(this.chartInstance);
+                }
+                this.chartInstance.setOption({
+                    tooltip:{formatter:'{b}: {c}'},
+                    series:[{ type:'graph', layout:'force', force:{repulsion:250, edgeLength:5}, data:nodes, label:{show:true} }]
+                });
+            },
+            renderBarras: function(tipo, data, idxStart, idxEnd, containerId, fillClass, isProj = false) {
+                let cnt = {};
+                data.forEach(r => {
+                    let cump = parsePercent(r[7]);
+                    for(let i=idxStart; i<=idxEnd; i++) {
+                        let val = limpiarTexto(r[i]);
+                        if(isProj && !esDatoValido(val)) continue;
+                        if(val && (!isProj || esDatoValido(val))) {
+                            if(!cnt[val]) cnt[val] = { count: 0, sumCump: 0 };
+                            cnt[val].count++;
+                            cnt[val].sumCump += cump;
+                        }
+                    }
+                });
+                
+                let arr = Object.entries(cnt).map(([n,v])=>({
+                    n, 
+                    v: v.count,
+                    prom: Math.round(v.sumCump / v.count)
+                }));
+                
+                // Lógica de ordenamiento dinámico para Comunidades o fijo para Proyectos
+                if (tipo === 'comunidades') {
+                    const sortVal = document.getElementById('v2-sort-comunidades').value;
+                    if (sortVal === 'acc_desc') arr.sort((a,b)=>b.v - a.v || b.prom - a.prom);
+                    else if (sortVal === 'acc_asc') arr.sort((a,b)=>a.v - b.v || a.prom - b.prom);
+                    else if (sortVal === 'cump_desc') arr.sort((a,b)=>b.prom - a.prom || b.v - a.v);
+                    else if (sortVal === 'cump_asc') arr.sort((a,b)=>a.prom - b.prom || a.v - b.v);
+                } else {
+                    arr.sort((a,b)=>b.v - a.v);
+                }
+                
+                // Aplicar el límite de Top 20 solo a los proyectos, mostrando todas las comunidades
+                if(isProj) {
+                    arr = arr.slice(0, 20);
+                }
+                
+                // Calcular el máximo dinámicamente porque el orden del arreglo puede variar al usar filtros de %
+                let mx = arr.length > 0 ? Math.max(...arr.map(a => a.v)) : 1;
+                
+                // Restablecer el subtítulo en ambos casos a su valor por defecto en lugar de "Mostrando top..."
+                document.getElementById(`v2-subtitle-${tipo}`).innerText = 'Clic para filtrar';
+                
+                let html = arr.map(a => {
+                    let op = (this.filtros[tipo==='comunidades'?'comunidad':'proyecto'].size>0 && !this.filtros[tipo==='comunidades'?'comunidad':'proyecto'].has(a.n))?'opacity-50':'';
+                    
+                    // La barra de Comunidades ahora representa el % de cumplimiento, la de proyectos el volumen.
+                    let pct = tipo === 'comunidades' ? Math.max(2, a.prom) : Math.max(5, (a.v/mx)*100);
+                    
+                    // Mostrar el promedio de cumplimiento con la etiqueta Cump: solo en la sección de Comunidades
+                    let labelDerecho = isProj ? a.v : `${a.v} (Cump: ${a.prom}%)`;
+                    
+                    return `
+                        <div class="mb-2 clickable-bar ${op}" onclick="ModComunidades.toggleFiltro('${tipo==='comunidades'?'comunidad':'proyecto'}', '${a.n.replace(/'/g,"\\'")}')">
+                            <div class="d-flex justify-content-between small fw-bold mb-1">
+                                <span class="text-truncate pe-2" title="${a.n}">${a.n}</span>
+                                <span class="text-nowrap">${labelDerecho}</span>
+                            </div>
+                            <div class="bar-track"><div class="bar-fill ${fillClass}" style="width: ${pct}%"></div></div>
+                        </div>`;
+                }).join('');
+                document.getElementById(containerId).innerHTML = html || '<p class="text-muted small">Sin datos</p>';
+            },
+            renderTabla: function(data) {
+                document.getElementById('v2-subtitle-tabla').innerText = data.length;
+                let sort = document.getElementById('v2-sort-acciones').value;
+                let arr = data.map(r => ({
+                    row: r, num: parseFloat(r[0])||0, macro: parseFloat(r[3])||0, cump: parsePercent(r[7])
+                }));
+                
+                if(sort==='mayor_cump') arr.sort((a,b)=>b.cump-a.cump);
+                else if(sort==='menor_cump') arr.sort((a,b)=>a.cump-b.cump);
+                else arr.sort((a,b)=>a.num-b.num);
+
+                document.getElementById('v2-table-body').innerHTML = arr.map(a => `
+                    <tr>
+                        <td class="text-center fw-bold text-muted">${a.row[0]||'-'}</td>
+                        <td class="text-center">${a.row[1]||'-'}</td>
+                        <td class="text-center">${a.row[3]||'-'}</td>
+                        <td class="small">${a.row[6]||'-'}</td>
+                        <td class="text-center fw-bold">${Math.round(a.cump)}%</td>
+                    </tr>`).join('') || '<tr><td colspan="5" class="text-center py-4">No hay datos que coincidan</td></tr>';
+            }
+        };
+
+        const ModEmpresas = {
+            dataLocal: [], master: { empresas: [], entidades: [] }, filtros: { empresas: new Set(), entidades: new Set() },
+            init: function() {
+                this.dataLocal = AppState.validData.filter(r => { let c=limpiarTexto(r[8]); return c==='EMPRESA' || c==='ENTIDAD'; });
+                let setEmp = new Set(), setEnt = new Set();
+                this.dataLocal.forEach(r => {
+                    let c = limpiarTexto(r[8]);
+                    for(let i=17;i<=40;i++) {
+                        let v = limpiarTexto(r[i]);
+                        if(esDatoValido(v)) { if(c==='EMPRESA') setEmp.add(v); else if(c==='ENTIDAD') setEnt.add(v); }
+                    }
+                });
+                this.master.empresas = Array.from(setEmp).sort(); this.master.entidades = Array.from(setEnt).sort();
+                this.renderCarousel('empresas'); this.renderCarousel('entidades');
+                this.aplicarFiltros();
+            },
+            renderCarousel: function(tipo) {
+                document.getElementById(`v3-carousel-${tipo}`).innerHTML = this.master[tipo].map(i => 
+                    `<button id="v3-btn-${tipo}-${i.replace(/\W/g,'')}" class="btn btn-sm btn-outline-secondary rounded-pill carousel-btn" 
+                        onclick="ModEmpresas.toggle('${tipo}','${i.replace(/'/g,"\\'")}')">${i}</button>`
+                ).join('');
+            },
+            toggle: function(tipo, val) {
+                if(this.filtros[tipo].has(val)) this.filtros[tipo].delete(val); else this.filtros[tipo].add(val);
+                this.aplicarFiltros();
+            },
+            seleccionarTodo: function(tipo) {
+                let m = this.master[tipo]; let f = this.filtros[tipo];
+                if(m.every(i => f.has(i))) f.clear(); else m.forEach(i => f.add(i));
+                this.aplicarFiltros();
+            },
+            limpiarFiltros: function() { this.filtros.empresas.clear(); this.filtros.entidades.clear(); this.aplicarFiltros(); },
+            aplicarFiltros: function() {
+                ['empresas','entidades'].forEach(t => {
+                    this.master[t].forEach(i => {
+                        let btn = document.getElementById(`v3-btn-${t}-${i.replace(/\W/g,'')}`);
+                        if(btn) {
+                            if(this.filtros[t].has(i)) { btn.classList.add(`active-${t}`); btn.classList.remove('btn-outline-secondary'); }
+                            else { btn.classList.remove(`active-${t}`); btn.classList.add('btn-outline-secondary'); }
+                        }
+                    });
+                });
+
+                let filterLogic = (row, tipoFilterSet) => {
+                    if(tipoFilterSet.size === 0) return true;
+                    for(let i=17;i<=40;i++) if(tipoFilterSet.has(limpiarTexto(row[i]))) return true;
+                    return false;
+                };
+
+                let dEmp = this.dataLocal.filter(r => limpiarTexto(r[8])==='EMPRESA' && filterLogic(r, this.filtros.empresas));
+                let dEnt = this.dataLocal.filter(r => limpiarTexto(r[8])==='ENTIDAD' && filterLogic(r, this.filtros.entidades));
+                
+                let sCumpEmp = 0; dEmp.forEach(r => sCumpEmp+=parsePercent(r[7]));
+                let sCumpEnt = 0; dEnt.forEach(r => sCumpEnt+=parsePercent(r[7]));
+                
+                document.getElementById('v3-cump-empresas').innerText = dEmp.length>0?Math.round(sCumpEmp/dEmp.length)+'%':'0%';
+                document.getElementById('v3-peso-empresas').innerText = AppState.validData.length>0?((dEmp.length/AppState.validData.length)*100).toFixed(1)+'%':'0%';
+                document.getElementById('v3-cump-entidades').innerText = dEnt.length>0?Math.round(sCumpEnt/dEnt.length)+'%':'0%';
+                document.getElementById('v3-peso-entidades').innerText = AppState.validData.length>0?((dEnt.length/AppState.validData.length)*100).toFixed(1)+'%':'0%';
+
+                let hasEmp = this.filtros.empresas.size>0;
+                let hasEnt = this.filtros.entidades.size>0;
+                
+                let res = this.dataLocal.filter(r => {
+                    let c = limpiarTexto(r[8]);
+                    if(!hasEmp && !hasEnt) return true;
+                    if(c==='EMPRESA') return hasEmp && filterLogic(r, this.filtros.empresas);
+                    if(c==='ENTIDAD') return hasEnt && filterLogic(r, this.filtros.entidades);
+                    return false;
+                });
+
+                document.getElementById('v3-contador-acciones').innerText = res.length;
+                document.getElementById('v3-table-body').innerHTML = res.map(r => `
+                    <tr>
+                        <td class="text-center fw-bold text-muted">${r[0]||'-'}</td>
+                        <td class="text-center">${r[1]||'-'}</td>
+                        <td class="text-center">${r[3]||'-'}</td>
+                        <td class="small">${r[6]||'-'}</td>
+                        <td class="text-center fw-bold">${Math.round(parsePercent(r[7]))}%</td>
+                    </tr>`).join('') || '<tr><td colspan="5" class="text-center py-4">Sin resultados</td></tr>';
+            }
+        };
+
+        const ModPTE5 = {
+            data: { comp: {}, mesasU: new Set(), maxV: 0 }, filtros: [], accs: [],
+            init: function() {
+                AppState.validData.forEach(r => {
+                    let mn = parseInt(r[1])||0; let cn = (r[13]||'').trim() || 'Sin Compromiso';
+                    let cump = parsePercent(r[7]);
+                    
+                    this.data.mesasU.add(mn);
+                    this.accs.push({ row: r, m: mn, c: cn, val: cump });
+                    
+                    if(!this.data.comp[cn]) this.data.comp[cn] = { n: cn, tot: 0, sCump: 0, mesas: {} };
+                    let cd = this.data.comp[cn];
+                    if(!cd.mesas[mn]) cd.mesas[mn] = 0;
+                    
+                    cd.mesas[mn]++; cd.tot++; cd.sCump+=cump;
+                    if(cd.mesas[mn] > this.data.maxV) this.data.maxV = cd.mesas[mn];
+                });
+                this.renderMatriz(); this.renderTable();
+            },
+            toggle: function(c, m) {
+                let idx = this.filtros.findIndex(f => f.c===c && f.m===m);
+                if(idx>-1) this.filtros.splice(idx,1); else this.filtros.push({c, m});
+                this.actualizarUI(); this.renderTable();
+            },
+            limpiarFiltros: function() { this.filtros = []; this.actualizarUI(); this.renderTable(); },
+            actualizarUI: function() {
+                document.querySelectorAll('.v4-hdr').forEach(el=>el.classList.remove('selected-filter','text-danger'));
+                document.querySelectorAll('.heatmap-cell').forEach(el=>el.classList.remove('selected-filter'));
+                this.filtros.forEach(f => {
+                    let rIdx = Object.values(this.data.comp).sort((a,b)=>a.n.localeCompare(b.n)).findIndex(c=>c.n===f.c);
+                    if(f.m===null) {
+                        let hr = document.getElementById(`v4-rh-${rIdx}`); if(hr) { hr.classList.add('selected-filter','text-danger'); }
+                        Array.from(this.data.mesasU).forEach(mx => { let cx = document.getElementById(`v4-c-${rIdx}-${mx}`); if(cx) cx.classList.add('selected-filter'); });
+                    } else {
+                        let cx = document.getElementById(`v4-c-${rIdx}-${f.m}`); if(cx) cx.classList.add('selected-filter');
+                    }
+                });
+            },
+            renderMatriz: function() {
+                let ms = Array.from(this.data.mesasU).sort((a,b)=>a-b);
+                let cs = Object.values(this.data.comp).sort((a,b)=>a.n.localeCompare(b.n));
+                
+                let h = `<table class="heatmap-table"><thead><tr><th style="text-align:left; width:30%;">COMPROMISO</th>` + 
+                        ms.map(m=>`<th>MESA ${m}</th>`).join('') + `<th>TOTAL</th><th>% CUMP</th></tr></thead><tbody>`;
+                
+                cs.forEach((c, rIdx) => {
+                    let sf = c.n.replace(/'/g,"\\'");
+                    h += `<tr><td class="v4-hdr p-2 rounded cursor-pointer" id="v4-rh-${rIdx}" style="cursor:pointer;" onclick="ModPTE5.toggle('${sf}', null)"><small>${c.n}</small></td>`;
+                    ms.forEach(m => {
+                        let v = c.mesas[m]||0;
+                        let bg = '#ffffff', txt = '—';
+                        if(v>0) {
+                            let rat = v/this.data.maxV; let op = 0.1 + (rat*0.9);
+                            bg = `rgba(96, 116, 104, ${op})`; txt = v; /* Verde salvia rgba */
+                        }
+                        h+=`<td class="p-1"><div id="v4-c-${rIdx}-${m}" class="heatmap-cell d-flex align-items-center justify-content-center" style="background:${bg}; border-color:${v>0?'transparent':'var(--gris-claro)'};" onclick="ModPTE5.toggle('${sf}', ${m})">${txt}</div></td>`;
+                    });
+                    h+=`<td class="text-center fw-bold">${c.tot}</td><td class="text-center fw-bold" style="color:var(--azul-petroleo);">${c.tot>0?Math.round(c.sCump/c.tot):0}%</td></tr>`;
+                });
+                document.getElementById('v4-matriz-container').innerHTML = h + `</tbody></table>`;
+            },
+            renderTable: function() {
+                let arr = this.accs;
+                if(this.filtros.length > 0) {
+                    arr = arr.filter(a => this.filtros.some(f => f.m===null ? a.c===f.c : (a.c===f.c && a.m===f.m)));
+                }
+                document.getElementById('v4-contador-acciones').innerText = arr.length;
+                document.getElementById('v4-table-body').innerHTML = arr.map(a => `
+                    <tr>
+                        <td class="text-center">${a.m}</td>
+                        <td class="text-center">${a.row[3]||'-'}</td>
+                        <td class="text-center fw-bold text-muted">${a.row[0]||'-'}</td>
+                        <td class="small">${a.row[6]||'-'}</td>
+                        <td class="text-center fw-bold">${Math.round(a.val)}%</td>
+                    </tr>`).join('') || '<tr><td colspan="5" class="text-center py-4">Sin datos coincidentes</td></tr>';
+            }
+        };
+
+        const ModSeguimiento = {
+            gestores: {}, sel: new Set(), totalUniv: 0,
+            init: function() {
+                this.totalUniv = AppState.validData.length;
+                AppState.validData.forEach(r => {
+                    let g = (r[15]||'').trim() || 'Sin Gestor Asignado';
+                    if(!this.gestores[g]) this.gestores[g] = { n: g, accs: [], sCump: 0 };
+                    let c = parsePercent(r[7]);
+                    this.gestores[g].accs.push({ r, c, num: parseFloat(r[0])||0, mac: parseFloat(r[3])||0 });
+                    this.gestores[g].sCump += c;
+                });
+                this.renderGrid();
+            },
+            renderGrid: function() {
+                let arr = Object.values(this.gestores).map(g => ({
+                    n: g.n, c: g.accs.length, prom: g.accs.length>0?Math.round(g.sCump/g.accs.length):0,
+                    p: this.totalUniv>0?(g.accs.length/this.totalUniv)*100:0
+                }));
+                arr.sort((a,b) => {
+                    let isNiA = a.n.toLowerCase().includes('no se implementa')||a.n==='Sin Gestor Asignado';
+                    let isNiB = b.n.toLowerCase().includes('no se implementa')||b.n==='Sin Gestor Asignado';
+                    if(isNiA && !isNiB) return 1; if(!isNiA && isNiB) return -1; return b.p-a.p;
+                });
+                
+                document.getElementById('v5-gestores-container').innerHTML = arr.map((g,i) => `
+                    <div class="col-6 col-sm-4 col-md-3 col-lg-2">
+                        <div class="gestor-btn h-100" id="v5-g-${i}" onclick="ModSeguimiento.toggle('${g.n.replace(/'/g,"\\'")}', 'v5-g-${i}')">
+                            <span class="small fw-bold text-dark text-truncate mb-2" title="${g.n}">${g.n}</span>
+                            <div class="d-flex flex-column gap-1 small mt-auto">
+                                <span class="bg-light px-2 py-1 rounded text-center">Accs: <b>${g.c}</b></span>
+                                <span class="bg-light px-2 py-1 rounded text-center">Cump: <b>${g.prom}%</b></span>
+                                <span class="bg-light px-2 py-1 rounded text-center">Peso: <b>${g.p.toFixed(1)}%</b></span>
+                            </div>
+                        </div>
+                    </div>`).join('');
+            },
+            toggle: function(n, id) {
+                let el = document.getElementById(id);
+                if(this.sel.has(n)) { this.sel.delete(n); el.classList.remove('active'); }
+                else { this.sel.add(n); el.classList.add('active'); }
+                
+                let cont = document.getElementById('v5-detalles-container');
+                if(this.sel.size > 0) cont.classList.remove('d-none'); else cont.classList.add('d-none');
+                this.actualizarDetalles();
+            },
+            actualizarDetalles: function() {
+                if(this.sel.size === 0) return;
+                let sort = document.getElementById('v5-sort-select').value;
+                let arr = [];
+                this.sel.forEach(g => arr = arr.concat(this.gestores[g].accs));
+                
+                if(sort==='cumpMayor') arr.sort((a,b)=>b.c-a.c);
+                else if(sort==='cumpMenor') arr.sort((a,b)=>a.c-b.c);
+                else if(sort==='macro') arr.sort((a,b)=>a.mac-b.mac);
+                else arr.sort((a,b)=>a.num-b.num);
+
+                document.getElementById('v5-total-acciones').innerText = arr.length;
+                document.getElementById('v5-table-body').innerHTML = arr.map(a => `
+                    <tr>
+                        <td class="text-center">${a.r[1]||'-'}</td>
+                        <td class="text-center">${a.r[3]||'-'}</td>
+                        <td class="text-center fw-bold text-muted">${a.r[0]||'-'}</td>
+                        <td class="small">${a.r[6]||'-'}</td>
+                        <td class="text-center fw-bold">${Math.round(a.c)}%</td>
+                    </tr>`).join('');
+            }
+        };
+    </script>
+</body>
+</html>
