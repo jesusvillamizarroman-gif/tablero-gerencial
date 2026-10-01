@@ -145,14 +145,6 @@
         }
         .heatmap-cell:hover { transform: scale(1.05); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
         .selected-filter { border-color: var(--rojo-alerta) !important; transform: scale(1.03); }
-        
-        /* Vista 5: Seguimiento y Gestión */
-        .gestor-btn {
-            background: var(--blanco); border: 1px solid var(--gris-medio); border-radius: 8px;
-            padding: 12px; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; justify-content: space-between;
-        }
-        .gestor-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); border-color: var(--azul-petroleo); }
-        .gestor-btn.active { background-color: rgba(39, 73, 83, 0.05); border-color: var(--azul-petroleo); box-shadow: 0 0 0 2px rgba(39, 73, 83, 0.3); }
 
         #loading-screen { 
             position: fixed; inset: 0; background: var(--gris-claro); z-index: 9999;
@@ -192,9 +184,6 @@
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="tab-v4" data-bs-toggle="tab" data-bs-target="#view-v4" type="button" role="tab">Compromisos</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="tab-v5" data-bs-toggle="tab" data-bs-target="#view-v5" type="button" role="tab">Seguimiento y Gestión</button>
             </li>
         </ul>
 
@@ -411,43 +400,6 @@
                 </div>
             </div>
 
-            <!-- ============================== VISTA 5: SEGUIMIENTO Y GESTIÓN ============================== -->
-            <div class="tab-pane fade" id="view-v5" role="tabpanel">
-                <div class="mb-4">
-                    <h4 class="fw-bold" style="color: var(--azul-petroleo);">Seguimiento por Gestor</h4>
-                    <p class="text-muted">Seleccione uno o más responsables para analizar su carga operativa y efectividad.</p>
-                </div>
-
-                <div class="row g-3 mb-4" id="v5-gestores-container"></div>
-
-                <div id="v5-detalles-container" class="card-institucional d-none">
-                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
-                        <h5 class="fw-bold m-0" style="color: var(--azul-petroleo);">Acciones del Gestor (<span id="v5-total-acciones">0</span>)</h5>
-                        <select id="v5-sort-select" class="form-select form-select-sm w-auto" onchange="ModSeguimiento.actualizarDetalles()">
-                            <option value="accion">N° de Acción (Defecto)</option>
-                            <option value="macro">N° de Macroacción</option>
-                            <option value="cumpMayor">% Cump. Mayor</option>
-                            <option value="cumpMenor">% Cump. Menor</option>
-                        </select>
-                    </div>
-                    
-                    <div class="table-responsive" style="max-height: 500px;">
-                        <table class="table table-institucional mb-0">
-                            <thead class="sticky-top">
-                                <tr>
-                                    <th class="text-center" width="8%">Mesa</th>
-                                    <th class="text-center" width="10%">Macro</th>
-                                    <th class="text-center" width="8%">No.</th>
-                                    <th width="59%">Descripción de la Acción</th>
-                                    <th class="text-center" width="15%">Cump.</th>
-                                </tr>
-                            </thead>
-                            <tbody id="v5-table-body"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
         </div>
     </div>
 
@@ -500,11 +452,11 @@
                     AppState.validData = results.data.slice(1).filter(row => row[0] && row[0].trim() !== '');
                     
                     // Inicializar los 5 submódulos
+                    // Inicializar los 4 submódulos
                     ModControl.init();
                     ModComunidades.init();
                     ModEmpresas.init();
                     ModPTE5.init();
-                    ModSeguimiento.init();
 
                     // Ocultar carga, mostrar app
                     document.getElementById('loading-screen').classList.add('d-none');
@@ -1019,74 +971,6 @@
                         <td class="small">${a.row[6]||'-'}</td>
                         <td class="text-center fw-bold">${Math.round(a.val)}%</td>
                     </tr>`).join('') || '<tr><td colspan="5" class="text-center py-4">Sin datos coincidentes</td></tr>';
-            }
-        };
-
-        const ModSeguimiento = {
-            gestores: {}, sel: new Set(), totalUniv: 0,
-            init: function() {
-                this.totalUniv = AppState.validData.length;
-                AppState.validData.forEach(r => {
-                    let g = (r[15]||'').trim() || 'Sin Gestor Asignado';
-                    if(!this.gestores[g]) this.gestores[g] = { n: g, accs: [], sCump: 0 };
-                    let c = parsePercent(r[7]);
-                    this.gestores[g].accs.push({ r, c, num: parseFloat(r[0])||0, mac: parseFloat(r[3])||0 });
-                    this.gestores[g].sCump += c;
-                });
-                this.renderGrid();
-            },
-            renderGrid: function() {
-                let arr = Object.values(this.gestores).map(g => ({
-                    n: g.n, c: g.accs.length, prom: g.accs.length>0?Math.round(g.sCump/g.accs.length):0,
-                    p: this.totalUniv>0?(g.accs.length/this.totalUniv)*100:0
-                }));
-                arr.sort((a,b) => {
-                    let isNiA = a.n.toLowerCase().includes('no se implementa')||a.n==='Sin Gestor Asignado';
-                    let isNiB = b.n.toLowerCase().includes('no se implementa')||b.n==='Sin Gestor Asignado';
-                    if(isNiA && !isNiB) return 1; if(!isNiA && isNiB) return -1; return b.p-a.p;
-                });
-                
-                document.getElementById('v5-gestores-container').innerHTML = arr.map((g,i) => `
-                    <div class="col-6 col-sm-4 col-md-3 col-lg-2">
-                        <div class="gestor-btn h-100" id="v5-g-${i}" onclick="ModSeguimiento.toggle('${g.n.replace(/'/g,"\\'")}', 'v5-g-${i}')">
-                            <span class="small fw-bold text-dark text-truncate mb-2" title="${g.n}">${g.n}</span>
-                            <div class="d-flex flex-column gap-1 small mt-auto">
-                                <span class="bg-light px-2 py-1 rounded text-center">Accs: <b>${g.c}</b></span>
-                                <span class="bg-light px-2 py-1 rounded text-center">Cump: <b>${g.prom}%</b></span>
-                                <span class="bg-light px-2 py-1 rounded text-center">Peso: <b>${g.p.toFixed(1)}%</b></span>
-                            </div>
-                        </div>
-                    </div>`).join('');
-            },
-            toggle: function(n, id) {
-                let el = document.getElementById(id);
-                if(this.sel.has(n)) { this.sel.delete(n); el.classList.remove('active'); }
-                else { this.sel.add(n); el.classList.add('active'); }
-                
-                let cont = document.getElementById('v5-detalles-container');
-                if(this.sel.size > 0) cont.classList.remove('d-none'); else cont.classList.add('d-none');
-                this.actualizarDetalles();
-            },
-            actualizarDetalles: function() {
-                if(this.sel.size === 0) return;
-                let sort = document.getElementById('v5-sort-select').value;
-                let arr = [];
-                this.sel.forEach(g => arr = arr.concat(this.gestores[g].accs));
-                
-                if(sort==='cumpMayor') arr.sort((a,b)=>b.c-a.c);
-                else if(sort==='cumpMenor') arr.sort((a,b)=>a.c-b.c);
-                else if(sort==='macro') arr.sort((a,b)=>a.mac-b.mac);
-                else arr.sort((a,b)=>a.num-b.num);
-
-                document.getElementById('v5-total-acciones').innerText = arr.length;
-                document.getElementById('v5-table-body').innerHTML = arr.map(a => `
-                    <tr>
-                        <td class="text-center">${a.r[1]||'-'}</td>
-                        <td class="text-center">${a.r[3]||'-'}</td>
-                        <td class="text-center fw-bold text-muted">${a.r[0]||'-'}</td>
-                        <td class="small">${a.r[6]||'-'}</td>
-                        <td class="text-center fw-bold">${Math.round(a.c)}%</td>
-                    </tr>`).join('');
             }
         };
     </script>
