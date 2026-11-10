@@ -1,0 +1,1440 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tablero de Cambio Climático | Seguimiento de Entregables</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & Montserrat -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+    <!-- SheetJS para leer el archivo XLSX en tiempo real -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <!-- Chart.js para visualizaciones comparativas -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Montserrat', 'sans-serif'],
+                    },
+                    colors: {
+                        pastel: {
+                            bg: '#FAFDFB',
+                            sage: '#88C9A1',
+                            sageDark: '#2E6F4E',
+                            sageLight: '#E8F5EE',
+                            sand: '#E6BE7A',
+                            sandDark: '#8A5D1B',
+                            sandLight: '#FDF6E7',
+                            sky: '#8AB8D6',
+                            skyDark: '#2C5E7A',
+                            skyLight: '#EAF3F9',
+                            terracotta: '#E29598',
+                            terracottaDark: '#8C383B',
+                            terracottaLight: '#FDEEEF'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #FAFDFB;
+            color: #1E3A2F;
+            overflow-x: hidden;
+        }
+
+        /* Fondo Blanco Ambiental Suave para resaltar el Mapa de Colombia */
+        .bg-environment {
+            background: 
+                radial-gradient(circle at 15% 18%, rgba(183, 228, 199, 0.35) 0%, transparent 45%),
+                radial-gradient(circle at 85% 25%, rgba(246, 226, 179, 0.32) 0%, transparent 42%),
+                radial-gradient(circle at 50% 85%, rgba(190, 223, 244, 0.35) 0%, transparent 50%),
+                linear-gradient(180deg, #FFFFFF 0%, #F7FBF8 55%, #F2F8F5 100%);
+        }
+
+        /* Tarjetas Glassmorphism Pastel sobre Fondo Blanco */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.82);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(136, 201, 161, 0.42);
+            box-shadow: 0 10px 28px -6px rgba(40, 90, 68, 0.07);
+        }
+
+        .glass-card-hover {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card-hover:hover {
+            background: rgba(255, 255, 255, 0.94);
+            border-color: rgba(104, 176, 136, 0.7);
+            transform: translateY(-2px);
+            box-shadow: 0 14px 32px -6px rgba(40, 90, 68, 0.12);
+        }
+
+        /* Scrollbar personalizado pastel */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #F2F8F4;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #A8D5BA;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #7BB896;
+        }
+
+        /* Animación suave del mapa de Colombia de fondo */
+        @keyframes floatMap {
+            0%, 100% { opacity: 0.55; transform: scale(1); }
+            50% { opacity: 0.68; transform: scale(1.012); }
+        }
+        .colombia-bg-watermark {
+            animation: floatMap 16s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="bg-environment min-h-screen relative selection:bg-[#B7E4C7] selection:text-[#1E3A2F]">
+
+    <!-- MAPA DE COLOMBIA DE FONDO RESALTADO EN TONOS PASTELES AMBIENTALES -->
+    <div class="fixed inset-0 pointer-events-none z-0 flex items-center justify-center overflow-hidden">
+        <svg class="colombia-bg-watermark w-[820px] h-[820px] md:w-[1020px] md:h-[1020px]" viewBox="0 0 800 950" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="colGradPastel" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#F6E2B3" stop-opacity="0.75"/>
+                    <stop offset="38%" stop-color="#B7E4C7" stop-opacity="0.85"/>
+                    <stop offset="72%" stop-color="#95D5B2" stop-opacity="0.80"/>
+                    <stop offset="100%" stop-color="#AED9F2" stop-opacity="0.75"/>
+                </linearGradient>
+                <pattern id="topoGridPastel" width="36" height="36" patternUnits="userSpaceOnUse">
+                    <path d="M 36 0 L 0 0 0 36" fill="none" stroke="#529471" stroke-width="0.6" stroke-opacity="0.22"/>
+                    <circle cx="18" cy="18" r="1.3" fill="#529471" fill-opacity="0.30"/>
+                </pattern>
+                <filter id="mapShadow" x="-10%" y="-10%" width="120%" height="120%">
+                    <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#3B7A57" flood-opacity="0.14"/>
+                </filter>
+            </defs>
+            <!-- Silueta de Colombia con sombra suave y relleno pastel -->
+            <path d="M365,45 L415,25 L438,32 L420,58 L390,75 L378,108 L402,155 L420,210 L442,240 L495,250 L548,265 L595,295 L615,340 L675,355 L695,390 L660,445 L645,495 L690,530 L705,575 L665,605 L635,665 L610,730 L585,845 L555,895 L535,885 L530,815 L475,775 L415,760 L365,710 L325,695 L265,645 L215,635 L165,595 L185,545 L210,485 L205,415 L180,355 L195,295 L225,275 L235,235 L255,220 L275,165 L315,120 L345,75 Z" 
+                  fill="url(#colGradPastel)" filter="url(#mapShadow)" stroke="#529471" stroke-width="3" stroke-dasharray="10 5"/>
+            <path d="M365,45 L415,25 L438,32 L420,58 L390,75 L378,108 L402,155 L420,210 L442,240 L495,250 L548,265 L595,295 L615,340 L675,355 L695,390 L660,445 L645,495 L690,530 L705,575 L665,605 L635,665 L610,730 L585,845 L555,895 L535,885 L530,815 L475,775 L415,760 L365,710 L325,695 L265,645 L215,635 L165,595 L185,545 L210,485 L205,415 L180,355 L195,295 L225,275 L235,235 L255,220 L275,165 L315,120 L345,75 Z" 
+                  fill="url(#topoGridPastel)"/>
+            <!-- Ríos y Cordilleras en trazos pasteles definidos -->
+            <path d="M265,645 Q310,500 340,350 T355,105" stroke="#5B9BD5" stroke-width="2.8" stroke-opacity="0.55" fill="none"/>
+            <path d="M245,620 Q275,480 300,340 T335,160" stroke="#4D906E" stroke-width="2.2" stroke-opacity="0.50" fill="none"/>
+            <path d="M325,695 Q460,680 610,730" stroke="#5B9BD5" stroke-width="2.5" stroke-opacity="0.50" fill="none"/>
+            <path d="M365,480 Q510,420 675,355" stroke="#D4A359" stroke-width="2.2" stroke-opacity="0.50" stroke-dasharray="6 6" fill="none"/>
+            <!-- Nodos Regionales Ambientales -->
+            <circle cx="415" cy="35" r="8" fill="#D9AE5F" stroke="#FFFFFF" stroke-width="2"/>
+            <circle cx="345" cy="395" r="9" fill="#68B088" stroke="#FFFFFF" stroke-width="2"/>
+            <circle cx="285" cy="320" r="7" fill="#6BAED6" stroke="#FFFFFF" stroke-width="2"/>
+            <circle cx="255" cy="515" r="8" fill="#68B088" stroke="#FFFFFF" stroke-width="2"/>
+            <circle cx="555" cy="795" r="8" fill="#529471" stroke="#FFFFFF" stroke-width="2"/>
+        </svg>
+    </div>
+
+    <!-- CONTENEDOR PRINCIPAL -->
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- CABECERA PRINCIPAL -->
+        <header class="glass-card rounded-2xl p-5 sm:p-6 border-t-4 border-t-[#88C9A1]">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                
+                <!-- Emblema Ambiental + Título -->
+                <div class="flex items-start sm:items-center gap-4">
+                    <div class="relative flex-shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#D8F3DC] via-[#B7E4C7] to-[#95D5B2] p-0.5 shadow-sm border border-[#74C69D] flex items-center justify-center">
+                        <div class="w-full h-full rounded-[14px] bg-white/90 flex flex-col items-center justify-center relative overflow-hidden">
+                            <div class="absolute top-0 inset-x-0 h-1.5 flex">
+                                <div class="w-2/4 bg-[#E9C46A]"></div>
+                                <div class="w-1/4 bg-[#8AB8D6]"></div>
+                                <div class="w-1/4 bg-[#E29598]"></div>
+                            </div>
+                            <i data-lucide="leaf" class="w-7 h-7 text-[#40916C] mt-1"></i>
+                            <span class="text-[9px] font-bold tracking-widest text-[#2D6A4F] uppercase">COLOMBIA</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h1 class="font-display text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#1B4332] tracking-tight mt-1">
+                            Cambio Climático <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#2D6A4F] via-[#40916C] to-[#74A57F]">Seguimiento de Entregables</span>
+                        </h1>
+                    </div>
+                </div>
+
+                <!-- Controles Superiores: Fecha de Corte e IA Nombres -->
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <!-- Selector de Fecha de Corte para % Esperado -->
+                    <div class="bg-[#F2F9F5] border border-[#B7E4C7] rounded-xl px-3.5 py-2 flex items-center gap-2.5">
+                        <i data-lucide="calendar-clock" class="w-4 h-4 text-[#40916C]"></i>
+                        <div class="flex flex-col">
+                            <label for="cutoffDateInput" class="text-[10px] uppercase tracking-wider text-[#4A6B5D] font-semibold">Fecha de Corte</label>
+                            <input type="date" id="cutoffDateInput" class="bg-transparent text-xs sm:text-sm font-semibold text-[#1B4332] focus:outline-none cursor-pointer">
+                        </div>
+                    </div>
+
+                    <!-- Botón IA para generar nombres asociados ejecutivos -->
+                    <button id="btnAiNames" onclick="generarNombresConIA()" class="px-4 py-2.5 rounded-xl bg-[#E9C46A]/85 hover:bg-[#E9C46A] text-[#3D2B1F] border border-[#D9AE5F] font-semibold text-xs sm:text-sm shadow-sm flex items-center gap-1.5 transition">
+                        <i data-lucide="sparkles" class="w-4 h-4 text-[#7F5539]"></i>
+                        <span>Sintetizar Nombres</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- AVISO / ESTADO DE CARGA O ALERTAS -->
+        <div id="statusBanner" class="hidden glass-card rounded-xl p-3.5 border-l-4 border-l-[#D9AE5F] flex items-center justify-between gap-3 text-xs sm:text-sm">
+            <div class="flex items-center gap-2.5">
+                <i data-lucide="info" class="w-5 h-5 text-[#8A5D1B] flex-shrink-0"></i>
+                <span id="statusBannerText" class="text-[#2D4A3E]">Cargando información...</span>
+            </div>
+            <button onclick="document.getElementById('statusBanner').classList.add('hidden')" class="text-[#4A6B5D] hover:text-[#1B4332]">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+
+        <!-- SECCIÓN 1: KPIs EJECUTIVOS -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- KPI 1: % Completado Real -->
+            <div class="glass-card glass-card-hover rounded-2xl p-5 relative overflow-hidden">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-[#2D6A4F]">Avance Completado</span>
+                    <div class="w-9 h-9 rounded-xl bg-[#E8F5EE] border border-[#B7E4C7] flex items-center justify-center">
+                        <i data-lucide="check-circle-2" class="w-5 h-5 text-[#40916C]"></i>
+                    </div>
+                </div>
+                <div class="mt-3 flex items-baseline gap-2">
+                    <span id="kpiAvgCompleted" class="font-display text-3xl sm:text-4xl font-extrabold text-[#1B4332]">0%</span>
+                    <span class="text-xs text-[#4A6B5D]">promedio real</span>
+                </div>
+                <div class="mt-3 w-full h-2.5 bg-[#E8F5EE] rounded-full overflow-hidden border border-[#B7E4C7]">
+                    <div id="kpiCompletedBar" class="h-full bg-[#74C69D] rounded-full transition-all duration-700" style="width: 0%"></div>
+                </div>
+                <p id="kpiCompletedSub" class="text-[11px] text-[#52796F] mt-2">Calculado sobre 0 entregables activos</p>
+            </div>
+
+            <!-- KPI 2: % Esperado a la Fecha -->
+            <div class="glass-card glass-card-hover rounded-2xl p-5 relative overflow-hidden">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-[#8A5D1B]">Avance Esperado</span>
+                    <div class="w-9 h-9 rounded-xl bg-[#FDF6E7] border border-[#F3DFAB] flex items-center justify-center">
+                        <i data-lucide="clock" class="w-5 h-5 text-[#B68233]"></i>
+                    </div>
+                </div>
+                <div class="mt-3 flex items-baseline gap-2">
+                    <span id="kpiAvgExpected" class="font-display text-3xl sm:text-4xl font-extrabold text-[#1B4332]">0%</span>
+                    <span class="text-xs text-[#8A5D1B]">según cronograma</span>
+                </div>
+                <div class="mt-3 w-full h-2.5 bg-[#FDF6E7] rounded-full overflow-hidden border border-[#F3DFAB]">
+                    <div id="kpiExpectedBar" class="h-full bg-[#E6BE7A] rounded-full transition-all duration-700" style="width: 0%"></div>
+                </div>
+                <p id="kpiExpectedSub" class="text-[11px] text-[#52796F] mt-2">Según fechas de inicio y finalización</p>
+            </div>
+
+            <!-- KPI 3: Balance + Días Restantes de Trabajo según Fecha Fin -->
+            <div class="glass-card glass-card-hover rounded-2xl p-5 relative overflow-hidden">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-[#2C5E7A]">Balance y Tiempo Restante</span>
+                    <div class="w-9 h-9 rounded-xl bg-[#EAF3F9] border border-[#C2DDF0] flex items-center justify-center">
+                        <i data-lucide="calendar-range" class="w-5 h-5 text-[#4A89B0]"></i>
+                    </div>
+                </div>
+                <div class="mt-2.5 flex items-baseline justify-between gap-2">
+                    <div class="flex items-baseline gap-2">
+                        <span id="kpiVariance" class="font-display text-3xl sm:text-4xl font-extrabold text-[#1B4332]">0%</span>
+                    </div>
+                </div>
+                <!-- Botón / Indicador de Días Restantes de Trabajo según Fecha Fin -->
+                <div class="mt-3 pt-2.5 border-t border-[#D3E8DC] flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-1.5">
+                        <i data-lucide="hourglass" class="w-4 h-4 text-[#2C5E7A]"></i>
+                        <span class="text-xs font-medium text-[#355B4B]">Días restantes de trabajo:</span>
+                    </div>
+                    <span id="kpiRemainingDays" class="px-2.5 py-1 rounded-lg text-xs font-bold transition-colors duration-300">
+                        0 días
+                    </span>
+                </div>
+                <p id="kpiRemainingSub" class="text-[11px] text-[#52796F] mt-1">Según fecha fin programada</p>
+            </div>
+
+            <!-- KPI 4: Semáforo de Entregables -->
+            <div class="glass-card glass-card-hover rounded-2xl p-5 relative overflow-hidden">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-[#2D6A4F]">Estado de Entregables</span>
+                    <div class="w-9 h-9 rounded-xl bg-[#E8F5EE] border border-[#B7E4C7] flex items-center justify-center">
+                        <i data-lucide="layers" class="w-5 h-5 text-[#40916C]"></i>
+                    </div>
+                </div>
+                <div class="mt-3 grid grid-cols-3 gap-2 text-center">
+                    <div class="bg-[#E8F5EE]/80 border border-[#B7E4C7] rounded-xl p-2">
+                        <span id="countOnTrack" class="block font-display text-xl font-bold text-[#2D6A4F]">0</span>
+                        <span class="text-[10px] text-[#355B4B] font-medium">Al Día</span>
+                    </div>
+                    <div class="bg-[#FDF6E7]/90 border border-[#F3DFAB] rounded-xl p-2">
+                        <span id="countWarning" class="block font-display text-xl font-bold text-[#8A5D1B]">0</span>
+                        <span class="text-[10px] text-[#8A5D1B] font-medium">Rezago Leve</span>
+                    </div>
+                    <div class="bg-[#FDEEEF]/90 border border-[#F5C2C4] rounded-xl p-2">
+                        <span id="countDelayed" class="block font-display text-xl font-bold text-[#8C383B]">0</span>
+                        <span class="text-[10px] text-[#8C383B] font-medium">Retraso</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 2: GRÁFICOS PRINCIPALES Y MAPA AMBIENTAL DE COLOMBIA -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Gráfico Comparativo de Barras -->
+            <div class="lg:col-span-2 glass-card rounded-2xl p-5 sm:p-6 flex flex-col justify-between">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                    <div>
+                        <h2 class="font-display text-lg sm:text-xl font-bold text-[#1B4332] flex items-center gap-2">
+                            <i data-lucide="bar-chart-horizontal" class="w-5 h-5 text-[#40916C]"></i>
+                            Avance Real vs. Avance Esperado
+                        </h2>
+                    </div>
+                    <div class="flex items-center gap-3 self-start sm:self-auto">
+                        <span class="flex items-center gap-1.5 text-xs font-medium text-[#2D6A4F]">
+                            <span class="w-3 h-3 rounded-sm bg-[#88C9A1] border border-[#529471] inline-block"></span> % Completado
+                        </span>
+                        <span class="flex items-center gap-1.5 text-xs font-medium text-[#8A5D1B]">
+                            <span class="w-3 h-3 rounded-sm bg-[#E6BE7A] border border-[#B68233] inline-block"></span> % Esperado
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Contenedor del Gráfico con altura adaptable -->
+                <div class="relative w-full min-h-[360px] max-h-[520px] overflow-y-auto pr-1">
+                    <div id="chartContainerWrapper" class="w-full" style="height: 380px;">
+                        <canvas id="deliverablesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel Mapa de Colombia & Resumen Ambiental -->
+            <div class="glass-card rounded-2xl p-5 sm:p-6 flex flex-col justify-between relative overflow-hidden">
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <h2 class="font-display text-lg font-bold text-[#1B4332] flex items-center gap-2">
+                            <i data-lucide="compass" class="w-5 h-5 text-[#40916C]"></i>
+                            Territorio y Acción Climática
+                        </h2>
+                        <span class="text-[11px] font-semibold px-2.5 py-0.5 rounded-md bg-[#E8F5EE] text-[#2D6A4F] border border-[#B7E4C7]">
+                            Colombia Sostenible
+                        </span>
+                    </div>
+                    <p class="text-xs text-[#4A6B5D] mb-4">
+                        Distribución del estado de cumplimiento de los entregables estratégicos de gestión climática.
+                    </p>
+                </div>
+
+                <!-- Ilustración Interactiva de Colombia + Dona de Estado -->
+                <div class="relative flex flex-col items-center justify-center my-auto py-2">
+                    <div class="relative w-56 h-56 flex items-center justify-center">
+                        <!-- Mini Mapa de Colombia central dentro de la dona -->
+                        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-0">
+                            <svg class="w-24 h-24 opacity-60" viewBox="0 0 800 950" fill="none">
+                                <path d="M365,45 L415,25 L438,32 L420,58 L390,75 L378,108 L402,155 L420,210 L442,240 L495,250 L548,265 L595,295 L615,340 L675,355 L695,390 L660,445 L645,495 L690,530 L705,575 L665,605 L635,665 L610,730 L585,845 L555,895 L535,885 L530,815 L475,775 L415,760 L365,710 L325,695 L265,645 L215,635 L165,595 L185,545 L210,485 L205,415 L180,355 L195,295 L225,275 L235,235 L255,220 L275,165 L315,120 L345,75 Z" 
+                                      fill="#B7E4C7" stroke="#529471" stroke-width="18"/>
+                            </svg>
+                            <span id="donutCenterLabel" class="font-display text-lg font-extrabold text-[#1B4332] -mt-2">0</span>
+                            <span class="text-[10px] uppercase tracking-wider text-[#2D6A4F] font-semibold">Entregables</span>
+                        </div>
+                        <canvas id="statusDonutChart" class="relative z-10"></canvas>
+                    </div>
+                </div>
+
+                <!-- Leyenda de Reglas de Evaluación -->
+                <div class="mt-4 bg-[#F2F9F5] rounded-xl p-3.5 border border-[#B7E4C7] space-y-2 text-xs">
+                    <div class="flex items-center justify-between text-[#1B4332]">
+                        <span class="font-semibold text-[#2D6A4F] flex items-center gap-1">
+                            <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-[#8C383B]"></i> Regla de Seguimiento:
+                        </span>
+                        <span class="font-mono text-[11px] bg-white px-2 py-0.5 rounded border border-[#B7E4C7] text-[#2D6A4F]">
+                            (Corte - Inicio) / (Fin - Inicio)
+                        </span>
+                    </div>
+                    <p class="text-[11px] text-[#4A6B5D] leading-relaxed">
+                        Si un entregable <strong>no tiene % esperado</strong>, se identifica automáticamente como <strong>Retraso</strong>, incluso si registra un 100% completado.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 3: DETALLE DE ENTREGABLES -->
+        <section class="glass-card rounded-2xl p-5 sm:p-6 space-y-5">
+            <!-- Barra de Herramientas y Filtros -->
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                    <h2 class="font-display text-lg sm:text-xl font-bold text-[#1B4332] flex items-center gap-2">
+                        <i data-lucide="list-checks" class="w-5 h-5 text-[#40916C]"></i>
+                        Detalle de Entregables
+                    </h2>
+                    <p class="text-xs text-[#4A6B5D]">
+                        Haz clic sobre cualquier entregable para consultar más información.
+                    </p>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <!-- Buscador -->
+                    <div class="relative flex-grow sm:flex-grow-0 sm:w-64">
+                        <i data-lucide="search" class="w-4 h-4 text-[#40916C] absolute left-3 top-1/2 -translate-y-1/2"></i>
+                        <input type="text" id="searchInput" oninput="renderizarEntregables()" placeholder="Buscar entregable, responsable..." 
+                               class="w-full pl-9 pr-3 py-2 rounded-xl bg-white border border-[#B7E4C7] text-xs sm:text-sm text-[#1B4332] placeholder-[#749C8B] focus:outline-none focus:border-[#529471]">
+                    </div>
+
+                    <!-- Filtro por Estado -->
+                    <select id="statusFilter" onchange="renderizarEntregables()" class="px-3 py-2 rounded-xl bg-white border border-[#B7E4C7] text-xs sm:text-sm text-[#1B4332] focus:outline-none focus:border-[#529471] cursor-pointer">
+                        <option value="ALL">Todos los estados</option>
+                        <option value="ON_TRACK">Al Día / Completados</option>
+                        <option value="WARNING">Rezago Leve (-5% a -20%)</option>
+                        <option value="DELAYED">Retraso (Crítico o Sin % Esperado)</option>
+                    </select>
+
+                    <!-- Switch para mostrar/ocultar descripción larga -->
+                    <button id="btnToggleNoise" onclick="toggleTextosOriginales()" class="px-3 py-2 rounded-xl bg-[#E8F5EE] hover:bg-[#D8F3DC] border border-[#B7E4C7] text-xs font-semibold text-[#2D6A4F] flex items-center gap-1.5 transition">
+                        <i data-lucide="eye-off" id="iconToggleNoise" class="w-4 h-4 text-[#40916C]"></i>
+                        <span id="labelToggleNoise">Modo Limpio (Sin Ruido Visual)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabla de Entregables -->
+            <div class="overflow-x-auto rounded-xl border border-[#B7E4C7] bg-white/70">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-[#E8F5EE]/90 text-[11px] uppercase tracking-wider text-[#2D6A4F] border-b border-[#B7E4C7]">
+                            <th class="py-3.5 px-4 font-semibold">Entregable (Nombre Asociado)</th>
+                            <th id="thOriginalCols" class="py-3.5 px-4 font-semibold hidden">Descripción y Observaciones</th>
+                            <th class="py-3.5 px-4 font-semibold">Responsable</th>
+                            <th class="py-3.5 px-4 font-semibold">Cronograma y Días Restantes</th>
+                            <th class="py-3.5 px-4 font-semibold text-center">% Esperado</th>
+                            <th class="py-3.5 px-4 font-semibold text-center">% Completado</th>
+                            <th class="py-3.5 px-4 font-semibold">Comparativa y Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="deliverablesTableBody" class="divide-y divide-[#D8F3DC] text-xs sm:text-sm">
+                        <!-- Filas generadas dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- PIE DE PÁGINA AMBIENTAL -->
+        <footer class="text-center text-xs text-[#52796F] py-4 flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-[#B7E4C7]">
+            <div class="flex items-center gap-2">
+                <span class="inline-block w-2.5 h-2.5 rounded-full bg-[#88C9A1]"></span>
+                <span>Tablero de Seguimiento de Cambio Climático • Colombia</span>
+            </div>
+            <div>
+                <span>Monitoreo Ambiental de Entregables</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- MODAL DE DETALLE DEL ENTREGABLE (INCLUYE RESPONSABLE Y OBSERVACIONES) -->
+    <div id="detailModal" class="fixed inset-0 z-50 hidden bg-[#1B4332]/40 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="glass-card bg-white/95 rounded-2xl max-w-xl w-full p-6 border border-[#88C9A1] space-y-4 max-h-[90vh] overflow-y-auto shadow-xl">
+            <div class="flex items-center justify-between border-b border-[#D8F3DC] pb-3">
+                <div class="flex items-center gap-2">
+                    <span id="modalItemCode" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#E8F5EE] text-[#2D6A4F] border border-[#B7E4C7]">
+                        Entregable
+                    </span>
+                    <span id="modalStatusBadge" class="px-2.5 py-0.5 rounded-full text-xs font-semibold"></span>
+                </div>
+                <button onclick="cerrarModalDetalle()" class="text-[#4A6B5D] hover:text-[#1B4332]">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3.5 text-xs sm:text-sm">
+                <div>
+                    <label class="block text-[#2D6A4F] text-xs font-semibold mb-1">Nombre Asociado (Sin ruido visual):</label>
+                    <input type="text" id="modalShortNameInput" class="w-full px-3.5 py-2 rounded-xl bg-[#F7FBF8] border border-[#B7E4C7] text-[#1B4332] font-semibold text-sm focus:outline-none focus:border-[#529471]">
+                </div>
+
+                <!-- Responsable y Días Restantes -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="bg-[#E8F5EE]/60 rounded-xl p-3 border border-[#B7E4C7]">
+                        <span class="text-[11px] uppercase tracking-wider text-[#2D6A4F] font-semibold flex items-center gap-1">
+                            <i data-lucide="user-check" class="w-3.5 h-3.5"></i> Responsable:
+                        </span>
+                        <p id="modalResponsableText" class="text-[#1B4332] font-semibold mt-1"></p>
+                    </div>
+                    <div class="bg-[#EAF3F9]/70 rounded-xl p-3 border border-[#C2DDF0]">
+                        <span class="text-[11px] uppercase tracking-wider text-[#2C5E7A] font-semibold flex items-center gap-1">
+                            <i data-lucide="hourglass" class="w-3.5 h-3.5"></i> Días Restantes de Trabajo:
+                        </span>
+                        <p id="modalRemainingDaysText" class="text-[#2C5E7A] font-bold mt-1"></p>
+                    </div>
+                </div>
+
+                <!-- Descripción del Entregable -->
+                <div class="bg-[#F7FBF8] rounded-xl p-3.5 border border-[#D8F3DC] space-y-2">
+                    <div>
+                        <span class="text-[11px] uppercase tracking-wider text-[#40916C] font-semibold block">Línea / Componente:</span>
+                        <p id="modalColAText" class="text-[#1B4332] font-medium mt-0.5 leading-relaxed"></p>
+                    </div>
+                    <div class="border-t border-[#D8F3DC] pt-2">
+                        <span class="text-[11px] uppercase tracking-wider text-[#40916C] font-semibold block">Descripción del Entregable:</span>
+                        <p id="modalColBText" class="text-[#2D4A3E] mt-0.5 leading-relaxed"></p>
+                    </div>
+                </div>
+
+                <!-- Observaciones -->
+                <div class="bg-[#FDF6E7]/80 rounded-xl p-3.5 border border-[#F3DFAB]">
+                    <span class="text-[11px] uppercase tracking-wider text-[#8A5D1B] font-semibold flex items-center gap-1">
+                        <i data-lucide="message-square-text" class="w-3.5 h-3.5"></i> Observaciones:
+                    </span>
+                    <p id="modalObservacionesText" class="text-[#5C4018] mt-1 leading-relaxed"></p>
+                </div>
+
+                <!-- Cronograma y Porcentajes -->
+                <div class="grid grid-cols-2 gap-3 bg-[#F7FBF8] p-3.5 rounded-xl border border-[#D8F3DC]">
+                    <div>
+                        <span class="text-[11px] text-[#52796F] block">Fecha de Inicio:</span>
+                        <strong id="modalStartDate" class="text-[#1B4332]"></strong>
+                    </div>
+                    <div>
+                        <span class="text-[11px] text-[#52796F] block">Fecha de Finalización:</span>
+                        <strong id="modalEndDate" class="text-[#1B4332]"></strong>
+                    </div>
+                    <div>
+                        <span class="text-[11px] text-[#8A5D1B] block">% Esperado a la fecha:</span>
+                        <strong id="modalExpectedPct" class="text-[#8A5D1B] text-base"></strong>
+                    </div>
+                    <div>
+                        <span class="text-[11px] text-[#2D6A4F] block">% Completado:</span>
+                        <strong id="modalCompletedPct" class="text-[#2D6A4F] text-base"></strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="cerrarModalDetalle()" class="px-4 py-2 rounded-xl bg-[#E8F5EE] hover:bg-[#D8F3DC] text-[#2D6A4F] text-xs font-semibold">Cerrar</button>
+                <button onclick="guardarNombreAsociadoManual()" class="px-4 py-2 rounded-xl bg-[#88C9A1] hover:bg-[#74C69D] text-[#1B4332] text-xs font-bold shadow-sm">
+                    Guardar Nombre Asociado
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================================
+        // ESTADO GLOBAL DE LA APLICACIÓN
+        // ============================================================================
+        const DEFAULT_XLSX_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSk75EVa0Os6ZQHIx5IP3DNOS_vyVpKqd_9R1r4q3q4n6OT-rWkvjivxDwVtJH_kw/pub?output=xlsx";
+        
+        let rawWorkbook = null;
+        let deliverablesData = [];
+        let showOriginalColumns = false;
+        let activeModalItemIndex = null;
+        let barChartInstance = null;
+        let donutChartInstance = null;
+
+        // Diccionario de palabras vacías o de relleno para la función generadora de nombres asociados
+        const NOISE_PREFIXES = [
+            /^elaborar\s+(un|una|el|la|los|las)?\s*/i,
+            /^realizar\s+(un|una|el|la|los|las)?\s*/i,
+            /^desarrollar\s+(un|una|el|la|los|las)?\s*/i,
+            /^implementar\s+(un|una|el|la|los|las)?\s*/i,
+            /^adelantar\s+(un|una|el|la|los|las)?\s*/i,
+            /^construir\s+(un|una|el|la|los|las)?\s*/i,
+            /^formular\s+(un|una|el|la|los|las)?\s*/i,
+            /^documento\s+(de|que\s+contenga|sobre|técnico\s+de)\s*/i,
+            /^informe\s+(de|sobre|técnico\s+de)\s*/i,
+            /^entregable\s*\d*\s*[:.-]?\s*/i
+        ];
+
+        // ============================================================================
+        // 1. FUNCIÓN PARA GENERAR UN NOMBRE ASOCIADO AL ENTREGABLE (SIN RUIDO VISUAL)
+        // ============================================================================
+        function generarNombreAsociado(colA, colB, rowIndex) {
+            const textA = String(colA || "").trim();
+            const textB = String(colB || "").trim();
+
+            let badgeCode = `E-${String(rowIndex + 1).padStart(2, '0')}`;
+            const codeMatch = textA.match(/^([A-Z0-9]+(?:[.-][A-Z0-9]+)*)/i);
+            if (codeMatch && codeMatch[1].length <= 8 && /\d/.test(codeMatch[1])) {
+                badgeCode = codeMatch[1].toUpperCase();
+            }
+
+            let baseText = textB.length > 3 ? textB : textA;
+            if (!baseText) return `${badgeCode} • Entregable ${rowIndex + 1}`;
+
+            let clean = baseText;
+            for (const regex of NOISE_PREFIXES) {
+                clean = clean.replace(regex, "");
+            }
+
+            clean = clean.split(/\s+(?:con el fin de|para garantizar|en el marco de|a través de|mediante el cual|que permita)\s+/i)[0];
+            clean = clean.charAt(0).toUpperCase() + clean.slice(1);
+
+            if (clean.length > 44) {
+                const words = clean.split(/\s+/);
+                clean = words.slice(0, 6).join(" ").replace(/[,.;:]+$/, "") + "…";
+            }
+
+            if (textA && textB && textA.length <= 22 && !clean.toLowerCase().includes(textA.toLowerCase())) {
+                return `${textA}: ${clean}`;
+            }
+
+            return `${badgeCode} • ${clean}`;
+        }
+
+        // ============================================================================
+        // 2. CÁLCULO DEL % ESPERADO, DÍAS RESTANTES Y PARSEO DE FECHAS
+        // ============================================================================
+        function parsearFechaExcel(valor) {
+            if (!valor && valor !== 0) return null;
+
+            if (valor instanceof Date && !isNaN(valor.getTime())) {
+                return valor;
+            }
+
+            if (typeof valor === 'number' && valor > 20000 && valor < 90000) {
+                const utcDays = Math.floor(valor - 25569);
+                const utcValue = utcDays * 86400;
+                return new Date(utcValue * 1000);
+            }
+
+            const str = String(valor).trim();
+            if (!str) return null;
+
+            const dmyMatch = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+            if (dmyMatch) {
+                let day = parseInt(dmyMatch[1], 10);
+                let month = parseInt(dmyMatch[2], 10) - 1;
+                let year = parseInt(dmyMatch[3], 10);
+                if (year < 100) year += 2000;
+                const d = new Date(year, month, day);
+                if (!isNaN(d.getTime())) return d;
+            }
+
+            const parsed = new Date(str);
+            return !isNaN(parsed.getTime()) ? parsed : null;
+        }
+
+        /**
+         * Calcula el % esperado en la fecha de corte.
+         * Si no cuenta con fecha de inicio o fin válidas, retorna null para indicar que NO tiene % esperado.
+         */
+        function calcularPorcentajeEsperado(fechaInicio, fechaFin, fechaCorte) {
+            if (!fechaInicio || !fechaFin || isNaN(fechaInicio.getTime()) || isNaN(fechaFin.getTime())) {
+                return null;
+            }
+
+            const startMs = fechaInicio.getTime();
+            const endMs = fechaFin.getTime();
+            const refMs = fechaCorte.getTime();
+
+            if (endMs <= startMs) {
+                return refMs >= endMs ? 100 : null;
+            }
+
+            if (refMs <= startMs) return 0;
+            if (refMs >= endMs) return 100;
+
+            const pct = ((refMs - startMs) / (endMs - startMs)) * 100;
+            return Math.min(100, Math.max(0, Math.round(pct * 10) / 10));
+        }
+
+        /**
+         * Calcula los días restantes de trabajo entre la fecha de corte y la fecha fin.
+         */
+        function calcularDiasRestantes(fechaFin, fechaCorte) {
+            if (!fechaFin || isNaN(fechaFin.getTime())) return null;
+            const finLimpiado = new Date(fechaFin.getFullYear(), fechaFin.getMonth(), fechaFin.getDate());
+            const corteLimpiado = new Date(fechaCorte.getFullYear(), fechaCorte.getMonth(), fechaCorte.getDate());
+            const diffMs = finLimpiado.getTime() - corteLimpiado.getTime();
+            return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+        }
+
+        function normalizarPorcentajeCompletado(valorJ, todosLosValoresJ = []) {
+            if (valorJ === null || valorJ === undefined || valorJ === "") return 0;
+
+            if (typeof valorJ === 'string') {
+                const tieneSimboloPct = valorJ.includes('%');
+                const limpio = parseFloat(valorJ.replace(',', '.').replace(/[^0-9.-]/g, ''));
+                if (isNaN(limpio)) return 0;
+                if (tieneSimboloPct) return Math.min(100, Math.max(0, Math.round(limpio * 10) / 10));
+                valorJ = limpio;
+            }
+
+            if (typeof valorJ === 'number') {
+                const maxEnColumna = Math.max(...todosLosValoresJ.filter(v => typeof v === 'number' && !isNaN(v)), 0);
+                let pct = valorJ;
+                if (maxEnColumna <= 1.05 && valorJ <= 1.05 && valorJ >= 0) {
+                    pct = valorJ * 100;
+                }
+                return Math.min(100, Math.max(0, Math.round(pct * 10) / 10));
+            }
+            return 0;
+        }
+
+        function formatearFechaCorta(dateObj) {
+            if (!dateObj || isNaN(dateObj.getTime())) return "Sin fecha";
+            return dateObj.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+
+        function formatearTextoDiasRestantes(dias) {
+            if (dias === null || dias === undefined) return "Sin fecha fin";
+            if (dias > 0) return `${dias} día${dias === 1 ? '' : 's'} restantes`;
+            if (dias === 0) return "Vence hoy";
+            return `Plazo finalizado (${Math.abs(dias)} d)`;
+        }
+
+        // ============================================================================
+        // 3. LECTURA Y PROCESAMIENTO DEL ARCHIVO DE DATOS
+        // ============================================================================
+        async function cargarDesdeGoogleSheets() {
+            const urlInput = DEFAULT_XLSX_URL;
+
+            const urlsParaIntentar = [
+                urlInput,
+                urlInput.replace("output=xlsx", "output=csv"),
+                `https://corsproxy.io/?${encodeURIComponent(urlInput)}`,
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(urlInput)}`
+            ];
+
+            for (const candidateUrl of urlsParaIntentar) {
+                try {
+                    const response = await fetch(candidateUrl);
+                    if (!response.ok) continue;
+
+                    const arrayBuffer = await response.arrayBuffer();
+                    const workbook = XLSX.read(arrayBuffer, { type: 'array', cellDates: true });
+
+                    if (workbook && workbook.SheetNames && workbook.SheetNames.length > 0) {
+                        rawWorkbook = workbook;
+                        procesarHojaExcel(workbook.Sheets[workbook.SheetNames[0]]);
+                        return;
+                    }
+                } catch (err) {
+                    // Continúa con el siguiente proxy de respaldo
+                }
+            }
+
+            cargarDatosRespaldoAmbiental();
+        }
+
+        function procesarHojaExcel(sheet) {
+            const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+            if (!rows || rows.length === 0) return;
+
+            const rawJValues = [];
+            rows.forEach(r => {
+                const valJ = r[9];
+                if (typeof valJ === 'number') rawJValues.push(valJ);
+            });
+
+            const extracted = [];
+            let lastColACategory = "";
+
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+                if (!row || row.length === 0) continue;
+
+                const rawA = String(row[0] ?? "").trim();
+                const rawB = String(row[1] ?? "").trim();
+                const rawC = String(row[2] ?? "").trim(); // Responsable
+                const rawE = row[4];                      // Fecha Inicio
+                const rawF = row[5];                      // Fecha Fin
+                const rawJ = row[9];                      // % Completado
+                const rawK = String(row[10] ?? "").trim(); // Observaciones
+
+                if (!rawA && !rawB) continue;
+
+                const combinedHeaderCheck = `${rawA} ${rawB} ${String(rawE)} ${String(rawF)} ${String(rawJ)}`.toLowerCase();
+                if (
+                    i < 5 &&
+                    (combinedHeaderCheck.includes("fecha de inicio") ||
+                     combinedHeaderCheck.includes("fecha inicio") ||
+                     combinedHeaderCheck.includes("% completado") ||
+                     combinedHeaderCheck.includes("porcentaje") ||
+                     (rawA.toLowerCase() === "entregable" || rawB.toLowerCase() === "entregable"))
+                ) {
+                    continue;
+                }
+
+                const startDate = parsearFechaExcel(rawE);
+                const endDate = parsearFechaExcel(rawF);
+
+                const hasValidJ = rawJ !== "" && rawJ !== null && rawJ !== undefined && !isNaN(parseFloat(String(rawJ).replace('%', '').replace(',', '.')));
+                if (!startDate && !endDate && !hasValidJ && i < 3) {
+                    continue;
+                }
+
+                if (rawA) lastColACategory = rawA;
+                const effectiveColA = rawA || lastColACategory || `Línea ${extracted.length + 1}`;
+                const effectiveColB = rawB || rawA;
+
+                const completedPct = normalizarPorcentajeCompletado(rawJ, rawJValues);
+                const idx = extracted.length;
+
+                extracted.push({
+                    id: `item-${idx}`,
+                    colA: effectiveColA,
+                    colB: effectiveColB,
+                    responsable: rawC || "Sin responsable asignado",
+                    observaciones: rawK || "Sin observaciones registradas",
+                    shortName: generarNombreAsociado(effectiveColA, effectiveColB, idx),
+                    startDate: startDate,
+                    endDate: endDate,
+                    completedPct: completedPct,
+                    expectedPct: null,
+                    hasExpected: false,
+                    remainingDays: null,
+                    variance: 0,
+                    status: 'ON_TRACK'
+                });
+            }
+
+            if (extracted.length > 0) {
+                deliverablesData = extracted;
+                recalcularTodoYRenderizar();
+            } else {
+                cargarDatosRespaldoAmbiental();
+            }
+        }
+
+        function cargarDatosRespaldoAmbiental() {
+            const sampleRows = [
+                {
+                    colA: "1. Mitigación GEI Sector Energético",
+                    colB: "Elaborar el documento técnico de la hoja de ruta para la reducción de emisiones fugitivas de metano en hidrocarburos y minería.",
+                    responsable: "Equipo Técnico de Mitigación",
+                    observaciones: "Entregable validado con actores regionales y en fase final de publicación.",
+                    start: "2026-01-15",
+                    end: "2026-12-20",
+                    completed: 92
+                },
+                {
+                    colA: "1. Mitigación GEI Sector Energético",
+                    colB: "Implementar el sistema digital de monitoreo, reporte y verificación (MRV) de proyectos de energía renovable en La Guajira y Cesar.",
+                    responsable: "Coordinación de Monitoreo Climático",
+                    observaciones: "Se completó la integración de datos base y pruebas piloto regionales.",
+                    start: "2026-02-01",
+                    end: "2026-12-15",
+                    completed: 78
+                },
+                {
+                    colA: "2. Adaptación al Cambio Climático",
+                    colB: "Realizar el análisis de vulnerabilidad y riesgo climático de la infraestructura de transmisión eléctrica nacional.",
+                    responsable: "Grupo de Adaptación e Infraestructura",
+                    observaciones: "Pendiente consolidación del capítulo de alertas tempranas hidrológicas.",
+                    start: "2026-03-01",
+                    end: "2026-11-28",
+                    completed: 65
+                },
+                {
+                    colA: "2. Adaptación al Cambio Climático",
+                    colB: "Formular los lineamientos de reconversión laboral y diversificación productiva en municipios priorizados.",
+                    responsable: "Dirección de Transición Socioecológica",
+                    observaciones: "En mesas de concertación territorial con comunidades locales.",
+                    start: "2026-04-10",
+                    end: "2026-12-10",
+                    completed: 54
+                },
+                {
+                    colA: "3. Comunidades Energéticas y Gobernanza",
+                    colB: "Desarrollar la estrategia de participación ciudadana y estructuración de Comunidades Energéticas Sostenibles en zonas no interconectadas.",
+                    responsable: "Grupo de Participación y Comunidades",
+                    observaciones: "Avance positivo en talleres participativos regionales.",
+                    start: "2026-02-15",
+                    end: "2026-12-30",
+                    completed: 85
+                },
+                {
+                    colA: "4. Finanzas del Clima y Mercados de Carbono",
+                    colB: "Elaborar la reglamentación técnica para la articulación de certificados de reducción de emisiones con el registro nacional.",
+                    responsable: "Mesa de Finanzas del Clima",
+                    observaciones: "Sin fecha programada en cronograma inicial; clasificado en retraso por falta de % esperado.",
+                    start: null,
+                    end: null,
+                    completed: 100
+                },
+                {
+                    colA: "5. Eficiencia Energética e Hidrógeno Verde",
+                    colB: "Adelantar el estudio de factibilidad ambiental e hídrica para hubs de producción de hidrógeno de bajas emisiones.",
+                    responsable: "Unidad de Nuevas Energías",
+                    observaciones: "Estudio hidrológico completado en un 88%.",
+                    start: "2026-03-15",
+                    end: "2026-12-18",
+                    completed: 88
+                }
+            ];
+
+            deliverablesData = sampleRows.map((item, idx) => ({
+                id: `sample-${idx}`,
+                colA: item.colA,
+                colB: item.colB,
+                responsable: item.responsable,
+                observaciones: item.observaciones,
+                shortName: generarNombreAsociado(item.colA, item.colB, idx),
+                startDate: item.start ? new Date(item.start) : null,
+                endDate: item.end ? new Date(item.end) : null,
+                completedPct: item.completed,
+                expectedPct: null,
+                hasExpected: false,
+                remainingDays: null,
+                variance: 0,
+                status: 'ON_TRACK'
+            }));
+
+            recalcularTodoYRenderizar();
+        }
+
+        // ============================================================================
+        // 4. RECÁLCULO DE MÉTRICAS Y REGLA DE RETRASO SIN % ESPERADO
+        // ============================================================================
+        function obtenerFechaCorteSeleccionada() {
+            const inputVal = document.getElementById('cutoffDateInput')?.value;
+            if (inputVal) {
+                const parts = inputVal.split('-');
+                return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 23, 59, 59);
+            }
+            return new Date();
+        }
+
+        function recalcularTodoYRenderizar() {
+            const cutoffDate = obtenerFechaCorteSeleccionada();
+
+            let sumCompleted = 0;
+            let sumExpected = 0;
+            let countWithExpected = 0;
+            let onTrackCount = 0;
+            let warningCount = 0;
+            let delayedCount = 0;
+
+            let maxEndDate = null;
+            let sumRemainingDaysPositivos = 0;
+            let countRemainingDaysPositivos = 0;
+
+            deliverablesData.forEach(item => {
+                const rawExpected = calcularPorcentajeEsperado(item.startDate, item.endDate, cutoffDate);
+                item.remainingDays = calcularDiasRestantes(item.endDate, cutoffDate);
+
+                if (item.endDate && !isNaN(item.endDate.getTime())) {
+                    if (!maxEndDate || item.endDate > maxEndDate) {
+                        maxEndDate = item.endDate;
+                    }
+                    if (item.remainingDays !== null && item.remainingDays > 0) {
+                        sumRemainingDaysPositivos += item.remainingDays;
+                        countRemainingDaysPositivos++;
+                    }
+                }
+
+                // REGLA SOLICITADA: Si un entregable NO tiene % esperado (fechas vacías/inválidas o % esperado nulo/0),
+                // debe ser identificado obligatoriamente como RETRASO ('DELAYED'), así tenga 100% de % completado.
+                const tienePorcentajeEsperado = rawExpected !== null && rawExpected > 0;
+                item.hasExpected = tienePorcentajeEsperado;
+                item.expectedPct = tienePorcentajeEsperado ? rawExpected : 0;
+
+                if (!tienePorcentajeEsperado) {
+                    item.variance = Math.round((item.completedPct - 0) * 10) / 10;
+                    item.status = 'DELAYED';
+                    delayedCount++;
+                } else {
+                    item.variance = Math.round((item.completedPct - item.expectedPct) * 10) / 10;
+                    countWithExpected++;
+                    sumExpected += item.expectedPct;
+
+                    if (item.completedPct >= 100 || item.variance >= -5) {
+                        item.status = 'ON_TRACK';
+                        onTrackCount++;
+                    } else if (item.variance >= -20) {
+                        item.status = 'WARNING';
+                        warningCount++;
+                    } else {
+                        item.status = 'DELAYED';
+                        delayedCount++;
+                    }
+                }
+
+                sumCompleted += item.completedPct;
+            });
+
+            const total = deliverablesData.length || 1;
+            const avgCompleted = Math.round((sumCompleted / total) * 10) / 10;
+            const avgExpected = countWithExpected > 0 ? Math.round((sumExpected / countWithExpected) * 10) / 10 : 0;
+            const netVariance = Math.round((avgCompleted - avgExpected) * 10) / 10;
+
+            // Actualizar KPIs
+            document.getElementById('kpiAvgCompleted').textContent = `${avgCompleted}%`;
+            document.getElementById('kpiCompletedBar').style.width = `${Math.min(100, avgCompleted)}%`;
+            document.getElementById('kpiCompletedSub').textContent = `Calculado sobre ${deliverablesData.length} entregables activos`;
+
+            document.getElementById('kpiAvgExpected').textContent = `${avgExpected}%`;
+            document.getElementById('kpiExpectedBar').style.width = `${Math.min(100, avgExpected)}%`;
+
+            const sign = netVariance > 0 ? '+' : '';
+            document.getElementById('kpiVariance').textContent = `${sign}${netVariance}%`;
+
+            // Actualizar Días Restantes de Trabajo en la tarjeta de Balance según Fecha Fin
+            const remainingBadge = document.getElementById('kpiRemainingDays');
+            const remainingSub = document.getElementById('kpiRemainingSub');
+            
+            // Asignar semáforo a días restantes según el balance
+            if (netVariance >= 0) {
+                remainingBadge.className = "px-2.5 py-1 rounded-lg text-xs font-bold bg-[#E8F5EE] text-[#2D6A4F] border border-[#B7E4C7]";
+            } else {
+                remainingBadge.className = "px-2.5 py-1 rounded-lg text-xs font-bold bg-[#FDEEEF] text-[#8C383B] border border-[#F5C2C4]";
+            }
+
+            if (maxEndDate) {
+                const diasHastaCierreMax = calcularDiasRestantes(maxEndDate, cutoffDate);
+                const diasmostrar = Math.max(0, diasHastaCierreMax);
+                remainingBadge.textContent = `${diasmostrar} días`;
+                const promDias = countRemainingDaysPositivos > 0
+                    ? Math.round(sumRemainingDaysPositivos / countRemainingDaysPositivos)
+                    : 0;
+                remainingSub.textContent = `Cierre máx: ${formatearFechaCorta(maxEndDate)} (Prom: ${promDias} d)`;
+            } else {
+                remainingBadge.textContent = "0 días";
+                remainingSub.textContent = "Sin fechas de finalización registradas";
+            }
+
+            document.getElementById('countOnTrack').textContent = onTrackCount;
+            document.getElementById('countWarning').textContent = warningCount;
+            document.getElementById('countDelayed').textContent = delayedCount;
+            document.getElementById('donutCenterLabel').textContent = deliverablesData.length;
+
+            renderizarGraficos(onTrackCount, warningCount, delayedCount);
+            renderizarEntregables();
+        }
+
+        // ============================================================================
+        // 5. GRÁFICOS INTERACTIVOS EN PALETA PASTEL AMBIENTAL
+        // ============================================================================
+        function renderizarGraficos(onTrack, warning, delayed) {
+            const ctxBar = document.getElementById('deliverablesChart').getContext('2d');
+            const ctxDonut = document.getElementById('statusDonutChart').getContext('2d');
+
+            const dynamicHeight = Math.max(340, deliverablesData.length * 42);
+            document.getElementById('chartContainerWrapper').style.height = `${dynamicHeight}px`;
+
+            const labels = deliverablesData.map(d => d.shortName);
+            const completedValues = deliverablesData.map(d => d.completedPct);
+            const expectedValues = deliverablesData.map(d => d.expectedPct);
+
+            if (barChartInstance) barChartInstance.destroy();
+            barChartInstance = new Chart(ctxBar, {
+                type: 'bar',
+                plugins: [ChartDataLabels],
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: '% Completado',
+                            data: completedValues,
+                            backgroundColor: deliverablesData.map(d =>
+                                d.status === 'ON_TRACK' ? '#88C9A1' :
+                                d.status === 'WARNING' ? '#E6BE7A' :
+                                '#E29598'
+                            ),
+                            borderColor: deliverablesData.map(d =>
+                                d.status === 'ON_TRACK' ? '#529471' :
+                                d.status === 'WARNING' ? '#B68233' :
+                                '#B55B5E'
+                            ),
+                            borderWidth: 1,
+                            borderRadius: 6,
+                            barPercentage: 0.75,
+                            categoryPercentage: 0.8
+                        },
+                        {
+                            label: '% Esperado',
+                            data: expectedValues,
+                            backgroundColor: 'rgba(230, 190, 122, 0.45)',
+                            borderColor: '#B68233',
+                            borderWidth: 1.5,
+                            borderRadius: 6,
+                            barPercentage: 0.75,
+                            categoryPercentage: 0.8
+                        }
+                    ]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: { right: 35 }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false },
+                        datalabels: {
+                            color: function(context) {
+                                return context.datasetIndex === 0 ? '#1B4332' : '#8A5D1B';
+                            },
+                            font: { family: 'Inter', size: 10, weight: 'bold' },
+                            formatter: function(value) {
+                                return value + '%';
+                            },
+                            anchor: 'end',
+                            align: 'end',
+                            offset: 4
+                        }
+                    },
+                    scales: {
+                        x: {
+                            min: 0,
+                            max: 100,
+                            grid: { color: 'rgba(82, 148, 113, 0.14)' },
+                            ticks: {
+                                color: '#355B4B',
+                                callback: value => value + '%'
+                            }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: {
+                                color: '#1B4332',
+                                font: { family: 'Inter', size: 11, weight: '600' }
+                            }
+                        }
+                    }
+                }
+            });
+
+            if (donutChartInstance) donutChartInstance.destroy();
+            donutChartInstance = new Chart(ctxDonut, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Al Día / Completado', 'Rezago Leve', 'Retraso'],
+                    datasets: [{
+                        data: [onTrack, warning, delayed],
+                        backgroundColor: [
+                            '#88C9A1',
+                            '#E6BE7A',
+                            '#E29598'
+                        ],
+                        borderColor: '#FFFFFF',
+                        borderWidth: 3,
+                        hoverOffset: 6
+                    }]
+                },
+                options: {
+                    cutout: '72%',
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: { display: false }
+                    }
+                }
+            });
+        }
+
+        // ============================================================================
+        // 6. TABLA INTERACTIVA DE DETALLE DE ENTREGABLES
+        // ============================================================================
+        function renderizarEntregables() {
+            const tbody = document.getElementById('deliverablesTableBody');
+            const search = (document.getElementById('searchInput')?.value || "").toLowerCase();
+            const statusFilter = document.getElementById('statusFilter')?.value || "ALL";
+
+            const filtered = deliverablesData
+                .map((item, originalIndex) => ({ ...item, originalIndex }))
+                .filter(item => {
+                    const matchesSearch =
+                        item.shortName.toLowerCase().includes(search) ||
+                        item.colA.toLowerCase().includes(search) ||
+                        item.colB.toLowerCase().includes(search) ||
+                        item.responsable.toLowerCase().includes(search) ||
+                        item.observaciones.toLowerCase().includes(search);
+                    const matchesStatus = statusFilter === "ALL" || item.status === statusFilter;
+                    return matchesSearch && matchesStatus;
+                });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="py-8 text-center text-[#52796F]">
+                            No se encontraron entregables con los filtros seleccionados.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(item => {
+                let statusBadge = "";
+                if (!item.hasExpected) {
+                    statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#FDEEEF] text-[#8C383B] border border-[#F5C2C4]">Retraso (Sin % esperado)</span>`;
+                } else if (item.status === 'ON_TRACK') {
+                    statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#E8F5EE] text-[#2D6A4F] border border-[#B7E4C7]">Al Día (${item.variance >= 0 ? '+' : ''}${item.variance}%)</span>`;
+                } else if (item.status === 'WARNING') {
+                    statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#FDF6E7] text-[#8A5D1B] border border-[#F3DFAB]">Rezago (${item.variance}%)</span>`;
+                } else {
+                    statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#FDEEEF] text-[#8C383B] border border-[#F5C2C4]">Retraso (${item.variance}%)</span>`;
+                }
+
+                const barColor =
+                    item.status === 'ON_TRACK' ? 'bg-[#88C9A1]' :
+                    item.status === 'WARNING' ? 'bg-[#E6BE7A]' : 'bg-[#E29598]';
+
+                const expectedLabel = item.hasExpected
+                    ? `<span class="font-display font-bold text-[#8A5D1B]">${item.expectedPct}%</span>`
+                    : `<span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#FDEEEF] text-[#8C383B] border border-[#F5C2C4]">Sin % esperado</span>`;
+
+                return `
+                    <tr onclick="abrirModalDetalle(${item.originalIndex})" class="hover:bg-[#E8F5EE]/60 transition group cursor-pointer">
+                        <!-- Nombre Asociado Sintetizado -->
+                        <td class="py-3.5 px-4 align-middle">
+                            <div class="flex items-center gap-2">
+                                <span class="text-left font-semibold text-[#1B4332] group-hover:text-[#2D6A4F] transition flex items-center gap-1.5">
+                                    <span>${item.shortName}</span>
+                                    <i data-lucide="external-link" class="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 text-[#40916C] transition"></i>
+                                </span>
+                            </div>
+                            <span class="text-[11px] text-[#52796F] block mt-0.5 truncate max-w-xs">
+                                ${item.colA}
+                            </span>
+                        </td>
+
+                        <!-- Descripción y Observaciones (Oculto por defecto en modo limpio) -->
+                        <td class="py-3.5 px-4 align-middle text-xs text-[#2D4A3E] max-w-md ${showOriginalColumns ? '' : 'hidden'}">
+                            <p class="font-semibold text-[#2D6A4F]">${item.colA}</p>
+                            <p class="mt-0.5 leading-relaxed">${item.colB}</p>
+                            <p class="mt-1 text-[11px] text-[#8A5D1B] bg-[#FDF6E7] px-2 py-1 rounded border border-[#F3DFAB]">
+                                <strong>Observaciones:</strong> ${item.observaciones}
+                            </p>
+                        </td>
+
+                        <!-- Responsable -->
+                        <td class="py-3.5 px-4 align-middle text-xs text-[#2D4A3E]">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#F2F9F5] border border-[#D8F3DC] font-medium text-[#1B4332]">
+                                <i data-lucide="user" class="w-3.5 h-3.5 text-[#40916C]"></i>
+                                ${item.responsable}
+                            </span>
+                        </td>
+
+                        <!-- Cronograma y Días Restantes -->
+                        <td class="py-3.5 px-4 align-middle whitespace-nowrap text-xs text-[#2D4A3E]">
+                            <div class="flex items-center gap-1.5">
+                                <span class="px-2 py-0.5 rounded bg-[#F7FBF8] border border-[#B7E4C7]">${formatearFechaCorta(item.startDate)}</span>
+                                <span class="text-[#40916C]">→</span>
+                                <span class="px-2 py-0.5 rounded bg-[#F7FBF8] border border-[#B7E4C7]">${formatearFechaCorta(item.endDate)}</span>
+                            </div>
+                            <span class="text-[11px] text-[#2C5E7A] font-medium block mt-1">
+                                ${formatearTextoDiasRestantes(item.remainingDays)}
+                            </span>
+                        </td>
+
+                        <!-- % Esperado -->
+                        <td class="py-3.5 px-4 align-middle text-center">
+                            ${expectedLabel}
+                        </td>
+
+                        <!-- % Completado -->
+                        <td class="py-3.5 px-4 align-middle text-center">
+                            <span class="font-display font-bold text-[#1B4332] text-sm">${item.completedPct}%</span>
+                        </td>
+
+                        <!-- Barra Comparativa Dual + Semáforo -->
+                        <td class="py-3.5 px-4 align-middle min-w-[215px]">
+                            <div class="flex items-center justify-between mb-1">
+                                ${statusBadge}
+                            </div>
+                            <div class="w-full h-2.5 bg-[#E8F5EE] rounded-full relative overflow-hidden border border-[#B7E4C7]">
+                                <div class="absolute top-0 bottom-0 bg-[#E6BE7A]/55 border-r-2 border-[#B68233] z-10 transition-all duration-500" style="width: ${item.expectedPct}%" title="Esperado: ${item.expectedPct}%"></div>
+                                <div class="h-full ${barColor} rounded-full relative z-20 transition-all duration-500" style="width: ${item.completedPct}%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        function toggleTextosOriginales() {
+            showOriginalColumns = !showOriginalColumns;
+            const th = document.getElementById('thOriginalCols');
+            const label = document.getElementById('labelToggleNoise');
+            const icon = document.getElementById('iconToggleNoise');
+
+            if (showOriginalColumns) {
+                th.classList.remove('hidden');
+                label.textContent = "Ocultar Descripción Detallada";
+                icon.setAttribute('data-lucide', 'eye');
+            } else {
+                th.classList.add('hidden');
+                label.textContent = "Modo Limpio (Sin Ruido Visual)";
+                icon.setAttribute('data-lucide', 'eye-off');
+            }
+            renderizarEntregables();
+        }
+
+        // ============================================================================
+        // 7. SÍNTESIS DE NOMBRES ASOCIADOS CON IA
+        // ============================================================================
+        async function generarNombresConIA() {
+            if (deliverablesData.length === 0) return;
+
+            const btn = document.getElementById('btnAiNames');
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Sintetizando...</span>`;
+            lucide.createIcons();
+
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+            const listaParaIA = deliverablesData.map((d, i) => ({
+                index: i,
+                componente: d.colA,
+                descripcion: d.colB
+            }));
+
+            const systemPrompt = "Eres un especialista en planeación ambiental de Cambio Climático en Colombia. Tu tarea es generar un 'nombreAsociado' muy corto, ejecutivo y sin ruido visual (máximo 4 a 5 palabras, incluyendo un prefijo corto como E-01) para cada entregable.";
+
+            const payload = {
+                contents: [{
+                    parts: [{
+                        text: `Genera nombres cortos ejecutivos para estos entregables:\n${JSON.stringify(listaParaIA)}`
+                    }]
+                }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "ARRAY",
+                        items: {
+                            type: "OBJECT",
+                            properties: {
+                                index: { type: "INTEGER" },
+                                nombreAsociado: { type: "STRING" }
+                            },
+                            propertyOrdering: ["index", "nombreAsociado"]
+                        }
+                    }
+                }
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                const jsonText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (jsonText) {
+                    const parsed = JSON.parse(jsonText);
+                    parsed.forEach(entry => {
+                        if (deliverablesData[entry.index] && entry.nombreAsociado) {
+                            deliverablesData[entry.index].shortName = entry.nombreAsociado;
+                        }
+                    });
+                    recalcularTodoYRenderizar();
+                    mostrarAviso("¡Nombres asociados optimizados exitosamente para evitar ruido visual!");
+                }
+            } catch (e) {
+                deliverablesData.forEach((d, idx) => {
+                    d.shortName = generarNombreAsociado(d.colA, d.colB, idx);
+                });
+                recalcularTodoYRenderizar();
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+                lucide.createIcons();
+            }
+        }
+
+        // ============================================================================
+        // 8. MODAL DE DETALLE (RESPONSABLE, OBSERVACIONES Y CRONOGRAMA)
+        // ============================================================================
+        function abrirModalDetalle(index) {
+            activeModalItemIndex = index;
+            const item = deliverablesData[index];
+            if (!item) return;
+
+            document.getElementById('modalItemCode').textContent = `Entregable #${index + 1}`;
+            document.getElementById('modalShortNameInput').value = item.shortName;
+            document.getElementById('modalResponsableText').textContent = item.responsable || "Sin responsable registrado";
+            document.getElementById('modalObservacionesText').textContent = item.observaciones || "Sin observaciones registradas";
+            document.getElementById('modalRemainingDaysText').textContent = formatearTextoDiasRestantes(item.remainingDays);
+            document.getElementById('modalColAText').textContent = item.colA || "Sin información";
+            document.getElementById('modalColBText').textContent = item.colB || "Sin información";
+            document.getElementById('modalStartDate').textContent = formatearFechaCorta(item.startDate);
+            document.getElementById('modalEndDate').textContent = formatearFechaCorta(item.endDate);
+            document.getElementById('modalExpectedPct').textContent = item.hasExpected ? `${item.expectedPct}%` : "Sin % esperado (Clasificado en Retraso)";
+            document.getElementById('modalCompletedPct').textContent = `${item.completedPct}%`;
+
+            const statusBadge = document.getElementById('modalStatusBadge');
+            if (!item.hasExpected) {
+                statusBadge.textContent = "Retraso (Sin % esperado)";
+                statusBadge.className = "px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#FDEEEF] text-[#8C383B] border border-[#F5C2C4]";
+            } else if (item.status === 'ON_TRACK') {
+                statusBadge.textContent = "Al Día";
+                statusBadge.className = "px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#E8F5EE] text-[#2D6A4F] border border-[#B7E4C7]";
+            } else if (item.status === 'WARNING') {
+                statusBadge.textContent = "Rezago Leve";
+                statusBadge.className = "px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#FDF6E7] text-[#8A5D1B] border border-[#F3DFAB]";
+            } else {
+                statusBadge.textContent = "Retraso";
+                statusBadge.className = "px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#FDEEEF] text-[#8C383B] border border-[#F5C2C4]";
+            }
+
+            document.getElementById('detailModal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function cerrarModalDetalle() {
+            document.getElementById('detailModal').classList.add('hidden');
+            activeModalItemIndex = null;
+        }
+
+        function guardarNombreAsociadoManual() {
+            if (activeModalItemIndex === null) return;
+            const newName = document.getElementById('modalShortNameInput').value.trim();
+            if (newName) {
+                deliverablesData[activeModalItemIndex].shortName = newName;
+                recalcularTodoYRenderizar();
+            }
+            cerrarModalDetalle();
+        }
+
+        function mostrarAviso(mensaje) {
+            const banner = document.getElementById('statusBanner');
+            const text = document.getElementById('statusBannerText');
+            text.textContent = mensaje;
+            banner.classList.remove('hidden');
+        }
+
+        // ============================================================================
+        // INICIALIZACIÓN AL CARGAR LA VENTANA
+        // ============================================================================
+        window.onload = function() {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            const dateInput = document.getElementById('cutoffDateInput');
+            dateInput.value = `${yyyy}-${mm}-${dd}`;
+            dateInput.addEventListener('change', recalcularTodoYRenderizar);
+
+            lucide.createIcons();
+            cargarDesdeGoogleSheets();
+        };
+    </script>
+</body>
+</html>
