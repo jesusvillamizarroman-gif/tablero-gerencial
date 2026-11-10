@@ -68,29 +68,29 @@
                 </button>
                 
                 <div id="dropdown-coordinacion" class="hidden fixed mt-1 w-64 bg-brand-dark border border-brand-primary/50 rounded-lg shadow-xl z-[100] flex-col overflow-hidden">
-                    <button onclick="loadContent('Gestión de Desastres', 'Tablero de Gestión de Riesgos.html'); toggleDropdown('dropdown-coordinacion')" class="w-full text-left py-3 px-4 text-sm text-gray-200 hover:text-white hover:bg-brand-primary transition-colors">
+                    <button onclick="loadContent('Tablero de Gestión de Riesgos.html'); toggleDropdown('dropdown-coordinacion')" class="w-full text-left py-3 px-4 text-sm text-gray-200 hover:text-white hover:bg-brand-primary transition-colors">
                         Gestión de Desastres
                     </button>
-                    <button onclick="loadContent('Pol. Relacionamiento Ambiental', 'Politica de relacionamiento Ambiental.html'); toggleDropdown('dropdown-coordinacion')" class="w-full text-left py-3 px-4 text-sm text-gray-200 hover:text-white hover:bg-brand-primary transition-colors border-t border-brand-primary/30">
+                    <button onclick="loadContent('Politica de relacionamiento Ambiental.html'); toggleDropdown('dropdown-coordinacion')" class="w-full text-left py-3 px-4 text-sm text-gray-200 hover:text-white hover:bg-brand-primary transition-colors border-t border-brand-primary/30">
                         Pol. Relacionamiento
                     </button>
-                    <button onclick="loadContent('Cambio Climático', 'Cambio climático.html'); toggleDropdown('dropdown-coordinacion')" class="w-full text-left py-3 px-4 text-sm text-gray-200 hover:text-white hover:bg-brand-primary transition-colors border-t border-brand-primary/30">
+                    <button onclick="loadContent('Cambio climático.html'); toggleDropdown('dropdown-coordinacion')" class="w-full text-left py-3 px-4 text-sm text-gray-200 hover:text-white hover:bg-brand-primary transition-colors border-t border-brand-primary/30">
                         Cambio Climático
                     </button>
                 </div>
             </div>
 
-            <button onclick="loadContent('CONPES', 'CONPES - Tablero.HTML')" class="shrink-0 flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-brand-primary transition-colors text-left text-white">
+            <button onclick="loadContent('CONPES - Tablero.html')" class="shrink-0 flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-brand-primary transition-colors text-left text-white">
                 <i class="fa-solid fa-file-contract text-brand-earth/80 w-5 text-center"></i>
                 <span class="font-medium whitespace-nowrap">CONPES</span>
             </button>
 
-            <button onclick="loadContent('Plan Estratégico Interinstitucional', 'Plan Estratégico Interinstitucional.HTML')" class="shrink-0 flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-brand-primary transition-colors text-left text-white">
+            <button onclick="loadContent('Plan Estratégico Interinstitucional.html')" class="shrink-0 flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-brand-primary transition-colors text-left text-white">
                 <i class="fa-solid fa-handshake-angle text-brand-earth/80 w-5 text-center"></i>
                 <span class="font-medium whitespace-nowrap">Plan Estratégico</span>
             </button>
 
-            <button onclick="loadContent('Planes de Acción', 'Planes de acción.HTML')" class="shrink-0 flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-brand-primary transition-colors text-left text-white">
+            <button onclick="loadContent('Planes de acción.html')" class="shrink-0 flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-brand-primary transition-colors text-left text-white">
                 <i class="fa-solid fa-chart-line text-brand-earth/80 w-5 text-center"></i>
                 <span class="font-medium whitespace-nowrap">Planes de Acción</span>
             </button>
@@ -104,14 +104,8 @@
 
     <main class="flex-1 h-full overflow-y-auto bg-colombia p-4 md:p-8 relative flex flex-col">
         
-        <header class="content-layer mb-6 flex justify-between items-center bg-white/70 backdrop-blur-md p-4 rounded-xl shadow-sm border border-white/50 shrink-0">
-            <div>
-                <h2 id="current-section-title" class="text-3xl font-bold text-brand-dark">Inicio</h2>
-                <p class="text-gray-500 text-sm mt-1">Seleccione un tablero en el menú superior para visualizar la información.</p>
-            </div>
-        </header>
-
-        <div id="dashboard-container" class="content-layer flex-1 bg-white/80 backdrop-blur-sm shadow-lg rounded-xl border border-gray-200 p-6 fade-in flex flex-col">
+        <!-- Contenedor Principal (Sin el encabezado repetitivo) -->
+        <div id="dashboard-container" class="content-layer flex-1 bg-white/80 backdrop-blur-sm shadow-lg rounded-xl border border-gray-200 p-2 sm:p-4 fade-in flex flex-col">
             
             <div id="welcome-message" class="flex flex-col items-center justify-center h-full text-center py-12">
                 <div class="w-24 h-24 bg-brand-primary/10 rounded-full flex items-center justify-center mb-6">
@@ -120,7 +114,7 @@
                 <h3 class="text-2xl font-bold text-gray-700 mb-2">Bienvenido al Sistema de Tableros</h3>
                 <p class="text-gray-500 max-w-md">
                     Este es el espacio central para visualizar los indicadores y gestión de la Oficina de Asuntos Ambientales y Sociales. 
-                    Por favor, seleccione una categoría en la parte superior para cargar el tablero correspondiente.
+                    Por favor, seleccione un tablero en el menú superior.
                 </p>
             </div>
 
@@ -172,7 +166,6 @@
         });
 
         function showWelcome() {
-            document.getElementById('current-section-title').innerText = 'Inicio';
             document.getElementById('welcome-message').classList.remove('hidden');
             document.getElementById('dynamic-content').classList.add('hidden');
             document.getElementById('dashboard-iframe').src = '';
@@ -183,9 +176,7 @@
             container.classList.add('fade-in');
         }
 
-        function loadContent(sectionTitle, fileUrl) {
-            document.getElementById('current-section-title').innerText = sectionTitle;
-            
+        function loadContent(fileUrl) {
             document.getElementById('welcome-message').classList.add('hidden');
             document.getElementById('dynamic-content').classList.remove('hidden');
             
