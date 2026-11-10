@@ -560,9 +560,6 @@
                 <button onclick="switchMainTab('entidades')" id="nav-btn-entidades" class="nav-tab-btn py-3 px-4 tab-inactive text-xs sm:text-sm uppercase tracking-wider transition-all border-0 bg-transparent cursor-pointer">
                     Entidades
                 </button>
-                <button onclick="switchMainTab('compromisos')" id="nav-btn-compromisos" class="nav-tab-btn py-3 px-4 tab-inactive text-xs sm:text-sm uppercase tracking-wider transition-all border-0 bg-transparent cursor-pointer">
-                    Compromisos
-                </button>
                 <button onclick="switchMainTab('responsables')" id="nav-btn-responsables" class="nav-tab-btn py-3 px-4 tab-inactive text-xs sm:text-sm uppercase tracking-wider transition-all border-0 bg-transparent cursor-pointer">
                     Responsables
                 </button>
@@ -996,6 +993,14 @@
                     </div>
                 </div>
 
+                <!-- Botones de Entidades -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-[#cc985c]/40">
+                    <h3 class="text-sm font-bold text-[#104c64] mb-3 mt-0"><i class="fa-solid fa-building-user mr-2 text-[#027fa6]"></i>Filtrar por Entidad</h3>
+                    <div id="entity-buttons-container" class="flex flex-wrap gap-2">
+                        <!-- Los botones se generarán dinámicamente aquí -->
+                    </div>
+                </div>
+
                 <!-- Tabla Detallada de Acciones Estratégicas (Entidades) -->
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-[#cc985c]/40">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
@@ -1056,62 +1061,7 @@
         </section>
 
         <!-- ======================================================================
-             VISTA 6: COMPROMISOS
-             ====================================================================== -->
-        <section id="view-compromisos" class="spa-view hidden">
-            <div class="container-fluid py-4 px-md-5 max-w-[1440px] mx-auto">
-                <div class="heatmap-container">
-                    <div class="d-flex justify-content-between align-items-end mb-3 flex-wrap gap-2">
-                        <div>
-                            <h4 class="fw-bold mb-1 text-[#104c64]">Cobertura de cada compromiso por mesa (Pactos Transición Energética)</h4>
-                            <p class="text-muted small mb-0">Número de acciones · más oscuro, más acciones. <strong>Haz clic en una fila o celda para filtrar.</strong></p>
-                        </div>
-                        <button class="btn btn-sm text-white fw-semibold" style="background-color: var(--mme-gold-dark);" onclick="limpiarFiltrosH5()">Limpiar filtros</button>
-                    </div>
-
-                    <div id="matriz-container"></div>
-                </div>
-
-                <div class="detalle-container">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="fw-bold m-0 text-[#104c64]">Detalles Acciones Estratégicas</h5>
-                        <span class="badge rounded-pill px-3 py-2 text-white" style="background-color: var(--mme-teal);" id="comp-contador-acciones">0 acciones</span>
-                    </div>
-
-                    <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
-                        <table class="table table-hover table-custom mb-0">
-                            <thead class="sticky-top shadow-sm bg-white">
-                                <tr>
-                                    <th width="8%" class="text-center">N° Mesa
-                                        <select id="comp-filter-mesa" class="form-select filter-select" onchange="aplicarFiltrosTablaH5()"><option value="">Todos</option></select>
-                                    </th>
-                                    <th width="8%" class="text-center">N° Macro
-                                        <select id="comp-filter-macro" class="form-select filter-select" onchange="aplicarFiltrosTablaH5()"><option value="">Todos</option></select>
-                                    </th>
-                                    <th width="9%" class="text-center">N° Acción
-                                        <select id="comp-filter-accion" class="form-select filter-select" onchange="aplicarFiltrosTablaH5()"><option value="">Todos</option></select>
-                                    </th>
-                                    <th width="45%" class="align-middle">Descripción de la Acción</th>
-                                    <th width="10%" class="text-center">Gobernabilidad
-                                        <select id="comp-filter-gob" class="form-select filter-select" onchange="aplicarFiltrosTablaH5()"><option value="">Todos</option></select>
-                                    </th>
-                                    <th width="10%" class="text-center">Importancia
-                                        <select id="comp-filter-imp" class="form-select filter-select" onchange="aplicarFiltrosTablaH5()"><option value="">Todos</option></select>
-                                    </th>
-                                    <th width="10%" class="text-center">% Cump.
-                                        <select id="comp-filter-cump" class="form-select filter-select" onchange="aplicarFiltrosTablaH5()"><option value="">Todos</option></select>
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody id="tabla-detalles-body"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ======================================================================
-             VISTA 7: RESPONSABLES
+             VISTA 6: RESPONSABLES
              ====================================================================== -->
         <section id="view-responsables" class="spa-view hidden">
             <div class="container-fluid py-4 px-md-5 max-w-[1440px] mx-auto">
@@ -1196,7 +1146,6 @@
             'empresas-proyectos',
             'comunidades',
             'entidades',
-            'compromisos',
             'responsables'
         ];
 
@@ -1301,7 +1250,6 @@
             try { initEmpresasProyectos(window.globalData.formattedMatrix); } catch (e) { console.error("Error Empresas y Proyectos:", e); }
             try { initComunidades(window.globalData.formattedMatrix, window.globalData.coordsMatrix); } catch (e) { console.error("Error Comunidades:", e); }
             try { initEntidades(window.globalData.rawMatrix); } catch (e) { console.error("Error Entidades:", e); }
-            try { initCompromisos(window.globalData.formattedMatrix); } catch (e) { console.error("Error Compromisos:", e); }
             try { initResponsables(window.globalData.formattedMatrix); } catch (e) { console.error("Error Responsables:", e); }
 
             const badge = document.getElementById('status-badge');
@@ -2457,10 +2405,19 @@
         };
 
         window.epSeleccionarTodo = function(tipo) {
-            const lista = epListasMaestras[tipo];
-            const todos = lista.every(item => epFiltros[tipo].has(item));
-            if (todos) lista.forEach(item => epFiltros[tipo].delete(item));
-            else lista.forEach(item => epFiltros[tipo].add(item));
+            // Solo considerar los elementos que están visibles actualmente
+            const listaVisible = epListasMaestras[tipo].filter(item => {
+                const id = item.replace(/[^a-zA-Z0-9]/g, '_');
+                const btn = document.getElementById(`btn-${tipo}-${id}`);
+                return btn && !btn.classList.contains('hidden');
+            });
+
+            const todosSeleccionados = listaVisible.every(item => epFiltros[tipo].has(item));
+            if (todosSeleccionados) {
+                listaVisible.forEach(item => epFiltros[tipo].delete(item));
+            } else {
+                listaVisible.forEach(item => epFiltros[tipo].add(item));
+            }
             epActualizarEstilosBotones();
             epAplicarFiltros();
         };
@@ -2470,10 +2427,11 @@
                 const id = emp.replace(/[^a-zA-Z0-9]/g, '_');
                 const btn = document.getElementById(`btn-empresas-${id}`);
                 if (btn) {
+                    const isHidden = btn.classList.contains('hidden');
                     if (epFiltros.empresas.has(emp)) {
-                        btn.className = "toggle-btn px-3.5 py-1.5 rounded-full border border-[#027fa6] bg-[#027fa6] text-white text-xs font-bold flex-shrink-0 whitespace-nowrap cursor-pointer shadow-sm";
+                        btn.className = `toggle-btn px-3.5 py-1.5 rounded-full border border-[#027fa6] bg-[#027fa6] text-white text-xs font-bold flex-shrink-0 whitespace-nowrap cursor-pointer shadow-sm ${isHidden ? 'hidden' : ''}`;
                     } else {
-                        btn.className = "toggle-btn px-3.5 py-1.5 rounded-full border border-slate-300 bg-white text-[#104c64] text-xs font-bold flex-shrink-0 whitespace-nowrap hover:border-[#027fa6] cursor-pointer";
+                        btn.className = `toggle-btn px-3.5 py-1.5 rounded-full border border-slate-300 bg-white text-[#104c64] text-xs font-bold flex-shrink-0 whitespace-nowrap hover:border-[#027fa6] cursor-pointer ${isHidden ? 'hidden' : ''}`;
                     }
                 }
             });
@@ -2482,10 +2440,11 @@
                 const id = proy.replace(/[^a-zA-Z0-9]/g, '_');
                 const btn = document.getElementById(`btn-proyectos-${id}`);
                 if (btn) {
+                    const isHidden = btn.classList.contains('hidden');
                     if (epFiltros.proyectos.has(proy)) {
-                        btn.className = "toggle-btn px-3.5 py-1.5 rounded-full border border-[#46766a] bg-[#46766a] text-white text-xs font-bold flex-shrink-0 w-full text-left justify-start whitespace-normal break-words leading-tight cursor-pointer shadow-sm";
+                        btn.className = `toggle-btn px-3.5 py-1.5 rounded-full border border-[#46766a] bg-[#46766a] text-white text-xs font-bold flex-shrink-0 w-full text-left justify-start whitespace-normal break-words leading-tight cursor-pointer shadow-sm ${isHidden ? 'hidden' : ''}`;
                     } else {
-                        btn.className = "toggle-btn px-3.5 py-1.5 rounded-full border border-slate-300 bg-white text-[#104c64] text-xs font-bold flex-shrink-0 w-full text-left justify-start whitespace-normal break-words leading-tight hover:border-[#46766a] cursor-pointer";
+                        btn.className = `toggle-btn px-3.5 py-1.5 rounded-full border border-slate-300 bg-white text-[#104c64] text-xs font-bold flex-shrink-0 w-full text-left justify-start whitespace-normal break-words leading-tight hover:border-[#46766a] cursor-pointer ${isHidden ? 'hidden' : ''}`;
                     }
                 }
             });
@@ -2520,6 +2479,41 @@
                 return false;
             });
             epActualizarMetricas('proyectos', accionesProyectos);
+
+            // --- ACTUALIZAR VISIBILIDAD DE BOTONES (FILTRO CRUZADO) ---
+            const proyectosVisibles = new Set();
+            accionesEmpresas.forEach(row => {
+                for (let i = 22; i <= 33; i++) {
+                    const val = String(row[i] || '').trim().toUpperCase();
+                    if (val && val !== 'NO APLICA') proyectosVisibles.add(val);
+                }
+            });
+
+            const empresasVisibles = new Set();
+            accionesProyectos.forEach(row => {
+                for (let i = 35; i <= 59; i++) {
+                    const val = String(row[i] || '').trim().toUpperCase();
+                    if (val && val !== 'NO APLICA') empresasVisibles.add(val);
+                }
+            });
+
+            epListasMaestras.empresas.forEach(emp => {
+                const id = emp.replace(/[^a-zA-Z0-9]/g, '_');
+                const btn = document.getElementById(`btn-empresas-${id}`);
+                if (btn) {
+                    if (empresasVisibles.has(emp)) btn.classList.remove('hidden');
+                    else btn.classList.add('hidden');
+                }
+            });
+
+            epListasMaestras.proyectos.forEach(proy => {
+                const id = proy.replace(/[^a-zA-Z0-9]/g, '_');
+                const btn = document.getElementById(`btn-proyectos-${id}`);
+                if (btn) {
+                    if (proyectosVisibles.has(proy)) btn.classList.remove('hidden');
+                    else btn.classList.add('hidden');
+                }
+            });
 
             const dataFiltrada = epRawDataTarget.filter(row => {
                 let pasaEmpresa = epFiltros.empresas.size === 0;
@@ -3004,6 +2998,7 @@
         // ========================================================================
         let allEntityRows = [];
         let filteredEntityRows = [];
+        let activeEntityFilter = 'ALL';
         const TODAY_ENT = new Date();
         TODAY_ENT.setHours(0, 0, 0, 0);
 
@@ -3037,7 +3032,9 @@
 
         function initEntidades(rawMatrix) {
             if (!rawMatrix || rawMatrix.length < 2) return;
-            const dataRows = rawMatrix.slice(1);
+            // Soportar encabezados en fila 2 y datos desde fila 3 (o desde fila 2 si aplica)
+            const startIdx = rawMatrix.length >= 3 && String(rawMatrix[1]?.[0] ?? '').toLowerCase().includes('n°') ? 2 : 1;
+            const dataRows = rawMatrix.slice(startIdx);
             const parsedRows = [];
 
             dataRows.forEach((row, idx) => {
@@ -3046,13 +3043,22 @@
                 const clasifH = String(row[7] ?? '').trim();
                 if ((!descG && !numA && !clasifH) || numA.toLowerCase() === 'n°') return;
 
+                // Extraer las entidades asociadas a esta acción (Columnas AJ a BH -> Índices 35 a 59)
+                const rowEntities = [];
+                for (let c = 35; c <= 59; c++) {
+                    const entityName = String(row[c] ?? '').trim();
+                    if (entityName && entityName.toUpperCase() !== 'NO APLICA' && !rowEntities.includes(entityName)) {
+                        rowEntities.push(entityName);
+                    }
+                }
+
                 const startDate = parseRobustDate(row[16]);
                 const endDate = parseRobustDate(row[17]);
                 const expectedPct = calculateProjectExpectedPercentage(startDate, endDate, TODAY_ENT);
                 const achievedPct = parseMMEPercent(row[20]);
 
                 parsedRows.push({
-                    rowNumber: idx + 2,
+                    rowNumber: idx + startIdx + 1,
                     colA: numA || "-",
                     colB: String(row[1] ?? '').trim() || "Sin Mesa",
                     colD: String(row[3] ?? '').trim() || "Sin Macroacción",
@@ -3065,7 +3071,8 @@
                     startDateStr: startDate ? formatDateDisplayEnt(startDate) : (String(row[16] ?? '').trim() || "-"),
                     endDateStr: endDate ? formatDateDisplayEnt(endDate) : (String(row[17] ?? '').trim() || "-"),
                     expectedPct,
-                    achievedPct
+                    achievedPct,
+                    rowEntities
                 });
             });
 
@@ -3092,7 +3099,58 @@
             fillEntSelect('tbl-colI', 'colI', 'Todas');
             fillEntSelect('tbl-colJ', 'colJ', 'Todas');
 
+            renderEntityButtons();
             applyEntidadesFilters();
+        }
+
+        function renderEntityButtons() {
+            const container = document.getElementById('entity-buttons-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const entitySet = new Set();
+            allEntityRows.forEach(row => {
+                if (row.rowEntities) {
+                    row.rowEntities.forEach(ent => entitySet.add(ent));
+                }
+            });
+            const entities = Array.from(entitySet).sort((a, b) => a.localeCompare(b));
+
+            const createBtn = (text, value, isDefault) => {
+                const btn = document.createElement('button');
+                btn.textContent = text;
+                btn.dataset.val = value;
+                btn.className = 'entity-btn px-4 py-2 text-xs font-bold rounded-xl shadow-sm transition border cursor-pointer ';
+                if (isDefault) {
+                    btn.classList.add('bg-[#027fa6]', 'text-white', 'border-[#027fa6]', 'hover:bg-[#104c64]');
+                } else {
+                    btn.classList.add('bg-white', 'text-[#104c64]', 'border-slate-200', 'hover:bg-[#ebe9e8]/60');
+                }
+                btn.onclick = () => filterByEntity(value);
+                return btn;
+            };
+
+            container.appendChild(createBtn('Todas las Entidades', 'ALL', true));
+            entities.forEach(ent => {
+                container.appendChild(createBtn(ent, ent, false));
+            });
+        }
+
+        window.filterByEntity = function(entityValue) {
+            activeEntityFilter = entityValue;
+            applyEntidadesFilters();
+        };
+
+        function syncEntityButtons(selectedValue) {
+            document.querySelectorAll('.entity-btn').forEach(btn => {
+                if (btn.dataset.val === selectedValue) {
+                    btn.classList.add('bg-[#027fa6]', 'text-white', 'border-[#027fa6]', 'hover:bg-[#104c64]');
+                    btn.classList.remove('bg-white', 'text-[#104c64]', 'border-slate-200', 'hover:bg-[#ebe9e8]/60');
+                } else {
+                    btn.classList.remove('bg-[#027fa6]', 'text-white', 'border-[#027fa6]', 'hover:bg-[#104c64]');
+                    btn.classList.add('bg-white', 'text-[#104c64]', 'border-slate-200', 'hover:bg-[#ebe9e8]/60');
+                }
+            });
         }
 
         window.applyEntidadesFilters = function() {
@@ -3103,6 +3161,8 @@
             const fI = document.getElementById('tbl-colI')?.value || 'ALL';
             const fJ = document.getElementById('tbl-colJ')?.value || 'ALL';
 
+            syncEntityButtons(activeEntityFilter);
+
             filteredEntityRows = allEntityRows.filter(row => {
                 if (fA !== 'ALL' && row.colA !== fA) return false;
                 if (fB !== 'ALL' && row.colB !== fB) return false;
@@ -3110,6 +3170,9 @@
                 if (fH !== 'ALL' && row.colH !== fH) return false;
                 if (fI !== 'ALL' && row.colI !== fI) return false;
                 if (fJ !== 'ALL' && row.colJ !== fJ) return false;
+                if (activeEntityFilter !== 'ALL' && (!row.rowEntities || !row.rowEntities.includes(activeEntityFilter))) {
+                    return false;
+                }
                 return true;
             });
 
@@ -3172,293 +3235,7 @@
         };
 
         // ========================================================================
-        // 6. MÓDULO: COMPROMISOS (PACTOS TRANSICIÓN ENERGÉTICA)
-        // ========================================================================
-        window.h5Data = {
-            compromisos: {},
-            mesasUnicas: new Set(),
-            maxValorCelda: 0,
-            maxTotalFila: 0
-        };
-        window.todasAccionesH5 = [];
-        window.h5Filtros = [];
-
-        function initCompromisos(data) {
-            window.h5Data = { compromisos: {}, mesasUnicas: new Set(), maxValorCelda: 0, maxTotalFila: 0 };
-            window.todasAccionesH5 = [];
-            window.h5Filtros = [];
-
-            const filas = data.slice(1);
-            filas.forEach(row => {
-                const mesaNum = parseInt(row[1]);
-                if (isNaN(mesaNum) || mesaNum === 0) return;
-
-                const numeroAccion = String(row[0] || '').trim();
-                const numeroMacro = String(row[3] || '').trim();
-                const nombreAccion = String(row[6] || '').trim();
-
-                let compromisoName = String(row[12] || '').trim();
-                if (!compromisoName) compromisoName = "Sin Compromiso Asignado";
-                if (compromisoName.startsWith('9')) return;
-
-                const gobernabilidad = String(row[9] || 'N/A').trim();
-                const importancia = String(row[8] || 'N/A').trim();
-                const valorNum = parseMMEPercent(row[20]);
-
-                const accionObj = {
-                    mesa: mesaNum,
-                    macro: numeroMacro,
-                    accionNum: numeroAccion,
-                    desc: nombreAccion,
-                    cumpNum: Math.round(valorNum),
-                    comp: compromisoName,
-                    gob: gobernabilidad,
-                    imp: importancia
-                };
-                window.todasAccionesH5.push(accionObj);
-                window.h5Data.mesasUnicas.add(mesaNum);
-
-                if (!window.h5Data.compromisos[compromisoName]) {
-                    window.h5Data.compromisos[compromisoName] = {
-                        nombre: compromisoName,
-                        totalAcciones: 0,
-                        sumaCumplimiento: 0,
-                        mesas: {}
-                    };
-                }
-
-                const compData = window.h5Data.compromisos[compromisoName];
-                if (!compData.mesas[mesaNum]) compData.mesas[mesaNum] = { count: 0 };
-
-                compData.mesas[mesaNum].count++;
-                compData.totalAcciones++;
-                compData.sumaCumplimiento += valorNum;
-
-                if (compData.mesas[mesaNum].count > window.h5Data.maxValorCelda) {
-                    window.h5Data.maxValorCelda = compData.mesas[mesaNum].count;
-                }
-            });
-
-            Object.values(window.h5Data.compromisos).forEach(comp => {
-                if (comp.totalAcciones > window.h5Data.maxTotalFila) {
-                    window.h5Data.maxTotalFila = comp.totalAcciones;
-                }
-            });
-
-            renderMatrizH5();
-            renderDetalleH5();
-        }
-
-        function renderMatrizH5() {
-            const container = document.getElementById('matriz-container');
-            const mesasSorted = Array.from(window.h5Data.mesasUnicas).sort((a, b) => a - b);
-            const compromisosSorted = Object.values(window.h5Data.compromisos).sort((a, b) =>
-                a.nombre.localeCompare(b.nombre, undefined, { numeric: true, sensitivity: 'base' })
-            );
-
-            let html = `<table class="heatmap-table"><thead><tr><th class="row-header">COMPROMISO</th>`;
-            mesasSorted.forEach(m => { html += `<th width="${50 / Math.max(1, mesasSorted.length)}%">MESA ${m}</th>`; });
-            html += `<th width="10%">TOTAL</th><th width="10%">% CUMP.</th></tr></thead><tbody>`;
-
-            compromisosSorted.forEach((comp, rowIndex) => {
-                const promCump = comp.totalAcciones > 0 ? Math.round(comp.sumaCumplimiento / comp.totalAcciones) : 0;
-                const safeCompName = comp.nombre.replace(/'/g, "\\'");
-
-                html += `<tr>
-                    <td class="row-header">
-                        <div class="heatmap-row-btn" id="row-hdr-${rowIndex}" onclick="toggleFiltroH5('${safeCompName}', null)">
-                            <span class="text-truncate" style="max-width: 260px;" title="${comp.nombre}">${comp.nombre}</span>
-                        </div>
-                    </td>`;
-
-                mesasSorted.forEach(m => {
-                    const celdaData = comp.mesas[m];
-                    const count = celdaData ? celdaData.count : 0;
-                    let bgColor = '#ffffff', textColor = '#94a3b8', txt = '—';
-
-                    if (count > 0) {
-                        const ratio = count / window.h5Data.maxValorCelda;
-                        const minOpacity = 0.22;
-                        const opacity = minOpacity + (ratio * (1 - minOpacity));
-                        bgColor = `rgba(70, 118, 106, ${opacity})`; // Verde corporativo #46766a
-                        textColor = opacity > 0.55 ? '#ffffff' : '#104c64';
-                        txt = count;
-                    }
-
-                    html += `
-                        <td style="padding: 2px;">
-                            <div class="heatmap-cell" id="cell-${rowIndex}-${m}"
-                                 style="background-color: ${bgColor}; color: ${textColor}; border-color: ${count > 0 ? 'transparent' : '#e2e8f0'};"
-                                 onclick="toggleFiltroH5('${safeCompName}', ${m})" title="Mesa ${m} - ${comp.nombre}">
-                                ${txt}
-                            </div>
-                        </td>`;
-                });
-
-                const widthBar = window.h5Data.maxTotalFila > 0 ? (comp.totalAcciones / window.h5Data.maxTotalFila) * 100 : 0;
-                html += `
-                    <td class="text-center align-middle">
-                        <div class="d-flex align-items-center justify-content-center flex-column px-2">
-                            <span class="fw-bold text-[#104c64] fs-6">${comp.totalAcciones}</span>
-                            <div class="total-bar-container"><div class="total-bar-fill" style="width: ${widthBar}%"></div></div>
-                        </div>
-                    </td>
-                    <td class="text-center align-middle">
-                        <span class="fw-bold text-[#46766a] fs-6">${promCump}%</span>
-                    </td>
-                </tr>`;
-            });
-
-            html += `<tr style="background-color: #ebe9e8; border-top: 3px solid #cc985c;">
-                <td class="row-header py-3 ps-3 fw-bold text-[#104c64]">TOTAL ACCIONES POR MESA</td>`;
-
-            let granTotal = 0, granTotalCumplimiento = 0;
-            compromisosSorted.forEach(comp => { granTotalCumplimiento += comp.sumaCumplimiento; });
-
-            mesasSorted.forEach(m => {
-                let totalMesa = 0;
-                compromisosSorted.forEach(comp => { if (comp.mesas[m]) totalMesa += comp.mesas[m].count; });
-                granTotal += totalMesa;
-                html += `<td class="text-center align-middle fw-bold fs-6 text-[#104c64]">${totalMesa}</td>`;
-            });
-
-            const granPromedio = granTotal > 0 ? Math.round(granTotalCumplimiento / granTotal) : 0;
-            html += `
-                <td class="text-center align-middle fw-bold fs-5 text-[#846131]">${granTotal}</td>
-                <td class="text-center align-middle fw-bold fs-5 text-[#46766a]">${granPromedio}%</td>
-            </tr></tbody></table>`;
-
-            container.innerHTML = html;
-            actualizarEstilosSeleccionH5();
-        }
-
-        window.toggleFiltroH5 = function(compromiso, mesa) {
-            const index = window.h5Filtros.findIndex(f => f.comp === compromiso && f.mesa === mesa);
-            if (index > -1) window.h5Filtros.splice(index, 1);
-            else window.h5Filtros.push({ comp: compromiso, mesa });
-            actualizarEstilosSeleccionH5();
-            renderDetalleH5();
-        };
-
-        window.limpiarFiltrosH5 = function() {
-            window.h5Filtros = [];
-            actualizarEstilosSeleccionH5();
-            renderDetalleH5();
-        };
-
-        window.aplicarFiltrosTablaH5 = function() {
-            renderDetalleH5(true);
-        };
-
-        function actualizarEstilosSeleccionH5() {
-            document.querySelectorAll('#view-compromisos .heatmap-row-btn').forEach(el => el.classList.remove('selected-row-header'));
-            document.querySelectorAll('#view-compromisos .heatmap-cell').forEach(el => el.classList.remove('selected-filter'));
-
-            const compromisosSorted = Object.values(window.h5Data.compromisos).sort((a, b) =>
-                a.nombre.localeCompare(b.nombre, undefined, { numeric: true, sensitivity: 'base' })
-            );
-
-            window.h5Filtros.forEach(filtro => {
-                const rowIndex = compromisosSorted.findIndex(c => c.nombre === filtro.comp);
-                if (rowIndex === -1) return;
-                if (filtro.mesa === null) {
-                    const rowHeaderEl = document.getElementById(`row-hdr-${rowIndex}`);
-                    if (rowHeaderEl) rowHeaderEl.classList.add('selected-row-header');
-                    window.h5Data.mesasUnicas.forEach(m => {
-                        const cellEl = document.getElementById(`cell-${rowIndex}-${m}`);
-                        if (cellEl) cellEl.classList.add('selected-filter');
-                    });
-                } else {
-                    const cellEl = document.getElementById(`cell-${rowIndex}-${filtro.mesa}`);
-                    if (cellEl) cellEl.classList.add('selected-filter');
-                }
-            });
-        }
-
-        function renderDetalleH5(keepTableFilters = false) {
-            const tbody = document.getElementById('tabla-detalles-body');
-            const contador = document.getElementById('comp-contador-acciones');
-
-            let accionesMatriz = window.todasAccionesH5;
-            if (window.h5Filtros.length > 0) {
-                accionesMatriz = window.todasAccionesH5.filter(acc =>
-                    window.h5Filtros.some(f => f.mesa === null ? acc.comp === f.comp : (acc.comp === f.comp && acc.mesa === f.mesa))
-                );
-            }
-
-            if (!keepTableFilters) {
-                const unq = { mesa: new Set(), macro: new Set(), accion: new Set(), gob: new Set(), imp: new Set(), cump: new Set() };
-                accionesMatriz.forEach(a => {
-                    if (a.mesa !== undefined) unq.mesa.add(a.mesa);
-                    if (a.macro !== undefined) unq.macro.add(a.macro);
-                    if (a.accionNum !== undefined) unq.accion.add(a.accionNum);
-                    if (a.gob) unq.gob.add(a.gob);
-                    if (a.imp) unq.imp.add(a.imp);
-                    if (a.cumpNum !== undefined) unq.cump.add(a.cumpNum);
-                });
-
-                const buildOpts = (id, set) => {
-                    const el = document.getElementById(id);
-                    if (!el) return;
-                    let html = `<option value="">Todos</option>`;
-                    Array.from(set).sort((a, b) => {
-                        const numA = parseFloat(a), numB = parseFloat(b);
-                        if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
-                        return String(a).localeCompare(String(b));
-                    }).forEach(item => { html += `<option value="${item}">${item}</option>`; });
-                    el.innerHTML = html;
-                };
-
-                buildOpts('comp-filter-mesa', unq.mesa);
-                buildOpts('comp-filter-macro', unq.macro);
-                buildOpts('comp-filter-accion', unq.accion);
-                buildOpts('comp-filter-gob', unq.gob);
-                buildOpts('comp-filter-imp', unq.imp);
-                buildOpts('comp-filter-cump', unq.cump);
-            }
-
-            const valMesa = document.getElementById('comp-filter-mesa')?.value || '';
-            const valMacro = document.getElementById('comp-filter-macro')?.value || '';
-            const valAcc = document.getElementById('comp-filter-accion')?.value || '';
-            const valGob = document.getElementById('comp-filter-gob')?.value || '';
-            const valImp = document.getElementById('comp-filter-imp')?.value || '';
-            const valCump = document.getElementById('comp-filter-cump')?.value || '';
-
-            const accionesFinales = accionesMatriz.filter(acc => {
-                if (valMesa && acc.mesa.toString() !== valMesa) return false;
-                if (valMacro && acc.macro.toString() !== valMacro) return false;
-                if (valAcc && acc.accionNum.toString() !== valAcc) return false;
-                if (valGob && acc.gob !== valGob) return false;
-                if (valImp && acc.imp !== valImp) return false;
-                if (valCump && acc.cumpNum.toString() !== valCump) return false;
-                return true;
-            });
-
-            tbody.innerHTML = '';
-            if (accionesFinales.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">No hay acciones que coincidan con la selección.</td></tr>`;
-            } else {
-                let rowsHtml = '';
-                accionesFinales.forEach(acc => {
-                    rowsHtml += `
-                        <tr>
-                            <td class="text-center fw-bold text-secondary">${acc.mesa}</td>
-                            <td class="text-center text-muted">${acc.macro}</td>
-                            <td class="text-center fw-bold text-[#846131]">${acc.accionNum}</td>
-                            <td>${acc.desc}</td>
-                            <td class="text-center align-middle"><span class="badge bg-light text-secondary border">${acc.gob}</span></td>
-                            <td class="text-center align-middle"><span class="badge bg-light text-secondary border">${acc.imp}</span></td>
-                            <td class="text-center align-middle"><span class="badge bg-[#46766a]/15 text-[#46766a] fw-bold w-100 py-2">${acc.cumpNum}%</span></td>
-                        </tr>
-                    `;
-                });
-                tbody.innerHTML = rowsHtml;
-            }
-            contador.innerText = `${accionesFinales.length} acciones`;
-        }
-
-        // ========================================================================
-        // 7. MÓDULO: RESPONSABLES
+        // 6. MÓDULO: RESPONSABLES
         // ========================================================================
         let totalAccionesUniversoResp = 0;
         let gestoresData = {};
