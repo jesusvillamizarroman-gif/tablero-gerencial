@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-[#f4f7f4] text-slate-800">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Política de Relacionamiento Ambiental - Gestión a Productos</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SheetJS para lectura de datos -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Fotografía de Montañas Andinas de Colombia con atmósfera luminosa ambiental */
+        .colombia-mountain-hero {
+            background-image:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(240, 253, 244, 0.72) 28%, rgba(6, 78, 59, 0.35) 75%, rgba(6, 78, 59, 0.65) 100%),
+                url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1920&q=85');
+            background-size: cover;
+            background-position: center 35%;
+        }
+
+        @keyframes float-pin {
+            0%, 100% { transform: translate(-50%, -50%) translateY(0px); }
+            50% { transform: translate(-50%, -50%) translateY(-3px); }
+        }
+        .climber-pin {
+            animation: float-pin 3.8s ease-in-out infinite;
+        }
+        .climber-pin:hover {
+            animation-play-state: paused;
+            z-index: 50 !important;
+        }
+    </style>
+</head>
+<body class="min-h-full bg-[#f4f7f4] text-slate-800 font-sans antialiased selection:bg-emerald-600 selection:text-white flex flex-col">
+
+    <!-- ENCABEZADO INSTITUCIONAL LUMINOSO (MINISTERIO DE MINAS Y ENERGÍA) -->
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-emerald-900/10 shadow-sm px-4 lg:px-10 py-3.5">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div class="flex items-center gap-3.5">
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-700 shadow-md shadow-emerald-600/20 flex items-center justify-center text-white shrink-0">
+                    <i class="fa-solid fa-leaf text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight text-slate-900 mt-0.5">
+                        Política de Relacionamiento Ambiental - Gestión a Productos
+                    </h1>
+                </div>
+            </div>
+
+            <!-- Controles Minimalistas de Búsqueda y Filtro -->
+            <div class="flex flex-wrap items-center gap-2.5">
+                <div class="relative min-w-[220px] sm:min-w-[260px]">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input id="searchInput" type="text" placeholder="Buscar producto o entregable..."
+                        class="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-600 focus:bg-white transition">
+                    <button id="btnClearSearch" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700">
+                        <i class="fa-solid fa-xmark text-xs"></i>
+                    </button>
+                </div>
+
+                <select id="filterDeliverableType" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 font-medium focus:outline-none focus:border-emerald-600 focus:bg-white">
+                    <option value="all">Todos los productos</option>
+                    <option value="intermediate">Con entregables intermedios</option>
+                    <option value="single">Productos directos</option>
+                </select>
+
+                <select id="filterStatus" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 font-medium focus:outline-none focus:border-emerald-600 focus:bg-white">
+                    <option value="all">Todo el recorrido</option>
+                    <option value="completed">En la Cima (100%)</option>
+                    <option value="in_progress">En ascenso (1% - 99%)</option>
+                    <option value="pending">En campamento base (0%)</option>
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-10 py-6 space-y-6">
+
+        <!-- RESUMEN MINIMALISTA (3 TARJETAS BLANCAS AMBIENTALES) -->
+        <section class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <!-- Productos -->
+            <div class="bg-white border border-emerald-900/10 shadow-sm rounded-2xl p-5 flex items-center justify-between">
+                <div>
+                    <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Productos en Ruta</span>
+                    <div class="flex items-baseline gap-2.5 mt-1">
+                        <span id="kpiTotalProducts" class="text-3xl font-extrabold text-slate-900 font-mono">0</span>
+                        <span id="kpiSummitCount" class="text-xs text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">0 en la cima</span>
+                    </div>
+                    <div class="mt-2 flex items-center gap-3 text-[11px] text-slate-500">
+                        <span><b id="kpiWithIntermediate" class="text-indigo-600">0</b> con etapas intermedias</span>
+                        <span>•</span>
+                        <span><b id="kpiSingleDeliverable" class="text-sky-600">0</b> directos</span>
+                    </div>
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-700">
+                    <i class="fa-solid fa-list-check text-lg"></i>
+                </div>
+            </div>
+
+            <!-- Avance General hacia la Cima -->
+            <div class="bg-white border border-emerald-900/10 shadow-sm rounded-2xl p-5 flex flex-col justify-between">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Ascenso Promedio a la Cima</span>
+                        <div class="flex items-baseline gap-2 mt-1">
+                            <span id="kpiAvgProgress" class="text-3xl font-extrabold text-emerald-700 font-mono">0%</span>
+                            <span class="text-xs text-slate-500">de meta alcanzada</span>
+                        </div>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200/70 flex items-center justify-center text-amber-600">
+                        <i class="fa-solid fa-sun text-lg"></i>
+                    </div>
+                </div>
+                <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden mt-3 border border-slate-200/60">
+                    <div id="kpiAvgProgressBar" class="bg-gradient-to-r from-amber-400 via-emerald-500 to-teal-600 h-full transition-all duration-700" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Meta Común / Horizonte -->
+            <div class="bg-white border border-emerald-900/10 shadow-sm rounded-2xl p-5 flex items-center justify-between">
+                <div>
+                    <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Horizonte hacia la Meta</span>
+                    <div class="mt-1.5 flex items-center gap-2 font-mono text-sm sm:text-base font-bold text-slate-900">
+                        <span id="kpiMinDate">--</span>
+                        <i class="fa-solid fa-arrow-right text-[10px] text-emerald-600"></i>
+                        <span id="kpiMaxDate">--</span>
+                    </div>
+                    <p id="kpiDurationDays" class="text-[11px] font-semibold text-sky-700 mt-2 bg-sky-50 inline-block px-2 py-0.5 rounded border border-sky-100">
+                        -- días disponibles
+                    </p>
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-sky-50 border border-sky-100 flex items-center justify-center text-sky-600">
+                    <i class="fa-regular fa-calendar-check text-lg"></i>
+                </div>
+            </div>
+        </section>
+
+        <!-- ESTADO DE CARGA -->
+        <div id="loadingState" class="py-24 px-4 bg-white border border-emerald-900/10 rounded-3xl shadow-sm flex flex-col items-center justify-center text-center">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 mb-3">
+                <i class="fa-solid fa-circle-notch fa-spin text-xl"></i>
+            </div>
+            <p class="text-sm font-medium text-slate-600">Cargando panorama y productos...</p>
+        </div>
+
+        <!-- CONTENEDOR PRINCIPAL DEL TABLERO -->
+        <div id="dashboardContent" class="hidden space-y-6">
+
+            <!-- PANORAMA INTERACTIVO -->
+            <section class="colombia-mountain-hero border border-emerald-900/15 rounded-3xl overflow-hidden shadow-lg relative">
+                <!-- Barra superior clara y limpia -->
+                <div class="px-6 pt-5 pb-3 bg-white/85 backdrop-blur-md border-b border-emerald-900/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-20">
+                    <div>
+                        <h2 class="text-base sm:text-lg font-bold text-slate-900">
+                            Estado de los productos por % cumplimiento
+                        </h2>
+                    </div>
+
+                    <!-- Leyenda de alto contraste -->
+                    <div class="flex flex-wrap items-center gap-3 text-xs font-medium text-slate-700 bg-white/95 border border-slate-200 rounded-xl px-3.5 py-2 shadow-sm">
+                        <span class="inline-flex items-center gap-1.5">
+                            <span class="w-3 h-3 rounded-full bg-sky-500 border-2 border-white shadow-sm inline-block"></span>
+                            <span>Producto directo</span>
+                        </span>
+                        <span class="inline-flex items-center gap-1.5">
+                            <span class="w-3 h-3 rounded-full bg-indigo-500 border-2 border-white shadow-sm inline-block"></span>
+                            <span>Con entregables intermedios</span>
+                        </span>
+                        <span class="inline-flex items-center gap-1.5">
+                            <span class="w-3 h-3 rounded-full bg-emerald-600 border-2 border-white shadow-sm inline-block"></span>
+                            <span>En la Cima (100%)</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Lienzo de la Montaña (Fotografía + Vectores Ambientales/Energéticos + Marcadores sin superposición) -->
+                <div class="relative w-full h-[440px] sm:h-[480px] select-none overflow-hidden" id="mountainStage">
+                    <svg id="mountainSvgCanvas" viewBox="0 0 1200 480" preserveAspectRatio="none" class="absolute inset-0 w-full h-full pointer-events-none">
+                        <defs>
+                            <!-- Gradientes verdes ambientales -->
+                            <linearGradient id="cerroBackLight" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#065f46" stop-opacity="0.32" />
+                                <stop offset="100%" stop-color="#064e3b" stop-opacity="0.65" />
+                            </linearGradient>
+                            <linearGradient id="cerroMainLight" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#047857" stop-opacity="0.78" />
+                                <stop offset="50%" stop-color="#065f46" stop-opacity="0.88" />
+                                <stop offset="100%" stop-color="#022c22" stop-opacity="0.95" />
+                            </linearGradient>
+                            <linearGradient id="energyTrail" x1="0%" y1="100%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#0284c7" stop-opacity="0.9" />
+                                <stop offset="50%" stop-color="#6366f1" stop-opacity="0.95" />
+                                <stop offset="100%" stop-color="#10b981" stop-opacity="1" />
+                            </linearGradient>
+                        </defs>
+
+                        <!-- Sol Andino Radiante en la Cumbre -->
+                        <circle cx="1035" cy="82" r="58" fill="rgba(251, 191, 36, 0.22)" />
+                        <circle cx="1035" cy="82" r="36" fill="rgba(251, 191, 36, 0.38)" />
+
+                        <!-- Silueta de Cordillera lejana -->
+                        <path d="M 0 480 L 0 385 Q 200 320 390 255 T 730 140 Q 860 95 950 135 L 1200 310 L 1200 480 Z" fill="url(#cerroBackLight)" />
+
+                        <!-- Aerogeneradores (Giro perfecto con animateTransform) -->
+                        <g transform="translate(520, 210)" stroke="#ffffff" stroke-width="2" fill="none" opacity="0.88">
+                            <line x1="0" y1="0" x2="0" y2="45" />
+                            <g>
+                                <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="9s" repeatCount="indefinite" />
+                                <line x1="0" y1="0" x2="0" y2="-18" />
+                                <line x1="0" y1="0" x2="15" y2="9" />
+                                <line x1="0" y1="0" x2="-15" y2="9" />
+                            </g>
+                            <circle cx="0" cy="0" r="2.5" fill="#fbbf24" />
+                        </g>
+                        <g transform="translate(565, 192)" stroke="#ffffff" stroke-width="2" fill="none" opacity="0.88">
+                            <line x1="0" y1="0" x2="0" y2="50" />
+                            <g>
+                                <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="8.5s" repeatCount="indefinite" />
+                                <line x1="0" y1="0" x2="0" y2="-20" />
+                                <line x1="0" y1="0" x2="17" y2="10" />
+                                <line x1="0" y1="0" x2="-17" y2="10" />
+                            </g>
+                            <circle cx="0" cy="0" r="2.5" fill="#fbbf24" />
+                        </g>
+
+                        <!-- Silueta Principal de Montaña Verde -->
+                        <path d="M 0 480 L 35 435 Q 250 395 450 310 T 790 165 Q 935 90 1035 82 Q 1095 80 1145 160 L 1200 280 L 1200 480 Z"
+                              fill="url(#cerroMainLight)" stroke="#34d399" stroke-width="2" />
+
+                        <!-- Granja Solar Ambiental -->
+                        <g transform="translate(230, 395) skewX(-18)" fill="#0284c7" stroke="#bae6fd" stroke-width="1" opacity="0.85">
+                            <rect x="0" y="0" width="22" height="12" rx="1" />
+                            <rect x="26" y="-4" width="22" height="12" rx="1" />
+                            <rect x="52" y="-8" width="22" height="12" rx="1" />
+                        </g>
+
+                        <!-- Sendero Luminoso de Ascenso (0% -> 100%) -->
+                        <path id="mountainAscentPath" d="M 105 418 C 310 385, 500 305, 685 220 C 835 150, 940 100, 1035 82"
+                              fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round" opacity="0.5" />
+                        <path d="M 105 418 C 310 385, 500 305, 685 220 C 835 150, 940 100, 1035 82"
+                              fill="none" stroke="url(#energyTrail)" stroke-width="4.5" stroke-linecap="round" />
+
+                        <!-- Capa para la Línea Dinámica de % Esperado -->
+                        <g id="expectedLineGroup"></g>
+
+                        <!-- Capa SVG para líneas conectoras entre cada punto en el sendero y su tarjeta -->
+                        <g id="climberConnectorLines"></g>
+
+                        <!-- Hito de Cima / Meta 100% -->
+                        <g transform="translate(1035, 82)">
+                            <circle cx="0" cy="0" r="18" fill="rgba(16, 185, 129, 0.28)" />
+                            <circle cx="0" cy="0" r="8" fill="#10b981" stroke="#ffffff" stroke-width="2.5" />
+                            <path d="M 0 -8 L 0 -36 M 0 -36 L 24 -28 L 0 -20" stroke="#fbbf24" stroke-width="2.8" fill="#f59e0b" stroke-linejoin="round" />
+                        </g>
+                    </svg>
+
+                    <!-- Contenedor de Nodos de Productos escalando hacia la cima -->
+                    <div id="mountainClimbersLayer" class="absolute inset-0 z-10">
+                        <!-- Se inyectan los marcadores -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- PANEL DESPLEGABLE DE DETALLE COMPLETO -->
+            <section id="selectedDetailSection" class="hidden bg-white border-2 border-emerald-600/40 rounded-3xl overflow-hidden shadow-xl transition-all">
+                <div class="px-6 py-4 bg-emerald-50/70 border-b border-emerald-900/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div class="flex items-start sm:items-center gap-3.5">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                            <i class="fa-solid fa-layer-group"></i>
+                        </div>
+                        <div>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span id="detailCodeBadge" class="px-2.5 py-0.5 rounded-md text-xs font-mono font-bold bg-emerald-700 text-white"></span>
+                                <h3 id="detailProductName" class="text-base sm:text-lg font-bold text-slate-900"></h3>
+                                <span id="detailAvgBadge" class="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-indigo-100 text-indigo-800 border border-indigo-300"></span>
+                            </div>
+                            <p id="detailSubtitle" class="text-xs text-slate-600 mt-0.5"></p>
+                        </div>
+                    </div>
+                    <button id="btnCloseDetail" type="button" class="self-end sm:self-center inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 shadow-sm transition">
+                        <i class="fa-solid fa-xmark"></i>
+                        <span>Cerrar</span>
+                    </button>
+                </div>
+
+                <div class="p-6 space-y-5">
+                    <!-- Resumen de etapas si tiene entregables intermedios -->
+                    <div id="detailStagesSummary" class="hidden bg-indigo-50/60 border border-indigo-200/80 rounded-2xl p-4"></div>
+
+                    <!-- Información completa de la(s) fila(s) -->
+                    <div id="detailRowsContainer" class="space-y-4"></div>
+                </div>
+            </section>
+
+            <!-- LISTA DE SENDEROS Y FILTROS -->
+            <section class="space-y-3">
+                <div class="flex flex-col md:flex-row md:items-center justify-between px-1 gap-4">
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-900">Recorrido Individual por Producto</h2>
+                        <p class="text-xs text-slate-500">Haz clic sobre cualquier producto o punto para desplegar toda la información de su fila</p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button id="btnExpandAll" type="button" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white hover:bg-emerald-50 text-slate-700 border border-slate-200 shadow-sm transition">
+                            Desplegar todos
+                        </button>
+                        <button id="btnCollapseAll" type="button" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white hover:bg-slate-100 text-slate-500 border border-slate-200 shadow-sm transition">
+                            Contraer
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filtros Dinámicos por Columna D -->
+                <div class="px-1 mt-1 mb-2">
+                    <p class="text-[10px] uppercase font-bold text-slate-400 mb-1.5 tracking-wide">Filtrar por Categoría</p>
+                    <div id="colDFilters" class="flex flex-wrap gap-2">
+                        <!-- Botones renderizados dinámicamente -->
+                    </div>
+                </div>
+
+                <!-- Tarjetas de Sendero de cada Producto -->
+                <div id="productsTrailList" class="space-y-3">
+                    <!-- Se inyecta dinámicamente -->
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- TOOLTIP FLOTANTE LUMINOSO -->
+    <div id="floatingTooltip" class="fixed z-50 pointer-events-none hidden bg-white/95 border border-emerald-900/15 rounded-2xl p-3.5 shadow-xl max-w-xs text-xs text-slate-800 backdrop-blur-md"></div>
+
+    <script>
+        /*************************************************************************
+         * CONFIGURACIÓN INTERNA
+         *************************************************************************/
+        const XLSX_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS29Ytx_hrn6yHFbdXFew1ZYBCGwW4uS_QVjc90fqclm_nxIeWOKy49k9tD6GTXtw/pub?output=xlsx';
+        const CSV_FALLBACK_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS29Ytx_hrn6yHFbdXFew1ZYBCGwW4uS_QVjc90fqclm_nxIeWOKy49k9tD6GTXtw/pub?output=csv';
+
+        const state = {
+            headers: [],
+            rawRows: [],
+            columnMapping: {
+                colA: 0,
+                colB: 1,
+                colD: 3,
+                colE: 4,
+                colF: 5,
+                colG: 6,
+                colPct: -1
+            },
+            products: [],
+            filteredProducts: [],
+            expandedProducts: new Set(),
+            selectedProductKey: null,
+            selectedRowIndex: null,
+            minDate: null,
+            maxDate: null,
+            searchQuery: '',
+            filterDeliverableType: 'all',
+            filterStatus: 'all',
+            filterColD: 'all',
+            uniqueColDValues: new Set()
+        };
+
+        /*************************************************************************
+         * UTILIDADES DE FECHAS Y PORCENTAJES
+         *************************************************************************/
+        const SPANISH_MONTHS = {
+            ene: 0, enero: 0, jan: 0,
+            feb: 1, febrero: 1,
+            mar: 2, marzo: 2,
+            abr: 3, abril: 3, apr: 3,
+            may: 4, mayo: 4,
+            jun: 5, junio: 5,
+            jul: 6, julio: 6,
+            ago: 7, agosto: 7, aug: 7,
+            sep: 8, sept: 8, septiembre: 8, set: 8,
+            oct: 9, octubre: 9,
+            nov: 10, noviembre: 10,
+            dic: 11, diciembre: 11, dec: 11
+        };
+
+        function parseExcelDate(val) {
+            if (val === null || val === undefined || val === '') return null;
+            if (val instanceof Date) return isNaN(val.getTime()) ? null : val;
+
+            if (typeof val === 'number') {
+                if (val > 25000 && val < 80000) {
+                    const utcDays = Math.floor(val - 25569);
+                    const dateInfo = new Date(utcDays * 86400 * 1000);
+                    return new Date(dateInfo.getUTCFullYear(), dateInfo.getUTCMonth(), dateInfo.getUTCDate(), 12, 0, 0);
+                }
+                return null;
+            }
+
+            const str = String(val).trim();
+            if (!str) return null;
+
+            if (/^\d{5}(\.\d+)?$/.test(str)) {
+                const serial = parseFloat(str);
+                if (serial > 25000 && serial < 80000) {
+                    const utcDays = Math.floor(serial - 25569);
+                    const dateInfo = new Date(utcDays * 86400 * 1000);
+                    return new Date(dateInfo.getUTCFullYear(), dateInfo.getUTCMonth(), dateInfo.getUTCDate(), 12, 0, 0);
+                }
+            }
+
+            let m = str.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+            if (m) {
+                const d = new Date(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10), 12, 0, 0);
+                if (!isNaN(d.getTime())) return d;
+            }
+
+            m = str.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/);
+            if (m) {
+                let p1 = parseInt(m[1], 10);
+                let p2 = parseInt(m[2], 10);
+                let year = parseInt(m[3], 10);
+                if (year < 100) year += 2000;
+                let day = p1, month = p2 - 1;
+                if (p2 > 12 && p1 <= 12) { month = p1 - 1; day = p2; }
+                const d = new Date(year, month, day, 12, 0, 0);
+                if (!isNaN(d.getTime())) return d;
+            }
+
+            const cleanStr = str.toLowerCase().replace(/de\s+/g, ' ').replace(/[,\.]/g, ' ').trim();
+            m = cleanStr.match(/^(\d{1,2})[\s\-\/]+([a-záéíóú]+)[\s\-\/]+(\d{2,4})/);
+            if (m && SPANISH_MONTHS[m[2]] !== undefined) {
+                let year = parseInt(m[3], 10);
+                if (year < 100) year += 2000;
+                return new Date(year, SPANISH_MONTHS[m[2]], parseInt(m[1], 10), 12, 0, 0);
+            }
+
+            const parsed = new Date(str);
+            if (!isNaN(parsed.getTime()) && parsed.getFullYear() > 1990 && parsed.getFullYear() < 2100) {
+                return parsed;
+            }
+            return null;
+        }
+
+        function formatDateDisplay(date) {
+            if (!date || isNaN(date.getTime())) return '—';
+            const d = String(date.getDate()).padStart(2, '0');
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const y = date.getFullYear();
+            return `${d}/${m}/${y}`;
+        }
+
+        function formatShortDate(date) {
+            if (!date || isNaN(date.getTime())) return '—';
+            const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            return `${String(date.getDate()).padStart(2, '0')} ${months[date.getMonth()]} ${date.getFullYear()}`;
+        }
+
+        function parsePercentageValue(cellObj, colScaleIsDecimal = false) {
+            if (!cellObj) return null;
+            const raw = cellObj.v;
+            const formatted = cellObj.w ? String(cellObj.w).trim() : '';
+
+            if (formatted.includes('%')) {
+                const num = parseFloat(formatted.replace(/[^0-9.,\-]/g, '').replace(',', '.'));
+                if (!isNaN(num)) return Math.max(0, Math.min(100, Math.round(num * 10) / 10));
+            }
+
+            if (typeof raw === 'number' && !isNaN(raw)) {
+                if (colScaleIsDecimal && raw >= 0 && raw <= 1) return Math.round(raw * 1000) / 10;
+                if (raw >= 0 && raw <= 100) return Math.round(raw * 10) / 10;
+            }
+
+            if (typeof raw === 'string') {
+                const clean = raw.trim();
+                if (clean.includes('%')) {
+                    const num = parseFloat(clean.replace(/[^0-9.,\-]/g, '').replace(',', '.'));
+                    if (!isNaN(num)) return Math.max(0, Math.min(100, Math.round(num * 10) / 10));
+                }
+                const num = parseFloat(clean.replace(',', '.'));
+                if (!isNaN(num)) {
+                    if (colScaleIsDecimal && num >= 0 && num <= 1) return Math.round(num * 1000) / 10;
+                    if (num >= 0 && num <= 100) return Math.round(num * 10) / 10;
+                }
+                const lower = clean.toLowerCase();
+                if (/^(completado|finalizado|terminado|cumplido|entregado|100%|si|sí)$/i.test(lower)) return 100;
+                if (/^(en proceso|en progreso|en curso|en ejecuci[oó]n|parcial)$/i.test(lower)) return 50;
+                if (/^(pendiente|no iniciado|por iniciar|sin iniciar|no)$/i.test(lower)) return 0;
+            }
+
+            return null;
+        }
+
+        /*************************************************************************
+         * CARGA DE LA HOJA DE CÁLCULO
+         *************************************************************************/
+        async function fetchSpreadsheetData() {
+            const strategies = [
+                XLSX_URL,
+                CSV_FALLBACK_URL,
+                'https://corsproxy.io/?' + encodeURIComponent(XLSX_URL),
+                'https://api.allorigins.win/raw?url=' + encodeURIComponent(XLSX_URL)
+            ];
+
+            for (const url of strategies) {
+                try {
+                    const response = await fetch(url, { cache: 'no-store' });
+                    if (!response.ok) continue;
+
+                    const arrayBuffer = await response.arrayBuffer();
+                    const data = new Uint8Array(arrayBuffer);
+
+                    const firstChars = new TextDecoder().decode(data.slice(0, 100)).trim().toLowerCase();
+                    if (firstChars.startsWith('<!doctype html') || firstChars.startsWith('<html')) continue;
+
+                    const workbook = XLSX.read(data, { type: 'array', cellDates: false, cellNF: true, cellText: true });
+
+                    if (workbook && workbook.SheetNames && workbook.SheetNames.length > 0) {
+                        let bestSheet = workbook.SheetNames[0];
+                        for (const name of workbook.SheetNames) {
+                            const ws = workbook.Sheets[name];
+                            if (ws && ws['!ref']) {
+                                const range = XLSX.utils.decode_range(ws['!ref']);
+                                if (range.e.r >= 1 && range.e.c >= 4) {
+                                    bestSheet = name;
+                                    break;
+                                }
+                            }
+                        }
+                        parseWorksheet(workbook.Sheets[bestSheet]);
+                        return;
+                    }
+                } catch (e) {}
+            }
+        }
+
+        function parseWorksheet(ws) {
+            if (!ws || !ws['!ref']) return;
+
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            const numRows = range.e.r + 1;
+            const numCols = Math.max(range.e.c + 1, 8);
+
+            const matrix = Array.from({ length: numRows }, () =>
+                Array.from({ length: numCols }, () => ({ v: '', w: '' }))
+            );
+
+            for (let r = range.s.r; r <= range.e.r; r++) {
+                for (let c = range.s.c; c <= range.e.c; c++) {
+                    const addr = XLSX.utils.encode_cell({ r, c });
+                    const cell = ws[addr];
+                    if (cell) {
+                        matrix[r][c] = {
+                            v: cell.v !== undefined ? cell.v : '',
+                            w: cell.w !== undefined ? String(cell.w).trim() : String(cell.v !== undefined ? cell.v : '').trim()
+                        };
+                    }
+                }
+            }
+
+            if (ws['!merges'] && Array.isArray(ws['!merges'])) {
+                ws['!merges'].forEach((merge) => {
+                    const topCell = matrix[merge.s.r]?.[merge.s.c];
+                    if (!topCell) return;
+                    for (let r = merge.s.r; r <= merge.e.r; r++) {
+                        for (let c = merge.s.c; c <= merge.e.c; c++) {
+                            if (matrix[r]?.[c] && (matrix[r][c].v === '' || matrix[r][c].v === null)) {
+                                matrix[r][c] = { ...topCell };
+                            }
+                        }
+                    }
+                });
+            }
+
+            let headerRowIdx = 0;
+            let bestHeaderScore = -1;
+            for (let r = 0; r < Math.min(10, numRows - 1); r++) {
+                const rowCells = matrix[r];
+                const nonEmptyCount = rowCells.filter(c => c.w !== '').length;
+                if (nonEmptyCount < 3) continue;
+
+                const rowText = rowCells.map(c => c.w.toLowerCase()).join(' | ');
+                let score = nonEmptyCount;
+                if (/producto|entregable|inicio|fin|fecha|avance|%|completado|actividad|c[oó]digo/i.test(rowText)) {
+                    score += 20;
+                }
+                if (score > bestHeaderScore) {
+                    bestHeaderScore = score;
+                    headerRowIdx = r;
+                }
+            }
+
+            const headers = [];
+            for (let c = 0; c < numCols; c++) {
+                const cleanTitle = (matrix[headerRowIdx]?.[c]?.w || '').replace(/\s+/g, ' ').trim();
+                headers.push({ index: c, title: cleanTitle || `Campo ${c + 1}` });
+            }
+
+            const dataRows = [];
+            for (let r = headerRowIdx + 1; r < numRows; r++) {
+                const row = matrix[r];
+                if (!row.some(cell => String(cell.w || cell.v || '').trim() !== '')) continue;
+                dataRows.push({ cells: row });
+            }
+
+            state.headers = headers;
+            state.rawRows = dataRows;
+            state.columnMapping.colPct = detectPercentageColumn(headers, dataRows);
+
+            buildProductsModel();
+        }
+
+        function detectPercentageColumn(headers, dataRows) {
+            for (const h of headers) {
+                if ([0, 1, 4, 5].includes(h.index)) continue;
+                if (/%|avance|completado|progreso|cumplimiento/i.test(h.title)) return h.index;
+            }
+            let bestCol = -1;
+            let bestScore = 0;
+            headers.forEach((h) => {
+                if ([0, 1, 4, 5, 6].includes(h.index)) return;
+                let score = 0;
+                dataRows.forEach((row) => {
+                    const cell = row.cells[h.index];
+                    if (!cell) return;
+                    if (String(cell.w).includes('%')) score += 5;
+                    else if (typeof cell.v === 'number' && cell.v >= 0 && cell.v <= 100) score += 2;
+                });
+                if (score > bestScore) { bestScore = score; bestCol = h.index; }
+            });
+            return bestCol === -1 && headers.length > 7 ? 7 : bestCol;
+        }
+
+        /*************************************************************************
+         * CONSTRUCCIÓN DE PRODUCTOS Y FILTROS
+         *************************************************************************/
+        function buildProductsModel() {
+            const { colA, colB, colD, colE, colF, colG, colPct } = state.columnMapping;
+            const rows = state.rawRows;
+
+            let colScaleIsDecimal = false;
+            if (colPct >= 0) {
+                const numericVals = rows.map(r => r.cells[colPct]?.v).filter(v => typeof v === 'number' && !isNaN(v));
+                if (numericVals.length > 0 && !numericVals.some(v => v > 1.0001) && Math.max(...numericVals) <= 1) {
+                    colScaleIsDecimal = true;
+                }
+            }
+
+            const productMap = new Map();
+            let lastColA = '';
+            let lastColB = '';
+            let globalMinDate = null;
+            let globalMaxDate = null;
+
+            rows.forEach((rowObj, idx) => {
+                const cells = rowObj.cells;
+
+                let valA = String(cells[colA]?.w || cells[colA]?.v || '').trim();
+                let valB = String(cells[colB]?.w || cells[colB]?.v || '').trim();
+                const valD = String(cells[colD]?.w || cells[colD]?.v || '').trim();
+                const valG = String(cells[colG]?.w || cells[colG]?.v || '').trim();
+
+                const rawDateE = cells[colE]?.v !== '' ? cells[colE]?.v : cells[colE]?.w;
+                const rawDateF = cells[colF]?.v !== '' ? cells[colF]?.v : cells[colF]?.w;
+                let startDate = parseExcelDate(rawDateE);
+                let endDate = parseExcelDate(rawDateF);
+
+                if (startDate && !endDate) endDate = new Date(startDate.getTime());
+                if (!startDate && endDate) startDate = new Date(endDate.getTime());
+
+                if (!valA && !valB && (valG || startDate || endDate)) { valA = lastColA; valB = lastColB; }
+                else if (valA && !valB && valA === lastColA) { valB = lastColB; }
+
+                if (valA) lastColA = valA;
+                if (valB) lastColB = valB;
+
+                if (!valA && !valB && !startDate && !endDate) return;
+
+                if (valD) state.uniqueColDValues.add(valD);
+
+                const normalizedA = valA.toUpperCase().trim();
+                const normalizedB = valB.toUpperCase().trim();
+                const productKey = normalizedA ? `${normalizedA}||${normalizedB}` : `B_ONLY||${normalizedB}`;
+
+                let rowPct = null;
+                if (colPct >= 0 && cells[colPct]) { rowPct = parsePercentageValue(cells[colPct], colScaleIsDecimal); }
+                if (rowPct === null) {
+                    for (let c = 0; c < cells.length; c++) {
+                        if ([colA, colB, colE, colF, colG].includes(c)) continue;
+                        if (String(cells[c]?.w || '').includes('%')) {
+                            rowPct = parsePercentageValue(cells[c], false);
+                            if (rowPct !== null) break;
+                        }
+                    }
+                }
+                const finalRowPct = rowPct !== null ? rowPct : 0;
+
+                if (startDate) {
+                    if (!globalMinDate || startDate < globalMinDate) globalMinDate = new Date(startDate.getTime());
+                    if (!globalMaxDate || startDate > globalMaxDate) globalMaxDate = new Date(startDate.getTime());
+                }
+                if (endDate) {
+                    if (!globalMinDate || endDate < globalMinDate) globalMinDate = new Date(endDate.getTime());
+                    if (!globalMaxDate || endDate > globalMaxDate) globalMaxDate = new Date(endDate.getTime());
+                }
+
+                const fields = state.headers.map((h) => ({
+                    title: h.title,
+                    value: cells[h.index]?.w || String(cells[h.index]?.v ?? '').trim()
+                })).filter(f => f.value !== '');
+
+                const deliverableItem = {
+                    rowIndex: idx,
+                    codeA: valA || '',
+                    nameB: valB || '',
+                    colD: valD || '',
+                    stageG: valG || '',
+                    startDate,
+                    endDate,
+                    rawStartText: cells[colE]?.w || formatDateDisplay(startDate),
+                    rawEndText: cells[colF]?.w || formatDateDisplay(endDate),
+                    percentage: finalRowPct,
+                    fields
+                };
+
+                if (!productMap.has(productKey)) {
+                    productMap.set(productKey, {
+                        key: productKey,
+                        code: valA || `${productMap.size + 1}`,
+                        name: valB || valA || 'Producto',
+                        deliverables: []
+                    });
+                }
+                productMap.get(productKey).deliverables.push(deliverableItem);
+            });
+
+            const productsList = [];
+            productMap.forEach((prod) => {
+                prod.deliverables.sort((a, b) => {
+                    const tA = a.endDate ? a.endDate.getTime() : (a.startDate ? a.startDate.getTime() : 0);
+                    const tB = b.endDate ? b.endDate.getTime() : (b.startDate ? b.startDate.getTime() : 0);
+                    return tA - tB;
+                });
+
+                const count = prod.deliverables.length;
+                const hasIntermediate = count > 1;
+
+                let prodStart = null;
+                let prodEnd = null;
+                prod.deliverables.forEach((d) => {
+                    if (d.startDate && (!prodStart || d.startDate < prodStart)) prodStart = new Date(d.startDate.getTime());
+                    if (d.endDate && (!prodEnd || d.endDate > prodEnd)) prodEnd = new Date(d.endDate.getTime());
+                });
+
+                const sumPct = prod.deliverables.reduce((acc, d) => acc + (Number(d.percentage) || 0), 0);
+                const avgPct = count > 0 ? Math.round((sumPct / count) * 10) / 10 : 0;
+
+                productsList.push({ ...prod, startDate: prodStart, endDate: prodEnd, avgPercentage: avgPct, hasIntermediate, totalDeliverables: count });
+            });
+
+            state.products = productsList;
+            state.minDate = globalMinDate;
+            state.maxDate = globalMaxDate;
+
+            renderColDButtons();
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('dashboardContent').classList.remove('hidden');
+
+            updateSummaryKPIs();
+            renderExpectedProgress();
+            applyFiltersAndRender();
+        }
+
+        /*************************************************************************
+         * INDICADORES, % ESPERADO Y FILTROS
+         *************************************************************************/
+        function updateSummaryKPIs() {
+            const products = state.products;
+            const total = products.length;
+            const withInter = products.filter(p => p.hasIntermediate).length;
+            const single = total - withInter;
+            const atSummit = products.filter(p => p.avgPercentage >= 100).length;
+
+            const overallAvg = total > 0 ? Math.round((products.reduce((acc, p) => acc + p.avgPercentage, 0) / total) * 10) / 10 : 0;
+
+            document.getElementById('kpiTotalProducts').textContent = total;
+            document.getElementById('kpiSummitCount').textContent = `${atSummit} en la cima`;
+            document.getElementById('kpiWithIntermediate').textContent = withInter;
+            document.getElementById('kpiSingleDeliverable').textContent = single;
+
+            document.getElementById('kpiAvgProgress').textContent = `${overallAvg}%`;
+            document.getElementById('kpiAvgProgressBar').style.width = `${Math.min(100, Math.max(0, overallAvg))}%`;
+
+            document.getElementById('kpiMinDate').textContent = formatShortDate(state.minDate);
+            document.getElementById('kpiMaxDate').textContent = formatShortDate(state.maxDate);
+
+            // Días disponibles
+            if (state.maxDate) {
+                const today = new Date();
+                const maxT = state.maxDate.getTime();
+                const diffTime = maxT - today.getTime();
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                const text = diffDays > 0 ? `${diffDays} días disponibles` : (diffDays === 0 ? "Último día" : `${Math.abs(diffDays)} días de retraso`);
+                const el = document.getElementById('kpiDurationDays');
+                el.textContent = text;
+                if (diffDays < 0) { el.classList.replace('bg-sky-50', 'bg-rose-50'); el.classList.replace('text-sky-700', 'text-rose-700'); el.classList.replace('border-sky-100', 'border-rose-100'); }
+            }
+        }
+
+        function renderExpectedProgress() {
+            const expectedG = document.getElementById('expectedLineGroup');
+            if (!expectedG || !state.minDate || !state.maxDate) return;
+
+            const today = new Date();
+            const minT = state.minDate.getTime();
+            const maxT = state.maxDate.getTime();
+            const nowT = today.getTime();
+
+            let expectedPct = 0;
+            if (nowT >= maxT) expectedPct = 100;
+            else if (nowT > minT) expectedPct = ((nowT - minT) / (maxT - minT)) * 100;
+
+            const t = Math.max(0, Math.min(100, expectedPct)) / 100;
+            const trailY = 87.0 - Math.pow(t, 1.06) * 69.9;
+            const svgY = (trailY / 100) * 480;
+
+            expectedG.innerHTML = `
+                <line x1="0" y1="${svgY}" x2="1200" y2="${svgY}" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="8 6" opacity="0.75" />
+                <rect x="20" y="${svgY - 11}" width="165" height="22" rx="6" fill="rgba(255,255,255,0.92)" stroke="#fca5a5" stroke-width="1" />
+                <text x="28" y="${svgY + 4}" fill="#dc2626" font-size="11" font-weight="bold" font-family="JetBrains Mono, monospace">
+                    % Esperado a Hoy: ${expectedPct.toFixed(1)}%
+                </text>
+            `;
+        }
+
+        function renderColDButtons() {
+            const container = document.getElementById('colDFilters');
+            container.innerHTML = `<button data-val="all" class="cold-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600 text-white border border-emerald-600 shadow-sm transition">Todos</button>`;
+
+            Array.from(state.uniqueColDValues).sort().forEach(val => {
+                container.innerHTML += `<button data-val="${escapeHtml(val)}" class="cold-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 shadow-sm transition">${escapeHtml(val)}</button>`;
+            });
+
+            container.addEventListener('click', (e) => {
+                if (e.target.tagName === 'BUTTON') {
+                    document.querySelectorAll('.cold-filter-btn').forEach(b => {
+                        b.className = 'cold-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 shadow-sm transition';
+                    });
+                    e.target.className = 'cold-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600 text-white border border-emerald-600 shadow-sm transition';
+                    state.filterColD = e.target.getAttribute('data-val');
+                    applyFiltersAndRender();
+                }
+            });
+        }
+
+        function applyFiltersAndRender() {
+            const q = state.searchQuery.toLowerCase().trim();
+            const typeFilter = state.filterDeliverableType;
+            const statusFilter = state.filterStatus;
+
+            state.filteredProducts = state.products.filter((prod) => {
+                if (typeFilter === 'intermediate' && !prod.hasIntermediate) return false;
+                if (typeFilter === 'single' && prod.hasIntermediate) return false;
+
+                if (statusFilter === 'completed' && prod.avgPercentage < 100) return false;
+                if (statusFilter === 'in_progress' && (prod.avgPercentage <= 0 || prod.avgPercentage >= 100)) return false;
+                if (statusFilter === 'pending' && prod.avgPercentage > 0) return false;
+
+                if (state.filterColD !== 'all') {
+                    if (!prod.deliverables.some(d => d.colD === state.filterColD)) return false;
+                }
+
+                if (q) {
+                    const matchProd = prod.code.toLowerCase().includes(q) || prod.name.toLowerCase().includes(q);
+                    const matchStage = prod.deliverables.some(d => d.stageG.toLowerCase().includes(q) || d.fields.some(f => String(f.value).toLowerCase().includes(q)));
+                    if (!matchProd && !matchStage) return false;
+                }
+                return true;
+            });
+
+            renderMountainClimbers();
+            renderProductsTrailList();
+        }
+
+        function getBaseTrailPoint(pct) {
+            const clamped = Math.max(0, Math.min(100, pct));
+            const t = clamped / 100;
+            const trailX = 8.75 + t * 77.5;
+            const trailY = 87.0 - Math.pow(t, 1.06) * 69.9;
+            return { trailX, trailY };
+        }
+
+        /*************************************************************************
+         * RENDERIZACIÓN DE VISTAS (MONTAÑA Y LISTA)
+         *************************************************************************/
+        function renderMountainClimbers() {
+            const layer = document.getElementById('mountainClimbersLayer');
+            const connectorGroup = document.getElementById('climberConnectorLines');
+            layer.innerHTML = '';
+            if (connectorGroup) connectorGroup.innerHTML = '';
+
+            const clusters = new Map();
+            state.filteredProducts.forEach((prod) => {
+                const bucketKey = Math.round(prod.avgPercentage / 3);
+                if (!clusters.has(bucketKey)) clusters.set(bucketKey, []);
+                clusters.get(bucketKey).push(prod);
+            });
+
+            clusters.forEach((groupProducts) => {
+                const totalInGroup = groupProducts.length;
+                const maxRowsPerCol = 4;
+
+                groupProducts.forEach((prod, indexInGroup) => {
+                    const { trailX, trailY } = getBaseTrailPoint(prod.avgPercentage);
+                    const col = Math.floor(indexInGroup / maxRowsPerCol);
+                    const row = indexInGroup % maxRowsPerCol;
+                    const itemsInThisCol = Math.min(maxRowsPerCol, totalInGroup - col * maxRowsPerCol);
+
+                    let pinX = trailX;
+                    let pinY = trailY;
+
+                    if (totalInGroup > 1) {
+                        if (prod.avgPercentage <= 20) {
+                            pinY = trailY - (row * 9.2) - (col * 2.5);
+                            pinX = trailX + (col * 8.2) + ((row % 2) * 1.6);
+                        } else if (prod.avgPercentage >= 85) {
+                            pinY = trailY + (row * 9.2) + (col * 2.5);
+                            pinX = trailX - (col * 8.2) - ((row % 2) * 1.6);
+                        } else {
+                            const centeredOffset = (row - (itemsInThisCol - 1) / 2) * 9.2;
+                            pinY = trailY + centeredOffset;
+                            pinX = trailX + (col * 7.8) + ((row % 2 === 0 ? -1 : 1) * 1.5);
+                        }
+                    }
+
+                    pinX = Math.max(6, Math.min(93, pinX));
+                    pinY = Math.max(10, Math.min(91, pinY));
+
+                    if (connectorGroup) {
+                        const svgX1 = (trailX / 100) * 1200;
+                        const svgY1 = (trailY / 100) * 480;
+                        const svgX2 = (pinX / 100) * 1200;
+                        const svgY2 = (pinY / 100) * 480;
+
+                        if (totalInGroup > 1) {
+                            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                            line.setAttribute('x1', svgX1);
+                            line.setAttribute('y1', svgY1);
+                            line.setAttribute('x2', svgX2);
+                            line.setAttribute('y2', svgY2);
+                            line.setAttribute('stroke', '#ffffff');
+                            line.setAttribute('stroke-width', '1.8');
+                            line.setAttribute('stroke-dasharray', '3 3');
+                            line.setAttribute('opacity', '0.85');
+                            connectorGroup.appendChild(line);
+                        }
+
+                        const baseDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                        baseDot.setAttribute('cx', svgX1);
+                        baseDot.setAttribute('cy', svgY1);
+                        baseDot.setAttribute('r', '4.5');
+                        baseDot.setAttribute('fill', prod.avgPercentage >= 100 ? '#10b981' : (prod.hasIntermediate ? '#6366f1' : '#0ea5e9'));
+                        baseDot.setAttribute('stroke', '#ffffff');
+                        baseDot.setAttribute('stroke-width', '1.5');
+                        connectorGroup.appendChild(baseDot);
+                    }
+
+                    const isSelected = state.selectedProductKey === prod.key;
+
+                    let badgeBorder = 'border-sky-500 ring-sky-500/20';
+                    let pillBg = 'bg-sky-600 text-white';
+                    let pctColor = 'text-sky-700';
+
+                    if (prod.avgPercentage >= 100) {
+                        badgeBorder = 'border-emerald-600 ring-emerald-500/30';
+                        pillBg = 'bg-emerald-600 text-white';
+                        pctColor = 'text-emerald-700';
+                    } else if (prod.hasIntermediate) {
+                        badgeBorder = 'border-indigo-500 ring-indigo-500/25';
+                        pillBg = 'bg-indigo-500 text-white';
+                        pctColor = 'text-indigo-700';
+                    }
+
+                    const pin = document.createElement('div');
+                    pin.className = 'climber-pin absolute cursor-pointer group';
+                    pin.style.left = `${pinX}%`;
+                    pin.style.top = `${pinY}%`;
+                    pin.style.animationDelay = `${(indexInGroup * 0.35)}s`;
+
+                    pin.innerHTML = `
+                        <div class="flex items-center gap-1.5 px-2 py-1 rounded-full bg-white/95 backdrop-blur-sm border-2 ${badgeBorder} ${isSelected ? 'ring-4 scale-110 shadow-xl' : 'ring-2 shadow-md'} transition-all duration-200 group-hover:scale-110 group-hover:shadow-xl">
+                            <span class="px-1.5 py-0.2 rounded-full text-[11px] font-mono font-extrabold ${pillBg} leading-tight">
+                                ${escapeHtml(prod.code)}
+                            </span>
+                            <span class="text-[11px] font-mono font-bold ${pctColor} pr-0.5 whitespace-nowrap">
+                                ${prod.avgPercentage}%
+                            </span>
+                        </div>
+                    `;
+
+                    pin.addEventListener('mouseenter', (ev) => showTooltip(ev, prod, null));
+                    pin.addEventListener('mousemove', moveTooltip);
+                    pin.addEventListener('mouseleave', hideTooltip);
+                    pin.addEventListener('click', () => { hideTooltip(); selectProductAndOpenDetail(prod.key, null, true); });
+
+                    layer.appendChild(pin);
+                });
+            });
+        }
+
+        function renderProductsTrailList() {
+            const container = document.getElementById('productsTrailList');
+            container.innerHTML = '';
+
+            if (state.filteredProducts.length === 0) {
+                container.innerHTML = `<div class="py-14 px-4 bg-white border border-slate-200 rounded-2xl text-center text-slate-500 shadow-sm"><p class="text-sm">No se encontraron productos con ese criterio.</p></div>`;
+                return;
+            }
+
+            state.filteredProducts.forEach((prod) => {
+                const isExpanded = state.expandedProducts.has(prod.key);
+                const isSelected = state.selectedProductKey === prod.key;
+
+                const card = document.createElement('div');
+                card.className = `bg-white border ${isSelected ? 'border-emerald-600 ring-2 ring-emerald-500/15' : 'border-emerald-900/10 hover:border-emerald-600/40'} rounded-2xl overflow-hidden shadow-sm transition-all`;
+
+                const typeTagHTML = prod.hasIntermediate
+                    ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-indigo-50 text-indigo-800 border border-indigo-200">
+                        <i class="fa-solid fa-route text-[9px] text-indigo-600"></i> ${prod.totalDeliverables} entregables intermedios
+                       </span>`
+                    : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-sky-50 text-sky-800 border border-sky-200">
+                        <i class="fa-solid fa-person-hiking text-[9px] text-sky-600"></i> Producto directo
+                       </span>`;
+
+                const barGradient = prod.avgPercentage >= 100 ? 'from-emerald-500 to-teal-600' : prod.hasIntermediate ? 'from-indigo-400 via-indigo-500 to-emerald-500' : 'from-sky-500 to-emerald-500';
+
+                let checkpointsHTML = '';
+                if (prod.hasIntermediate) {
+                    checkpointsHTML = prod.deliverables.map((deliv, idx) => {
+                        const stepPos = Math.round(((idx + 1) / prod.totalDeliverables) * 100);
+                        const isDone = deliv.percentage >= 100;
+                        const nodeColor = isDone ? 'bg-emerald-600 border-white ring-emerald-500/30' : deliv.percentage > 0 ? 'bg-indigo-500 border-white ring-indigo-500/30' : 'bg-slate-300 border-white ring-slate-300/50';
+                        return `
+                            <button type="button" data-row-idx="${deliv.rowIndex}" class="stage-checkpoint-btn absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-10 group/cp focus:outline-none" style="left: ${stepPos}%" title="${escapeHtml(deliv.stageG || `Etapa ${idx + 1}`)} (${deliv.percentage}%)">
+                                <div class="w-4 h-4 rounded-full ${nodeColor} border-2 ring-2 shadow-sm transition-transform group-hover/cp:scale-125"></div>
+                            </button>
+                        `;
+                    }).join('');
+                }
+
+                const mainRow = document.createElement('div');
+                mainRow.className = 'p-4 sm:px-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4 cursor-pointer';
+
+                mainRow.innerHTML = `
+                    <div class="flex items-start gap-3 min-w-0 lg:w-[38%] shrink-0">
+                        <button type="button" class="mt-0.5 w-6 h-6 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 transition">
+                            <i class="fa-solid fa-chevron-right text-[10px] transition-transform duration-200 ${isExpanded ? 'rotate-90 text-emerald-600' : ''}"></i>
+                        </button>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-emerald-700 text-white">${escapeHtml(prod.code)}</span>
+                                <h3 class="text-sm font-bold text-slate-900 truncate" title="${escapeHtml(prod.name)}">${escapeHtml(prod.name)}</h3>
+                            </div>
+                            <div class="mt-1.5 flex flex-wrap items-center gap-2.5 text-[11px] text-slate-500">
+                                ${typeTagHTML}
+                                <span class="font-mono">${formatShortDate(prod.startDate)} → ${formatShortDate(prod.endDate)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex-1 flex items-center gap-4">
+                        <div class="flex-1 relative py-3">
+                            <div class="w-full h-3 bg-slate-100 border border-slate-200/80 rounded-full overflow-hidden p-0.5">
+                                <div class="h-full rounded-full bg-gradient-to-r ${barGradient} transition-all duration-500" style="width: ${Math.min(100, Math.max(2, prod.avgPercentage))}%"></div>
+                            </div>
+                            ${checkpointsHTML}
+                            <div class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 pointer-events-none transition-all duration-500" style="left: ${Math.min(100, Math.max(0, prod.avgPercentage))}%">
+                                <div class="px-2 py-0.5 -mt-8 rounded-md bg-slate-900 text-[10px] font-mono font-bold text-white shadow-md">${prod.avgPercentage}%</div>
+                            </div>
+                        </div>
+                        <div class="shrink-0 flex items-center gap-2 pl-1">
+                            <div class="w-8 h-8 rounded-xl ${prod.avgPercentage >= 100 ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 border border-slate-200 text-slate-400'} flex items-center justify-center" title="La Cima (100%)">
+                                <i class="fa-solid fa-mountain-sun text-xs"></i>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                mainRow.querySelectorAll('.stage-checkpoint-btn').forEach((btn) => {
+                    const rIdx = parseInt(btn.getAttribute('data-row-idx'), 10);
+                    const delivObj = prod.deliverables.find(d => d.rowIndex === rIdx);
+                    btn.addEventListener('mouseenter', (ev) => showTooltip(ev, prod, delivObj));
+                    btn.addEventListener('mousemove', moveTooltip);
+                    btn.addEventListener('mouseleave', hideTooltip);
+                    btn.addEventListener('click', (ev) => { ev.stopPropagation(); hideTooltip(); selectProductAndOpenDetail(prod.key, rIdx, true); });
+                });
+
+                mainRow.addEventListener('click', () => {
+                    if (state.expandedProducts.has(prod.key)) {
+                        state.expandedProducts.delete(prod.key);
+                        renderProductsTrailList();
+                    } else {
+                        state.expandedProducts.add(prod.key);
+                        selectProductAndOpenDetail(prod.key, null, false);
+                    }
+                });
+
+                card.appendChild(mainRow);
+
+                if (isExpanded) {
+                    const detailBody = document.createElement('div');
+                    detailBody.className = 'border-t border-slate-200/80 bg-slate-50/70 p-4 sm:px-6 space-y-4';
+
+                    prod.deliverables.forEach((deliv, idx) => {
+                        const stageBlock = document.createElement('div');
+                        stageBlock.className = 'bg-white border border-slate-200/90 rounded-xl p-4 space-y-3 shadow-sm';
+
+                        const headerHTML = prod.hasIntermediate
+                            ? `<div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
+                                <div class="flex items-center gap-2">
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-indigo-100 text-indigo-800 border border-indigo-200">Entregable intermedio ${idx + 1}</span>
+                                    <span class="text-xs font-bold text-slate-900">${escapeHtml(deliv.stageG || deliv.nameB)}</span>
+                                </div>
+                                <div class="flex items-center gap-3 text-xs font-mono">
+                                    <span class="text-slate-500">${escapeHtml(deliv.rawStartText)} → ${escapeHtml(deliv.rawEndText)}</span>
+                                    <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">${deliv.percentage}%</span>
+                                </div>
+                               </div>`
+                            : '';
+
+                        const fieldsGridHTML = deliv.fields.map((f) => `
+                            <div class="bg-slate-50 border border-slate-200/70 rounded-lg p-2.5">
+                                <span class="text-[10px] font-semibold text-slate-500 block truncate" title="${escapeHtml(f.title)}">${escapeHtml(f.title)}</span>
+                                <span class="text-xs text-slate-900 font-medium break-words mt-0.5 block">${escapeHtml(f.value)}</span>
+                            </div>
+                        `).join('');
+
+                        stageBlock.innerHTML = `${headerHTML}<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">${fieldsGridHTML}</div>`;
+                        detailBody.appendChild(stageBlock);
+                    });
+                    card.appendChild(detailBody);
+                }
+
+                container.appendChild(card);
+            });
+        }
+
+        function selectProductAndOpenDetail(productKey, rowIndex = null, scrollToSection = false) {
+            state.selectedProductKey = productKey;
+            state.selectedRowIndex = rowIndex;
+            state.expandedProducts.add(productKey);
+
+            renderMountainClimbers();
+            renderProductsTrailList();
+
+            const prod = state.products.find(p => p.key === productKey);
+            const section = document.getElementById('selectedDetailSection');
+            if (!prod) { section.classList.add('hidden'); return; }
+
+            section.classList.remove('hidden');
+            document.getElementById('detailCodeBadge').textContent = prod.code;
+            document.getElementById('detailProductName').textContent = prod.name;
+            document.getElementById('detailAvgBadge').textContent = `${prod.avgPercentage}% hacia la Cima`;
+            document.getElementById('detailSubtitle').textContent = prod.hasIntermediate
+                ? `${prod.totalDeliverables} entregables intermedios • Horizonte: ${formatDateDisplay(prod.startDate)} → ${formatDateDisplay(prod.endDate)}`
+                : `Producto directo sin entregables intermedios • Horizonte: ${formatDateDisplay(prod.startDate)} → ${formatDateDisplay(prod.endDate)}`;
+
+            const stagesSummary = document.getElementById('detailStagesSummary');
+            if (prod.hasIntermediate) {
+                stagesSummary.classList.remove('hidden');
+                const chips = prod.deliverables.map((d, i) => `
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-indigo-200 text-xs shadow-sm">
+                        <span class="w-2 h-2 rounded-full ${d.percentage >= 100 ? 'bg-emerald-500' : 'bg-indigo-500'}"></span>
+                        <span class="text-slate-700 font-medium">${escapeHtml(d.stageG || `Etapa ${i + 1}`)}</span>
+                        <span class="font-mono font-bold text-emerald-700">${d.percentage}%</span>
+                    </div>
+                `).join('');
+                stagesSummary.innerHTML = `
+                    <span class="text-[11px] font-bold text-indigo-800 uppercase tracking-wider block mb-2">
+                        Avance promediado de sus entregables intermedios
+                    </span>
+                    <div class="flex flex-wrap items-center gap-2">${chips}</div>
+                `;
+            } else {
+                stagesSummary.classList.add('hidden');
+            }
+
+            const rowsContainer = document.getElementById('detailRowsContainer');
+            rowsContainer.innerHTML = '';
+
+            prod.deliverables.forEach((deliv, idx) => {
+                const isHighlighted = rowIndex !== null && deliv.rowIndex === rowIndex;
+                const block = document.createElement('div');
+                block.className = `rounded-2xl border p-4 ${isHighlighted ? 'bg-emerald-50/50 border-emerald-500 shadow-sm' : 'bg-slate-50/70 border-slate-200'}`;
+
+                const headerBar = prod.hasIntermediate
+                    ? `<div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-3 border-b border-slate-200">
+                        <span class="text-xs font-bold text-indigo-800">${escapeHtml(deliv.stageG || `Entregable intermedio ${idx + 1}`)}</span>
+                        <span class="text-xs font-mono text-emerald-700 font-bold">${deliv.percentage}% completado</span>
+                       </div>`
+                    : '';
+
+                const fieldsHTML = deliv.fields.map((f) => `
+                    <div class="bg-white border border-slate-200/80 rounded-xl p-3 shadow-sm">
+                        <span class="text-[11px] font-semibold text-slate-500 block truncate">${escapeHtml(f.title)}</span>
+                        <span class="text-xs sm:text-sm font-medium text-slate-900 break-words mt-1 block">${escapeHtml(f.value)}</span>
+                    </div>
+                `).join('');
+
+                block.innerHTML = `${headerBar}<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">${fieldsHTML}</div>`;
+                rowsContainer.appendChild(block);
+            });
+
+            if (scrollToSection) section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        /*************************************************************************
+         * TOOLTIP Y EVENTOS COMUNES
+         *************************************************************************/
+        function showTooltip(ev, prod, deliv) {
+            const tooltip = document.getElementById('floatingTooltip');
+            const subtitle = deliv && prod.hasIntermediate
+                ? `<div class="text-indigo-700 font-semibold mt-1">${escapeHtml(deliv.stageG)} (${deliv.percentage}%)</div>`
+                : `<div class="text-slate-500 mt-1">${prod.hasIntermediate ? `${prod.totalDeliverables} entregables intermedios` : 'Producto directo'}</div>`;
+
+            tooltip.innerHTML = `
+                <div>
+                    <div class="flex items-center justify-between gap-3">
+                        <span class="px-2 py-0.5 rounded bg-emerald-700 text-white font-mono font-bold text-[11px]">${escapeHtml(prod.code)}</span>
+                        <span class="font-mono font-extrabold text-emerald-700">${prod.avgPercentage}%</span>
+                    </div>
+                    <div class="text-slate-900 font-semibold mt-1 leading-snug">${escapeHtml(prod.name)}</div>
+                    ${subtitle}
+                    <div class="mt-2 pt-1.5 border-t border-slate-200 text-[10px] font-mono text-slate-500">
+                        ${formatShortDate(prod.startDate)} → ${formatShortDate(prod.endDate)}
+                    </div>
+                </div>
+            `;
+            tooltip.classList.remove('hidden');
+            moveTooltip(ev);
+        }
+
+        function moveTooltip(ev) {
+            const tooltip = document.getElementById('floatingTooltip');
+            const pad = 14;
+            let x = ev.clientX + pad;
+            let y = ev.clientY + pad;
+            const rect = tooltip.getBoundingClientRect();
+            if (x + rect.width > window.innerWidth - 12) x = ev.clientX - rect.width - pad;
+            if (y + rect.height > window.innerHeight - 12) y = ev.clientY - rect.height - pad;
+            tooltip.style.left = `${Math.max(8, x)}px`;
+            tooltip.style.top = `${Math.max(8, y)}px`;
+        }
+
+        function hideTooltip() { document.getElementById('floatingTooltip').classList.add('hidden'); }
+        function escapeHtml(str) { return String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;'); }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchSpreadsheetData();
+
+            const searchInput = document.getElementById('searchInput');
+            const btnClearSearch = document.getElementById('btnClearSearch');
+
+            searchInput.addEventListener('input', (e) => {
+                state.searchQuery = e.target.value;
+                btnClearSearch.classList.toggle('hidden', !state.searchQuery);
+                applyFiltersAndRender();
+            });
+
+            btnClearSearch.addEventListener('click', () => {
+                searchInput.value = '';
+                state.searchQuery = '';
+                btnClearSearch.classList.add('hidden');
+                applyFiltersAndRender();
+            });
+
+            document.getElementById('filterDeliverableType').addEventListener('change', (e) => { state.filterDeliverableType = e.target.value; applyFiltersAndRender(); });
+            document.getElementById('filterStatus').addEventListener('change', (e) => { state.filterStatus = e.target.value; applyFiltersAndRender(); });
+            document.getElementById('btnExpandAll').addEventListener('click', () => { state.filteredProducts.forEach(p => state.expandedProducts.add(p.key)); renderProductsTrailList(); });
+            document.getElementById('btnCollapseAll').addEventListener('click', () => { state.expandedProducts.clear(); renderProductsTrailList(); });
+            document.getElementById('btnCloseDetail').addEventListener('click', () => {
+                state.selectedProductKey = null; state.selectedRowIndex = null;
+                document.getElementById('selectedDetailSection').classList.add('hidden');
+                renderMountainClimbers(); renderProductsTrailList();
+            });
+        });
+    </script>
+</body>
+</html>

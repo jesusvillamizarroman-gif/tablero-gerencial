@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seguimiento CONPES</title>
+    
+    <!-- Librerías Externas -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Fuentes de Google -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Estilización del scrollbar para la tabla de datos */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f8fafc; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Selects responsivos para omitir estilos por defecto molestos */
+        select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.2rem center;
+            background-size: 1em;
+            padding-right: 1.5rem !important;
+        }
+
+        /* Utilidad para scrollbar horizontal en la escalera */
+        .custom-scrollbar::-webkit-scrollbar { height: 12px; width: 12px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 8px; border: 3px solid #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        /* Clases para animación fluida de las tarjetas */
+        .node-anim {
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card-hover:hover {
+            transform: translate(-50%, -50%) scale(1.15) !important;
+            z-index: 50 !important;
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen text-slate-800 p-4 md:p-8">
+    <div class="max-w-7xl mx-auto space-y-6">
+        
+        <!-- Encabezado Principal -->
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Consejo Nacional de Política Económica y Social CONPES</h1>
+                <p class="text-sm text-slate-500 mt-1">Monitoreo de avance, cumplimiento de metas e indicadores</p>
+            </div>
+            <div id="status-badge" class="px-4 py-2 rounded-full text-sm font-medium bg-blue-50 text-blue-700 flex items-center gap-2 border border-blue-100">
+                <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Conectando...
+            </div>
+        </header>
+
+        <!-- Pantalla de Carga -->
+        <div id="loader" class="flex flex-col items-center justify-center py-32">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 mb-4"></div>
+            <p class="text-slate-500 font-medium">Obteniendo y procesando datos...</p>
+        </div>
+
+        <!-- Manejo de Errores y Carga Manual (Fallback) -->
+        <div id="error-container" class="hidden bg-white p-6 rounded-2xl border border-red-200 shadow-sm">
+            <div class="flex items-start gap-4">
+                <div class="p-3 bg-red-50 rounded-full text-red-500">
+                    <i data-lucide="alert-circle" class="w-6 h-6"></i>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-red-800 text-lg font-bold mb-1">No se pudo automatizar la conexión</h3>
+                    <p class="text-slate-600 text-sm mb-4">
+                        El navegador bloqueó la descarga directa por políticas de seguridad (CORS) u otro impedimento de red.
+                    </p>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-4">
+                        <p class="text-slate-700 text-sm font-medium mb-3">
+                            Solución rápida:
+                        </p>
+                        <ol class="list-decimal list-inside text-sm text-slate-600 space-y-1 mb-4">
+                            <li><a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vSgdr8eUvVGho4jA-sJ2IzZwPswG9zebNzbVQn-JOIWHqmm6esb1fgMsfYbyKcFfw/pub?output=xlsx" target="_blank" class="text-blue-600 font-semibold hover:underline inline-flex items-center gap-1">Haz clic aquí para descargar tu archivo XLSX <i data-lucide="external-link" class="w-3 h-3"></i></a></li>
+                            <li>Sube el archivo descargado en el botón inferior.</li>
+                        </ol>
+                        <div class="relative">
+                            <input type="file" id="file-upload" accept=".xlsx, .xls, .csv" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 file:cursor-pointer cursor-pointer focus:outline-none transition-colors" />
+                        </div>
+                    </div>
+                    <div id="parse-error" class="hidden text-red-600 text-sm font-medium"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contenido Principal del Dashboard -->
+        <div id="dashboard-content" class="hidden space-y-6">
+            
+            <!-- Controles / Botones -->
+            <div class="bg-white p-2 rounded-2xl shadow-sm border border-slate-200/60 flex flex-wrap gap-2 w-full justify-center md:justify-start relative z-20">
+                <button id="btn-radial" onclick="renderLayout('radial')" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 bg-slate-800 text-white shadow-md">
+                    <i data-lucide="circle" class="w-4 h-4"></i> Vista Radial
+                </button>
+                <button id="btn-cerrar" onclick="renderLayout('vencimientos')" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 text-slate-600 hover:bg-slate-100">
+                    <i data-lucide="clock" class="w-4 h-4"></i> Próximos Vencimientos
+                </button>
+                <button id="btn-finalizar" onclick="renderLayout('avance')" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 text-slate-600 hover:bg-slate-100">
+                    <i data-lucide="trending-up" class="w-4 h-4"></i> Mayor Avance
+                </button>
+                <button id="btn-atrasados" onclick="renderLayout('rezago')" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 text-slate-600 hover:bg-slate-100">
+                    <i data-lucide="alert-triangle" class="w-4 h-4"></i> Mayor Rezago
+                </button>
+            </div>
+            
+            <!-- Lienzo Interactivo (Círculo / Cuadrícula) -->
+            <div id="interactive-canvas" class="relative w-full node-anim overflow-visible" style="min-height: 800px;">
+                
+                <!-- Resumen Global (Nodo Central) -->
+                <div id="global-status-node" class="absolute node-anim bg-white p-6 rounded-3xl shadow-lg border-2 border-indigo-100 flex flex-col items-center justify-center gap-4 w-[340px] z-30" style="left: 50%; top: 400px; transform: translate(-50%, -50%);">
+                    <div class="flex items-center gap-3 w-full justify-center border-b border-slate-100 pb-3">
+                        <div class="p-3 bg-indigo-50 rounded-xl text-indigo-600">
+                            <i data-lucide="target" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-800 tracking-tight text-center uppercase">ESTADO GENERAL</h3>
+                        </div>
+                    </div>
+                    
+                    <div class="w-full flex justify-between bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
+                        <div>
+                            <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Inicio</span>
+                            <span id="global-start" class="text-sm font-semibold text-slate-700">--/--/----</span>
+                        </div>
+                        <div class="w-px h-8 bg-slate-200 self-center"></div>
+                        <div>
+                            <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Fin</span>
+                            <span id="global-end" class="text-sm font-semibold text-slate-700">--/--/----</span>
+                        </div>
+                    </div>
+
+                    <div class="w-full space-y-3">
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-500 font-medium">Logrado General:</span>
+                                <span id="global-logrado-text" class="font-extrabold text-indigo-600">0%</span>
+                            </div>
+                            <div class="w-full bg-slate-100 rounded-full h-2">
+                                <div id="global-logrado-bar" class="h-2 bg-indigo-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-500 font-medium">Esperado General:</span>
+                                <span id="global-esperado-text" class="font-bold text-slate-700">0%</span>
+                            </div>
+                            <div class="w-full bg-slate-100 rounded-full h-1.5">
+                                <div id="global-esperado-bar" class="h-1.5 bg-slate-400 rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Los nodos/tarjetas se inyectarán aquí vía JS -->
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Modal de Detalle (Oculto por defecto) -->
+    <div id="detail-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 md:p-8 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-5xl max-h-[95vh] flex flex-col transform scale-95 transition-transform duration-300">
+            <!-- Modal Header -->
+            <div class="p-6 md:p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-3xl">
+                <div>
+                    <h3 class="text-2xl font-bold text-slate-800 tracking-tight">Detalle de la Acción</h3>
+                    <p class="text-sm text-slate-500 mt-1">Información completa extraída del registro seleccionado.</p>
+                </div>
+                <button id="close-modal" class="p-3 text-slate-400 hover:bg-slate-200 hover:text-slate-700 rounded-full transition-colors focus:outline-none">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <!-- Modal Body -->
+            <div id="modal-content" class="p-6 md:p-8 overflow-y-auto custom-scrollbar flex-1 bg-white rounded-b-3xl">
+                <!-- Contenido dinámico (Key-Value) -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Script de Lógica -->
+    <script>
+        // Inicializar iconos
+        lucide.createIcons();
+
+        const dataUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSgdr8eUvVGho4jA-sJ2IzZwPswG9zebNzbVQn-JOIWHqmm6esb1fgMsfYbyKcFfw/pub?output=xlsx';
+        
+        let jsonData = [];
+        let cols = [];
+
+        // 1. Iniciar la carga
+        window.onload = async () => {
+            try {
+                const response = await fetch(dataUrl);
+                if (!response.ok) throw new Error("CORS o error de red");
+                const arrayBuffer = await response.arrayBuffer();
+                processArrayBuffer(arrayBuffer);
+            } catch (error) {
+                console.warn("Fallo carga automática, solicitando fallback:", error);
+                showErrorState();
+            }
+        };
+
+        // Fallback Subida Manual
+        document.getElementById('file-upload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            document.getElementById('parse-error').classList.add('hidden');
+            
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    processArrayBuffer(evt.target.result);
+                } catch (err) {
+                    const errEl = document.getElementById('parse-error');
+                    errEl.textContent = "El archivo cargado no es válido o está dañado.";
+                    errEl.classList.remove('hidden');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        // 2. Procesamiento de SheetJS
+        function processArrayBuffer(buffer) {
+            const workbook = XLSX.read(new Uint8Array(buffer), {type: 'array'});
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+            
+            // Convertir a JSON conservando celdas vacías
+            jsonData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+            
+            if (jsonData.length === 0) {
+                throw new Error("Archivo vacío");
+            }
+            
+            // Extraer columnas respetando el orden real de Excel para asegurar Columna I
+            const range = XLSX.utils.decode_range(sheet['!ref']);
+            cols = [];
+            for(let C = range.s.c; C <= range.e.c; ++C) {
+                const cell = sheet[XLSX.utils.encode_cell({c:C, r:range.s.r})];
+                if(cell && cell.v) cols.push(cell.v);
+            }
+            
+            // Fallback por si la estructura está inusual
+            if (cols.length === 0) {
+                let keySet = new Set();
+                jsonData.forEach(row => Object.keys(row).forEach(k => keySet.add(k)));
+                cols = Array.from(keySet);
+            }
+            
+            // Cambiar UI de Carga a Dashboard
+            document.getElementById('loader').classList.add('hidden');
+            document.getElementById('error-container').classList.add('hidden');
+            document.getElementById('dashboard-content').classList.remove('hidden');
+            
+            const status = document.getElementById('status-badge');
+            status.className = "px-4 py-2 rounded-full text-sm font-medium bg-emerald-50 text-emerald-700 flex items-center gap-2 border border-emerald-200 shadow-sm";
+            status.innerHTML = '<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> Conectado en Vivo';
+            
+            initDashboard();
+        }
+
+        function showErrorState() {
+            document.getElementById('loader').classList.add('hidden');
+            document.getElementById('error-container').classList.remove('hidden');
+            const status = document.getElementById('status-badge');
+            status.className = "px-4 py-2 rounded-full text-sm font-medium bg-red-50 text-red-700 flex items-center gap-2 border border-red-200";
+            status.innerHTML = '<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg> Error de Conexión';
+        }
+
+        // Parseo seguro de fechas desde Excel
+        function parseExcelDate(val) {
+            if (!val) return new Date(9999, 11, 31); // Colocar al final si está vacío
+            
+            // Si es número (Serial Date de Excel)
+            if (!isNaN(val) && typeof val === 'number') {
+                return new Date(Math.round((val - 25569) * 86400 * 1000));
+            }
+            
+            // Si es texto (ej: 31-12-2023 o 31/12/2023)
+            const strVal = String(val);
+            const parts = strVal.split(/[-/]/);
+            if (parts.length === 3) {
+                // Suponemos formato DD/MM/YYYY para Colombia
+                let year = parts[2].length === 2 ? `20${parts[2]}` : parts[2];
+                return new Date(year, parts[1] - 1, parts[0]);
+            }
+            
+            return new Date(val); // Intento nativo de JS
+        }
+
+        // 3. Inicialización y Renderizado de Vistas
+        let currentMode = 'radial';
+        let processedDataCache = [];
+        let cardElements = []; // Almacena referencias a los nodos del DOM
+
+        function initDashboard() {
+            const hoy = new Date();
+            let sumaEsperado = 0;
+            let sumaLogrado = 0;
+            let totalTareasValidas = 0;
+
+            // Limpiar datos previos si existen
+            cardElements.forEach(el => el.remove());
+            cardElements = [];
+            
+            processedDataCache = jsonData.map((row, index) => {
+                const conpesValue = row[cols[0]] || "N/A";
+                const accionValue = row[cols[1]] || "Sin descripción";
+                
+                let fechaInicio = parseExcelDate(row[cols[3]]);
+                let fechaFin = parseExcelDate(row[cols[4]]);
+                
+                let logrado = row[cols[8]];
+                let logradoNum = 0;
+                if (logrado === undefined || logrado === "") { logradoNum = 0; }
+                else if (typeof logrado === 'number') { logradoNum = logrado <= 1 ? (logrado * 100) : logrado; }
+                else { logradoNum = parseFloat(String(logrado).replace(/[^\d.-]/g, '')) || 0; }
+                
+                let esperadoNum = 100;
+                if (isNaN(fechaInicio) || isNaN(fechaFin) || fechaInicio.getFullYear() === 9999) {
+                    esperadoNum = 0;
+                } else if (hoy > fechaFin) {
+                    esperadoNum = 100;
+                } else if (hoy < fechaInicio) {
+                    esperadoNum = 0;
+                } else {
+                    const duracionTotal = fechaFin.getTime() - fechaInicio.getTime();
+                    const tiempoTranscurrido = hoy.getTime() - fechaInicio.getTime();
+                    if (duracionTotal > 0) { esperadoNum = (tiempoTranscurrido / duracionTotal) * 100; }
+                }
+                
+                esperadoNum = Math.max(0, Math.min(100, esperadoNum));
+                logradoNum = Math.max(0, Math.min(100, logradoNum));
+                
+                const diferencia = logradoNum - esperadoNum;
+                
+                // Días para cierre (positivo = faltan, negativo = vencido)
+                let diasParaCierre = null;
+                if (!isNaN(fechaFin) && fechaFin.getFullYear() !== 9999) {
+                    // Diferencia en días
+                    diasParaCierre = Math.ceil((fechaFin.getTime() - hoy.getTime()) / (1000 * 3600 * 24));
+                }
+
+                sumaEsperado += esperadoNum;
+                sumaLogrado += logradoNum;
+                totalTareasValidas++;
+
+                return { id: `card-${index}`, row, conpesValue, accionValue, fechaInicio, fechaFin, logradoNum, esperadoNum, diferencia, diasParaCierre };
+            });
+
+            // Fechas Globales
+            const validStarts = processedDataCache.map(d => d.fechaInicio).filter(d => !isNaN(d) && d.getFullYear() !== 9999);
+            const validEnds = processedDataCache.map(d => d.fechaFin).filter(d => !isNaN(d) && d.getFullYear() !== 9999);
+
+            const minDate = validStarts.length > 0 ? new Date(Math.min(...validStarts)) : new Date();
+            const maxDate = validEnds.length > 0 ? new Date(Math.max(...validEnds)) : new Date();
+
+            const formatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
+            document.getElementById('global-start').textContent = minDate.toLocaleDateString('es-CO', formatOptions);
+            document.getElementById('global-end').textContent = maxDate.toLocaleDateString('es-CO', formatOptions);
+
+            // Porcentajes Globales
+            const centralLogrado = totalTareasValidas > 0 ? (sumaLogrado / totalTareasValidas) : 0;
+            const centralEsperado = totalTareasValidas > 0 ? (sumaEsperado / totalTareasValidas) : 0;
+            
+            document.getElementById('global-logrado-text').textContent = Math.round(centralLogrado) + '%';
+            document.getElementById('global-logrado-bar').style.width = centralLogrado + '%';
+            document.getElementById('global-esperado-text').textContent = Math.round(centralEsperado) + '%';
+            document.getElementById('global-esperado-bar').style.width = centralEsperado + '%';
+
+            // Estado visual si está atrasado globalmente
+            if (centralLogrado < centralEsperado) {
+                document.getElementById('global-logrado-text').classList.replace('text-indigo-600', 'text-amber-600');
+                document.getElementById('global-logrado-bar').classList.replace('bg-indigo-500', 'bg-amber-500');
+            }
+
+            // Crear los nodos en el DOM una sola vez
+            createCardElements();
+            
+            // Renderizar la disposición inicial (Radial)
+            renderLayout('radial');
+            
+            // Actualizar posiciones al cambiar tamaño de ventana para diseño responsivo
+            window.addEventListener('resize', () => {
+                renderLayout(currentMode);
+            });
+        }
+
+        function createCardElements() {
+            const canvas = document.getElementById('interactive-canvas');
+            
+            processedDataCache.forEach(item => {
+                const card = document.createElement('div');
+                card.id = item.id;
+                card.className = "absolute node-anim card-hover bg-white p-4 rounded-2xl border border-slate-200 shadow-sm cursor-pointer w-[280px] h-[190px] flex flex-col justify-between overflow-hidden";
+                
+                const isDelayed = item.logradoNum < item.esperadoNum;
+                let extraIndicatorHtml = '';
+
+                // Crear los indicadores (Reloj y Tendencia)
+                let clockColor, clockText;
+                if (item.diasParaCierre !== null) {
+                    if (item.diasParaCierre < 0) {
+                        clockColor = "text-red-600 bg-red-50 border-red-100";
+                        clockText = `Vencido (${Math.abs(item.diasParaCierre)}d)`;
+                    } else if (item.diasParaCierre <= 30) {
+                        clockColor = "text-orange-600 bg-orange-50 border-orange-100";
+                        clockText = `Crítico (${item.diasParaCierre}d)`;
+                    } else if (item.diasParaCierre <= 90) {
+                        clockColor = "text-amber-600 bg-amber-50 border-amber-100";
+                        clockText = `Cercano (${item.diasParaCierre}d)`;
+                    } else {
+                        clockColor = "text-emerald-600 bg-emerald-50 border-emerald-100";
+                        clockText = `A tiempo (${item.diasParaCierre}d)`;
+                    }
+                    extraIndicatorHtml += `
+                        <div class="px-2 py-1 rounded-lg border flex items-center gap-1.5 text-[10px] font-bold ${clockColor}">
+                            <i data-lucide="clock" class="w-3 h-3"></i> ${clockText}
+                        </div>
+                    `;
+                }
+
+                if (item.diferencia < 0) {
+                    extraIndicatorHtml += `
+                        <div class="px-2 py-1 rounded-lg border border-red-100 bg-red-50 flex items-center gap-1 text-[10px] font-bold text-red-600">
+                            <i data-lucide="trending-down" class="w-3 h-3"></i> ${Math.abs(Math.round(item.diferencia))}%
+                        </div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-[10px] font-bold text-indigo-500 uppercase tracking-wider block">C-${item.conpesValue}</span>
+                            <div class="flex gap-1">${extraIndicatorHtml}</div>
+                        </div>
+                        <h4 class="text-xs font-semibold text-slate-800 leading-tight mb-3 line-clamp-3">${item.accionValue}</h4>
+                    </div>
+                    
+                    <div class="space-y-2 mt-auto">
+                        <div>
+                            <div class="flex justify-between text-[10px] mb-1">
+                                <span class="text-slate-500 font-medium">Logrado</span>
+                                <span class="font-bold ${isDelayed ? 'text-amber-600' : 'text-emerald-600'}">${Math.round(item.logradoNum)}%</span>
+                            </div>
+                            <div class="w-full bg-slate-100 rounded-full h-1.5">
+                                <div class="h-1.5 ${isDelayed ? 'bg-amber-500' : 'bg-emerald-500'} rounded-full" style="width: ${item.logradoNum}%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[10px] mb-1">
+                                <span class="text-slate-500 font-medium">Esperado</span>
+                                <span class="font-bold text-slate-700">${Math.round(item.esperadoNum)}%</span>
+                            </div>
+                            <div class="w-full bg-slate-100 rounded-full h-1">
+                                <div class="h-1 bg-slate-300 rounded-full" style="width: ${item.esperadoNum}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                card.onclick = () => openModal(item.row);
+                canvas.appendChild(card);
+                
+                // Guardar referencia en el objeto de datos para moverlo luego
+                item.element = card;
+            });
+            
+            lucide.createIcons();
+        }
+
+        function renderLayout(mode) {
+            currentMode = mode;
+            
+            // Estilos de botones activos
+            const btnStyles = "flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 bg-slate-800 text-white shadow-md";
+            const btnInactive = "flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 text-slate-600 hover:bg-slate-100";
+            
+            document.getElementById('btn-radial').className = mode === 'radial' ? btnStyles : btnInactive;
+            document.getElementById('btn-cerrar').className = mode === 'vencimientos' ? btnStyles : btnInactive;
+            document.getElementById('btn-finalizar').className = mode === 'avance' ? btnStyles : btnInactive;
+            document.getElementById('btn-atrasados').className = mode === 'rezago' ? btnStyles : btnInactive;
+
+            // Ordenamiento lógico
+            let sortedData = [...processedDataCache];
+            
+            if (mode === 'vencimientos') {
+                sortedData.sort((a, b) => a.fechaFin - b.fechaFin);
+            } else if (mode === 'avance') {
+                sortedData.sort((a, b) => b.logradoNum - a.logradoNum);
+            } else if (mode === 'rezago') {
+                sortedData.sort((a, b) => a.diferencia - b.diferencia);
+            }
+            // Si es 'radial', mantenemos el orden original del caché para que se distribuyan equitativamente
+
+            // Posicionamiento Matemático (Cálculo de Top y Left)
+            const canvas = document.getElementById('interactive-canvas');
+            const centerNode = document.getElementById('global-status-node');
+            
+            const canvasWidth = canvas.clientWidth;
+            const centerX = canvasWidth / 2;
+            const isMobile = canvasWidth < 768;
+
+            if (mode === 'radial') {
+                // --- MODO CIRCULAR ---
+                const centerY = 450; // Posición Y del centro
+                canvas.style.height = '900px';
+
+                // Posicionar nodo central en el medio
+                centerNode.style.top = `${centerY}px`;
+                centerNode.style.left = `${centerX}px`;
+                centerNode.style.transform = 'translate(-50%, -50%) scale(1)';
+                
+                // Calcular radio según el espacio (mínimo 200, máximo 380)
+                const maxRadius = isMobile ? (canvasWidth / 2) - 40 : 380;
+                const radius = Math.max(200, Math.min(maxRadius, canvasWidth / 2 - 150));
+
+                sortedData.forEach((item, index) => {
+                    // Ángulo distribuido equitativamente (comenzando arriba = -90 grados)
+                    const angle = (index / sortedData.length) * (2 * Math.PI) - (Math.PI / 2);
+                    const x = centerX + radius * Math.cos(angle);
+                    const y = centerY + radius * Math.sin(angle);
+
+                    item.element.style.top = `${y}px`;
+                    item.element.style.left = `${x}px`;
+                    item.element.style.transform = 'translate(-50%, -50%) scale(1)';
+                    item.element.style.zIndex = '10';
+                });
+
+            } else {
+                // --- MODO CUADRÍCULA (FILAS Y COLUMNAS DEBAJO DEL CENTRO) ---
+                
+                // Mover nodo central arriba
+                centerNode.style.top = '40px';
+                centerNode.style.left = `${centerX}px`;
+                centerNode.style.transform = 'translate(-50%, 0) scale(0.9)'; // Lo achicamos un poco
+
+                // Variables de la cuadrícula
+                const cardW = 280;
+                const cardH = 190;
+                const gapX = 24;
+                const gapY = 24;
+                
+                // Calcular cuántas columnas caben
+                const cols = Math.max(1, Math.floor((canvasWidth - gapX) / (cardW + gapX)));
+                const startY = 280; // Inicia debajo del nodo central
+                
+                // Calcular el ancho total del bloque de columnas para centrarlo
+                const gridWidth = (cols * cardW) + ((cols - 1) * gapX);
+                const startX = (canvasWidth - gridWidth) / 2 + (cardW / 2); // Le sumamos cardW/2 porque el anchor es el centro (-50%, -50%)
+
+                sortedData.forEach((item, index) => {
+                    const row = Math.floor(index / cols);
+                    const col = index % cols;
+
+                    const x = startX + col * (cardW + gapX);
+                    // Le sumamos cardH/2 a 'y' para compensar que el transform es -50% en Y
+                    const y = startY + row * (cardH + gapY) + (cardH / 2);
+
+                    item.element.style.top = `${y}px`;
+                    item.element.style.left = `${x}px`;
+                    item.element.style.transform = 'translate(-50%, -50%) scale(1)';
+                    
+                    // Efecto cascada z-index para la vista plana
+                    item.element.style.zIndex = String(20 + index);
+                });
+
+                // Ajustar altura final del contenedor canvas
+                const rows = Math.ceil(sortedData.length / cols);
+                const totalHeight = startY + (rows * (cardH + gapY)) + 50;
+                canvas.style.height = `${totalHeight}px`;
+            }
+        }
+
+        // 4. Lógica de Apertura del Detalle (Modal)
+        function openModal(row) {
+            const modal = document.getElementById('detail-modal');
+            const content = document.getElementById('modal-content');
+            content.innerHTML = '';
+            
+            const grid = document.createElement('div');
+            grid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6';
+            
+            // Recorrer todas las columnas de la fila seleccionada
+            cols.forEach(col => {
+                const val = row[col];
+                // Solo renderizar si tiene contenido
+                if (val !== undefined && val !== '') {
+                    const item = document.createElement('div');
+                    item.className = 'bg-slate-50 p-5 rounded-2xl border border-slate-200/70 shadow-sm hover:border-blue-300 transition-colors';
+                    
+                    let displayVal = val;
+                    if (typeof displayVal === 'number' && !Number.isInteger(displayVal)) {
+                        // Limitar decimales visuales exagerados
+                        displayVal = new Intl.NumberFormat('es-CO', {maximumFractionDigits: 2}).format(displayVal);
+                    }
+                    
+                    item.innerHTML = `
+                        <span class="block text-[11px] font-bold text-blue-600/80 uppercase tracking-widest mb-2">${col}</span>
+                        <span class="block text-sm md:text-base text-slate-700 font-medium break-words leading-relaxed">${displayVal}</span>
+                    `;
+                    grid.appendChild(item);
+                }
+            });
+            
+            content.appendChild(grid);
+            
+            // Animación de entrada
+            modal.classList.remove('hidden');
+            void modal.offsetWidth; // Trigger reflow
+            modal.classList.remove('opacity-0');
+            modal.querySelector('div').classList.remove('scale-95');
+            modal.querySelector('div').classList.add('scale-100');
+        }
+
+        // Control de Cierre del Modal
+        document.getElementById('close-modal').addEventListener('click', closeModal);
+        
+        document.getElementById('detail-modal').addEventListener('click', (e) => {
+            // Cerrar si se da click al fondo borroso
+            if (e.target.id === 'detail-modal') {
+                closeModal();
+            }
+        });
+        
+        function closeModal() {
+            const modal = document.getElementById('detail-modal');
+            modal.classList.add('opacity-0');
+            modal.querySelector('div').classList.remove('scale-100');
+            modal.querySelector('div').classList.add('scale-95');
+            // Esperar transición antes de ocultar el display
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300); 
+        }
+    </script>
+</body>
+</html>

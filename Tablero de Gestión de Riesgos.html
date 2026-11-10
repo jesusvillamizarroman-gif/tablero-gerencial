@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Riesgos de Desastres - Tablero Piramidal</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SheetJS (xlsx) para leer directamente el archivo publicado de Google Sheets -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Paleta pastel ambiental suave (verdes salvia, cielo sereno y crema natural) */
+            background: linear-gradient(135deg, #f0f7f4 0%, #e6f2f5 50%, #f7f5eb 100%);
+            color: #1e3a2f;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Estilos de Cubos 3D Piramidales en tonos Pasteles Ambientales */
+        .pyramid-cube {
+            position: relative;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(145deg, #ffffff 0%, #f2f9f6 100%);
+            border: 1.5px solid #c5e0d4;
+            box-shadow: 
+                0 8px 20px -6px rgba(45, 106, 79, 0.12),
+                inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
+        }
+
+        /* Efecto bisel 3D superior y lateral en tonos pastel para apariencia de cubo */
+        .pyramid-cube::before {
+            content: '';
+            position: absolute;
+            top: -7px;
+            left: 7px;
+            right: -7px;
+            height: 7px;
+            background: linear-gradient(90deg, #b7e4c7, #a9def9);
+            transform: skewX(-45deg);
+            border-radius: 3px 3px 0 0;
+            border: 1px solid #95d5b2;
+            border-bottom: none;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .pyramid-cube::after {
+            content: '';
+            position: absolute;
+            top: -3.5px;
+            right: -7px;
+            bottom: 3.5px;
+            width: 7px;
+            background: linear-gradient(180deg, #95d5b2, #bde0fe);
+            border-right: 1px solid #74c69d;
+            border-top: 1px solid #95d5b2;
+            transform: skewY(-45deg);
+            border-radius: 0 2px 2px 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .pyramid-cube:hover {
+            transform: translateY(-5px) scale(1.02);
+            border-color: #74c69d;
+            box-shadow: 
+                0 16px 28px -8px rgba(45, 106, 79, 0.22),
+                inset 0 1px 0 0 #ffffff;
+            z-index: 30;
+        }
+
+        /* Cubo Cima (Progreso General) Pastel Destacado */
+        .apex-cube {
+            background: linear-gradient(135deg, #e8f6ef 0%, #e3f2fd 55%, #fefae0 100%);
+            border: 2px solid #74c69d;
+            box-shadow: 
+                0 12px 28px -6px rgba(64, 145, 108, 0.2),
+                inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
+        }
+
+        .apex-cube::before {
+            background: linear-gradient(90deg, #74c69d, #90e0ef);
+        }
+
+        /* Tooltip Flotante de Responsable */
+        .responsable-tooltip {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(8px) scale(0.96);
+            transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+        }
+
+        .pyramid-cube:hover .responsable-tooltip {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1);
+        }
+
+        /* Scrollbar personalizada pastel */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e6f2ee;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #95d5b2;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #74c69d;
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-emerald-200 selection:text-emerald-950 pb-16">
+
+    <!-- Fondo decorativo ambiental en tonos pasteles -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div class="absolute -top-32 -left-32 w-96 h-96 bg-emerald-200/45 rounded-full blur-3xl"></div>
+        <div class="absolute top-1/3 -right-32 w-96 h-96 bg-sky-200/45 rounded-full blur-3xl"></div>
+        <div class="absolute -bottom-32 left-1/3 w-96 h-96 bg-amber-100/60 rounded-full blur-3xl"></div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- VENTANA 1: VISTA PRINCIPAL DE LA PIRÁMIDE                                 -->
+    <!-- ========================================================================= -->
+    <div id="mainPyramidWindow" class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 transition-all">
+        
+        <!-- Encabezado Ambiental Limpio -->
+        <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-emerald-200/80">
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-300 to-sky-300 border border-emerald-400/50 flex items-center justify-center shadow-md shadow-emerald-700/10 shrink-0">
+                    <i class="ph-fill ph-mountains text-3xl text-emerald-950"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-emerald-950">
+                        Gestión de Riesgos de Desastres
+                    </h1>
+                    <p class="text-sm text-emerald-800/80 font-medium">
+                        Seguimiento piramidal de productos ambientales, avance esperado al día de hoy y progreso completado
+                    </p>
+                </div>
+            </div>
+
+            <!-- Fecha actual automática y botón de actualizar -->
+            <div class="flex items-center gap-3 self-start md:self-auto bg-white/80 backdrop-blur-sm px-4 py-2.5 rounded-2xl border border-emerald-200 shadow-sm">
+                <div class="flex items-center gap-2 text-xs text-emerald-900">
+                    <i class="ph-fill ph-calendar-check text-emerald-600 text-lg"></i>
+                    <div>
+                        <span class="block text-[10px] uppercase tracking-wider font-bold text-emerald-600">Fecha de Corte Actual</span>
+                        <span id="currentDateLabel" class="font-bold text-emerald-950 text-xs sm:text-sm">Hoy</span>
+                    </div>
+                </div>
+                <div class="h-6 w-px bg-emerald-200"></div>
+                <button onclick="loadSpreadsheetData()" class="px-3 py-1.5 rounded-xl bg-emerald-100 hover:bg-emerald-200/80 text-emerald-900 text-xs font-semibold flex items-center gap-1.5 transition" title="Actualizar datos">
+                    <i class="ph-bold ph-arrows-clockwise text-sm"></i>
+                    <span>Actualizar</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Barra de Filtros Interactivos (Para organizar la Pirámide) -->
+        <section class="mt-6 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 bg-white/75 backdrop-blur-md p-3.5 rounded-2xl border border-emerald-200/90 shadow-sm">
+            <div class="flex flex-wrap items-center gap-2" id="filterButtonsContainer">
+                <span class="text-xs font-bold uppercase tracking-wider text-emerald-800 px-2 flex items-center gap-1.5">
+                    <i class="ph-fill ph-funnel text-emerald-600 text-sm"></i> Organizar Pirámide:
+                </span>
+                
+                <button onclick="setPyramidFilter('piramidal')" id="btn-piramidal" class="filter-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 bg-emerald-200 text-emerald-950 border border-emerald-400/60 shadow-sm">
+                    <i class="ph-fill ph-triangle text-emerald-800"></i>
+                    <span>1. Vista Piramidal</span>
+                </button>
+
+                <button onclick="setPyramidFilter('vencimientos')" id="btn-vencimientos" class="filter-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 bg-slate-100/90 text-slate-700 border border-slate-200 hover:bg-amber-100/70 hover:text-amber-950 hover:border-amber-300">
+                    <i class="ph-fill ph-clock-countdown text-amber-600"></i>
+                    <span>2. Próximos Vencimientos</span>
+                </button>
+
+                <button onclick="setPyramidFilter('avance')" id="btn-avance" class="filter-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 bg-slate-100/90 text-slate-700 border border-slate-200 hover:bg-sky-100/70 hover:text-sky-950 hover:border-sky-300">
+                    <i class="ph-fill ph-trend-up text-sky-600"></i>
+                    <span>3. Mayor Avance</span>
+                </button>
+
+                <button onclick="setPyramidFilter('rezago')" id="btn-rezago" class="filter-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 bg-slate-100/90 text-slate-700 border border-slate-200 hover:bg-rose-100/70 hover:text-rose-950 hover:border-rose-300">
+                    <i class="ph-fill ph-warning-octagon text-rose-500"></i>
+                    <span>4. Mayor Rezago</span>
+                </button>
+            </div>
+
+            <!-- Buscador Rápido -->
+            <div class="relative w-full lg:w-64">
+                <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-emerald-700 text-sm"></i>
+                <input type="text" id="searchInput" oninput="renderPyramid()" placeholder="Buscar producto o responsable..." class="w-full pl-9 pr-3 py-2 bg-emerald-50/60 border border-emerald-200 rounded-xl text-xs text-emerald-950 placeholder-emerald-700/60 focus:outline-none focus:border-emerald-500 focus:bg-white transition">
+            </div>
+        </section>
+
+        <!-- Indicador del Modo Actual de la Pirámide (Sin textos de columnas) -->
+        <div class="mt-4 flex flex-wrap items-center justify-end gap-2 px-2 text-xs text-emerald-900/80 font-medium">
+            <div class="flex items-center gap-4">
+                <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-sky-300 border border-sky-500 inline-block"></span> Progreso Esperado</span>
+                <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-emerald-300 border border-emerald-500 inline-block"></span> Progreso Completado</span>
+            </div>
+        </div>
+
+        <!-- ÁREA PRINCIPAL DE LA PIRÁMIDE -->
+        <main class="mt-8 relative">
+            <!-- Estado de Carga -->
+            <div id="loadingState" class="py-20 flex flex-col items-center justify-center text-center">
+                <div class="w-12 h-12 border-4 border-emerald-300 border-t-emerald-700 rounded-full animate-spin mb-4"></div>
+                <h3 class="text-base font-bold text-emerald-950">Cargando Pirámide de Gestión de Riesgos...</h3>
+            </div>
+
+            <!-- Contenedor Dinámico de la Pirámide -->
+            <div id="pyramidContainer" class="hidden flex-col items-center gap-6 py-4">
+                <!-- Se inyecta la Cima y las Filas de Cubos por JS -->
+            </div>
+        </main>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- VENTANA 2: VISTA DE DETALLE PIRAMIDAL DE UN PRODUCTO (OTRA VENTANA)       -->
+    <!-- ========================================================================= -->
+    <div id="detailPyramidWindow" class="relative z-20 hidden max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-20">
+        <!-- Barra Superior con Botón de Volver -->
+        <div class="flex flex-wrap items-center justify-between gap-4 pb-5 mb-6 border-b border-emerald-200/90">
+            <button onclick="closeDetailWindow()" class="px-5 py-2.5 rounded-2xl bg-white hover:bg-emerald-100 text-emerald-950 border-2 border-emerald-300 shadow-sm font-bold text-sm flex items-center gap-2 transition transform hover:-translate-x-0.5 cursor-pointer">
+                <i class="ph-bold ph-arrow-left text-lg text-emerald-700"></i>
+                <span>Volver a la Pirámide Principal</span>
+            </button>
+
+            <div class="flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-100/90 border border-emerald-300 text-emerald-900 text-xs font-bold">
+                <i class="ph-fill ph-triangle text-emerald-700"></i>
+                <span>Vista Detallada del Producto en Estructura Piramidal</span>
+            </div>
+        </div>
+
+        <!-- Contenedor de la Pirámide de Detalle de la Fila -->
+        <div id="detailPyramidContent" class="flex flex-col items-center gap-6 w-full">
+            <!-- Inyectado dinámicamente al seleccionar un cubo -->
+        </div>
+
+        <!-- Botón inferior adicional para volver cómodamente -->
+        <div class="mt-10 flex justify-center">
+            <button onclick="closeDetailWindow()" class="px-6 py-3 rounded-2xl bg-emerald-200 hover:bg-emerald-300 text-emerald-950 border border-emerald-400 shadow-md font-bold text-sm flex items-center gap-2 transition cursor-pointer">
+                <i class="ph-bold ph-arrow-left text-base"></i>
+                <span>Volver al Tablero Principal</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // URL del archivo publicado en Google Sheets (formato XLSX)
+        const SHEET_XLSX_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTNF_xUz3xN-BvgUgSMy3BI593nGnvyTID5Eq56WklQtaLj6Go9as6-OYh2yC0yzg/pub?output=xlsx";
+
+        // Estado Global
+        let rawHeaders = [];
+        let productsData = [];
+        let currentFilter = 'piramidal';
+
+        // Palabras vacías para generar un Referente conciso que siempre quepa en el cubo principal
+        const STOPWORDS_ES = new Set([
+            'de', 'la', 'el', 'los', 'las', 'un', 'una', 'unos', 'unas', 'en', 'y', 'o', 'para', 'por', 'con', 'del', 'al', 'se', 'su', 'sus', 'como', 'sobre', 'entre', 'hacia', 'hasta', 'desde', 'que', 'realizar', 'elaborar', 'desarrollar', 'implementar', 'documento', 'informe', 'proceso', 'mediante', 'marco', 'nivel', 'acciones', 'estrategia', 'formulacion', 'formulación', 'ejecucion', 'ejecución'
+        ]);
+
+        // Inicialización al cargar la ventana
+        window.onload = function () {
+            const today = new Date();
+            document.getElementById('currentDateLabel').textContent = formatDateDisplay(today);
+            loadSpreadsheetData();
+        };
+
+        /**
+         * Normaliza los nombres de las personas responsables para que las primeras letras estén en Mayúscula (Title Case)
+         */
+        function normalizePersonName(rawName) {
+            if (!rawName || String(rawName).trim() === '') return 'Sin Asignar';
+            return String(rawName)
+                .trim()
+                .replace(/\s+/g, ' ')
+                .split(/([,;/\-\n]+)/)
+                .map(segment => {
+                    if (/^[,;/\-\n]+$/.test(segment)) return ' • ';
+                    return segment
+                        .trim()
+                        .split(' ')
+                        .map(word => {
+                            if (!word) return '';
+                            return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                        })
+                        .join(' ');
+                })
+                .join('');
+        }
+
+        /**
+         * Genera un "Referente" conciso y claro para que quepa perfectamente en el cubo de la vista principal
+         */
+        function generateShortReferent(longName, code) {
+            if (!longName) return `Producto ${code || ''}`;
+            const clean = String(longName).trim().replace(/\s+/g, ' ');
+            
+            if (clean.length <= 45) return clean;
+
+            // Si tiene dos puntos o guión corto descriptivo al inicio
+            const colonParts = clean.split(/[:–—]/);
+            if (colonParts[0].trim().length >= 10 && colonParts[0].trim().length <= 48) {
+                return colonParts[0].trim();
+            }
+
+            // Extraer las palabras clave con mayor significado ambiental/técnico
+            const words = clean.split(' ');
+            const keyWords = [];
+            for (let w of words) {
+                const plain = w.toLowerCase().replace(/[.,;()]/g, '');
+                if (!STOPWORDS_ES.has(plain) && plain.length > 2) {
+                    keyWords.push(w.replace(/[.,;()]/g, ''));
+                }
+                if (keyWords.length >= 5) break;
+            }
+
+            let referent = keyWords.length >= 3 ? keyWords.join(' ') : words.slice(0, 6).join(' ');
+            referent = referent.charAt(0).toUpperCase() + referent.slice(1);
+            
+            if (referent.length > 52) {
+                referent = referent.substring(0, 50).trim();
+            }
+            return referent;
+        }
+
+        /**
+         * Parsea fechas desde serial de Excel o texto
+         */
+        function parseFlexibleDate(val) {
+            if (val === null || val === undefined || val === '') return null;
+            if (val instanceof Date && !isNaN(val)) return val;
+
+            // Serial numérico de Excel
+            if (typeof val === 'number' && val > 20000 && val < 90000) {
+                const utcDays = Math.floor(val - 25569);
+                const utcValue = utcDays * 86400 * 1000;
+                const d = new Date(utcValue);
+                return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+            }
+
+            const str = String(val).trim();
+            if (!str) return null;
+
+            // Formato DD/MM/YYYY o DD-MM-YYYY
+            const dmyMatch = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+            if (dmyMatch) {
+                let day = parseInt(dmyMatch[1], 10);
+                let month = parseInt(dmyMatch[2], 10) - 1;
+                let year = parseInt(dmyMatch[3], 10);
+                if (year < 100) year += 2000;
+                return new Date(year, month, day);
+            }
+
+            // Formato YYYY-MM-DD
+            const ymdMatch = str.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+            if (ymdMatch) {
+                return new Date(parseInt(ymdMatch[1], 10), parseInt(ymdMatch[2], 10) - 1, parseInt(ymdMatch[3], 10));
+            }
+
+            const parsed = new Date(str);
+            return isNaN(parsed.getTime()) ? null : parsed;
+        }
+
+        /**
+         * Formatea un objeto Date a DD/MM/YYYY
+         */
+        function formatDateDisplay(dateObj) {
+            if (!dateObj || isNaN(dateObj.getTime())) return 'Por definir';
+            const d = String(dateObj.getDate()).padStart(2, '0');
+            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const y = dateObj.getFullYear();
+            return `${d}/${m}/${y}`;
+        }
+
+        /**
+         * Parsea porcentaje completado (en blanco = 0%)
+         */
+        function parseCompletionValue(val) {
+            if (val === null || val === undefined || String(val).trim() === '') return 0;
+            if (typeof val === 'number') {
+                if (val > 0 && val <= 1) return Math.round(val * 100 * 10) / 10;
+                return Math.min(100, Math.max(0, Math.round(val * 10) / 10));
+            }
+            const clean = String(val).replace('%', '').replace(',', '.').trim();
+            const num = parseFloat(clean);
+            if (isNaN(num)) return 0;
+            if (num > 0 && num <= 1 && !String(val).includes('%')) {
+                return Math.round(num * 100 * 10) / 10;
+            }
+            return Math.min(100, Math.max(0, Math.round(num * 10) / 10));
+        }
+
+        /**
+         * Calcula el % Esperado a la fecha actual (Hoy)
+         */
+        function calculateExpectedProgress(startDate, endDate, refDate) {
+            if (!startDate || !endDate) return 0;
+            const startMs = startDate.getTime();
+            const endMs = endDate.getTime();
+            const refMs = refDate.getTime();
+
+            if (refMs <= startMs) return 0;
+            if (refMs >= endMs) return 100;
+
+            const totalDuration = endMs - startMs;
+            if (totalDuration <= 0) return 100;
+
+            const elapsed = refMs - startMs;
+            return Math.min(100, Math.max(0, Math.round((elapsed / totalDuration) * 1000) / 10));
+        }
+
+        /**
+         * Descarga y procesa el archivo Excel publicado de Google Sheets (Columnas A hasta K)
+         */
+        async function loadSpreadsheetData() {
+            try {
+                let arrayBuffer = null;
+                try {
+                    const response = await fetch(SHEET_XLSX_URL, { cache: "no-store" });
+                    if (response.ok) {
+                        arrayBuffer = await response.arrayBuffer();
+                    }
+                } catch (e) {
+                    console.warn("Intento directo XLSX fallido, probando proxy...", e);
+                }
+
+                if (!arrayBuffer) {
+                    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(SHEET_XLSX_URL)}`;
+                    const response = await fetch(proxyUrl);
+                    if (response.ok) {
+                        arrayBuffer = await response.arrayBuffer();
+                    }
+                }
+
+                if (arrayBuffer) {
+                    processWorkbookBuffer(arrayBuffer);
+                    return;
+                }
+                throw new Error("No se pudo conectar al origen");
+            } catch (error) {
+                console.warn("Cargando estructura base de respaldo:", error);
+                loadFallbackDisasterData();
+            }
+        }
+
+        /**
+         * Procesa las columnas de la A hasta la K (índices 0 a 10) del archivo Excel
+         */
+        function processWorkbookBuffer(buffer) {
+            const workbook = XLSX.read(buffer, { type: 'array', cellDates: false });
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+            
+            if (!rows || rows.length < 2) {
+                loadFallbackDisasterData();
+                return;
+            }
+
+            // Detectar fila de encabezados
+            let headerRowIndex = 0;
+            for (let i = 0; i < Math.min(5, rows.length); i++) {
+                const nonEmptyCount = rows[i].filter(c => String(c).trim() !== '').length;
+                if (nonEmptyCount >= 3) {
+                    headerRowIndex = i;
+                    break;
+                }
+            }
+
+            // Tomar encabezados desde la A hasta la K (máximo 11 columnas: índices 0 a 10)
+            const maxCols = Math.min(11, Math.max(rows[headerRowIndex].length, 11));
+            const defaultTitles = [
+                "Código", "Producto", "Responsable", "Dependencia / Entidad",
+                "Fecha de Inicio", "Fecha de Finalización", "Indicador",
+                "Meta", "Actividad / Evidencia", "Porcentaje Completado", "Observaciones"
+            ];
+
+            rawHeaders = [];
+            for (let c = 0; c < maxCols; c++) {
+                const hText = rows[headerRowIndex][c] !== undefined ? String(rows[headerRowIndex][c]).trim() : '';
+                rawHeaders.push(hText || defaultTitles[c] || `Atributo ${c + 1}`);
+            }
+
+            const parsedProducts = [];
+            for (let r = headerRowIndex + 1; r < rows.length; r++) {
+                const row = rows[r];
+                const codeVal = row[0] !== undefined ? String(row[0]).trim() : '';
+                const nameVal = row[1] !== undefined ? String(row[1]).trim() : '';
+                
+                if (!codeVal && !nameVal) continue;
+
+                const respVal = row[2];
+                const startVal = row[4];
+                const endVal = row[5];
+                const compVal = row[9];
+
+                const startDate = parseFlexibleDate(startVal);
+                const endDate   = parseFlexibleDate(endVal);
+                const completedPct = parseCompletionValue(compVal);
+
+                // Construir todos los atributos de la fila (A hasta K) sin etiquetas de letras de columna
+                const fullRowAttributes = [];
+                for (let c = 0; c < maxCols; c++) {
+                    let cellValue = row[c];
+                    if (c === 2) {
+                        cellValue = normalizePersonName(cellValue);
+                    } else if (c === 4 || c === 5) {
+                        const d = parseFlexibleDate(cellValue);
+                        cellValue = d ? formatDateDisplay(d) : (String(cellValue).trim() || 'Por definir');
+                    } else if (c === 9) {
+                        cellValue = `${completedPct}%`;
+                    } else {
+                        cellValue = (cellValue !== undefined && String(cellValue).trim() !== '') ? String(cellValue).trim() : 'Sin registro';
+                    }
+
+                    fullRowAttributes.push({
+                        colIndex: c,
+                        header: rawHeaders[c],
+                        value: cellValue
+                    });
+                }
+
+                parsedProducts.push({
+                    originalIndex: parsedProducts.length + 1,
+                    code: codeVal || `P-${parsedProducts.length + 1}`,
+                    fullName: nameVal || 'Producto sin descripción',
+                    referent: generateShortReferent(nameVal, codeVal),
+                    responsable: normalizePersonName(respVal),
+                    startDate: startDate,
+                    endDate: endDate,
+                    expectedPct: 0,
+                    completedPct: completedPct,
+                    fullRow: fullRowAttributes
+                });
+            }
+
+            if (parsedProducts.length === 0) {
+                loadFallbackDisasterData();
+                return;
+            }
+
+            productsData = parsedProducts;
+            recalculateProgressAndRender();
+        }
+
+        /**
+         * Datos de respaldo estructurados de la A hasta la K en caso de bloqueo de red
+         */
+        function loadFallbackDisasterData() {
+            rawHeaders = [
+                "Código", "Producto", "Responsable", "Área / Dependencia", 
+                "Fecha de Inicio", "Fecha de Terminación", "Indicador de Producto", 
+                "Meta Programada", "Medio de Verificación", "Avance Completado", "Observaciones"
+            ];
+
+            const sampleRows = [
+                ["GRD-01", "Elaboración del diagnóstico técnico y cartográfico de zonas de amenaza por movimientos en masa e inundaciones", "CARLOS ANDRÉS MARTÍNEZ / DIANA LÓPEZ", "Conocimiento del Riesgo", "2026-01-15", "2026-08-30", "Mapas de amenaza actualizados", "1 Diagnóstico Cartográfico", "Estudio técnico y shapefiles", "", "En consolidación de insumos de campo"],
+                ["GRD-02", "Diseño e implementación del sistema de alerta temprana comunitaria en cuencas hidrográficas priorizadas", "MARÍA FERNANDA GÓMEZ", "Monitoreo Hidrometeorológico", "2026-02-10", "2026-10-15", "Cuencas con sistema operativo", "5 Cuencas Monitoreadas", "Acta de operación de sensores", "", "Instalación de limnígrafos y pluviómetros"],
+                ["GRD-03", "Formulación del plan estratégico de gestión del riesgo de desastres y respuesta a emergencias ambientales", "JORGE ELIÉCER RAMÍREZ / PAULA ANDREA ROJAS", "Coordinación Territorial Ambiental", "2026-03-01", "2026-11-30", "Plan formulado y adoptado", "1 Plan Estratégico", "Resolución de adopción", "", "Mesas técnicas interinstitucionales"],
+                ["GRD-04", "Ejecución de obras de bioingeniería y restauración ecológica para mitigación de riesgo en laderas críticas", "LUIS GABRIEL TORRES", "Reducción del Riesgo Ambiental", "2026-04-01", "2026-12-15", "Hectáreas críticas intervenidas", "45 Hectáreas", "Informes de interventoría", "", "Alistamiento de material vegetal nativo"],
+                ["GRD-05", "Capacitación y simulacros comunitarios frente a eventos de incendios de cobertura vegetal y sequía", "ANA MARÍA CASTRO / CAMILO VARGAS", "Educación y Participación", "2026-05-15", "2026-11-20", "Comunidades entrenadas", "12 Jornadas Comunitarias", "Listados y registro fotográfico", "", "Cronograma concertado con juntas locales"],
+                ["GRD-06", "Protocolo interinstitucional de rehabilitación ecológica post-desastre en ecosistemas estratégicos", "SANDRA PATRICIA MENDOZA", "Gestión de Ecosistemas", "2026-06-01", "2026-12-20", "Protocolo validado", "1 Documento Protocolario", "Documento técnico aprobado", "", "Revisión de lineamientos nacionales"],
+                ["GRD-07", "Evaluación de vulnerabilidad ambiental de infraestructura crítica y puntos de abastecimiento hídrico", "RICARDO ALFONSO PÉREZ", "Planeación y Cambio Climático", "2026-07-01", "2026-12-28", "Bocatomas evaluadas", "8 Sistemas Evaluados", "Matrices de vulnerabilidad", "", "Levantamiento de líneas base"],
+                ["GRD-08", "Plataforma geográfica pública para reporte temprano y monitoreo de puntos críticos ambientales", "DIEGO ALEJANDRO HERRERA", "Sistemas de Información", "2026-08-01", "2027-01-30", "Visor geográfico activo", "1 Plataforma Web", "Enlace público en producción", "", "Diseño de servicios geográficos"]
+            ];
+
+            productsData = sampleRows.map((row, idx) => {
+                const startDate = parseFlexibleDate(row[4]);
+                const endDate = parseFlexibleDate(row[5]);
+                const completedPct = parseCompletionValue(row[9]);
+                
+                const fullRowAttributes = rawHeaders.map((headerName, colIdx) => {
+                    let val = row[colIdx];
+                    if (colIdx === 2) val = normalizePersonName(val);
+                    else if (colIdx === 4 || colIdx === 5) val = formatDateDisplay(parseFlexibleDate(val));
+                    else if (colIdx === 9) val = `${completedPct}%`;
+                    else val = val || 'Sin registro';
+                    return { colIndex: colIdx, header: headerName, value: val };
+                });
+
+                return {
+                    originalIndex: idx + 1,
+                    code: row[0],
+                    fullName: row[1],
+                    referent: generateShortReferent(row[1], row[0]),
+                    responsable: normalizePersonName(row[2]),
+                    startDate,
+                    endDate,
+                    expectedPct: 0,
+                    completedPct,
+                    fullRow: fullRowAttributes
+                };
+            });
+
+            recalculateProgressAndRender();
+        }
+
+        /**
+         * Recalcula el progreso esperado de cada producto a la fecha de hoy y actualiza la pirámide
+         */
+        function recalculateProgressAndRender() {
+            const today = new Date();
+            document.getElementById('currentDateLabel').textContent = formatDateDisplay(today);
+
+            productsData.forEach(item => {
+                item.expectedPct = calculateExpectedProgress(item.startDate, item.endDate, today);
+                item.lag = Math.round((item.expectedPct - item.completedPct) * 10) / 10;
+            });
+
+            renderPyramid();
+        }
+
+        /**
+         * Lógica de MS Project para el Progreso General (Cima de la Pirámide) a la fecha de hoy:
+         * - Ponderación del avance esperado según la duración entre Fecha Inicio y Fecha Fin de los productos.
+         * - Promedio directo del % completado para el avance general completado.
+         */
+        function calculateGeneralApexMetrics() {
+            if (!productsData || productsData.length === 0) {
+                return { expectedGeneral: 0, completedGeneral: 0, minStart: null, maxEnd: null, totalProducts: 0 };
+            }
+
+            const today = new Date();
+            let minStart = null;
+            let maxEnd = null;
+            let totalDurationDays = 0;
+            let weightedExpectedSum = 0;
+            let sumCompleted = 0;
+
+            productsData.forEach(p => {
+                sumCompleted += (p.completedPct || 0);
+
+                if (p.startDate && (!minStart || p.startDate < minStart)) {
+                    minStart = p.startDate;
+                }
+                if (p.endDate && (!maxEnd || p.endDate > maxEnd)) {
+                    maxEnd = p.endDate;
+                }
+
+                if (p.startDate && p.endDate && p.endDate >= p.startDate) {
+                    const durationDays = Math.max(1, Math.round((p.endDate - p.startDate) / (1000 * 60 * 60 * 24)));
+                    totalDurationDays += durationDays;
+                    weightedExpectedSum += durationDays * p.expectedPct;
+                }
+            });
+
+            const completedGeneral = Math.round((sumCompleted / productsData.length) * 10) / 10;
+            
+            let expectedGeneral = 0;
+            if (totalDurationDays > 0) {
+                expectedGeneral = Math.round((weightedExpectedSum / totalDurationDays) * 10) / 10;
+            } else if (minStart && maxEnd) {
+                expectedGeneral = calculateExpectedProgress(minStart, maxEnd, today);
+            }
+
+            return {
+                expectedGeneral,
+                completedGeneral,
+                minStart,
+                maxEnd,
+                totalProducts: productsData.length
+            };
+        }
+
+        /**
+         * Cambia el filtro interactivo para organizar la pirámide manteniendo el Progreso General en la cima
+         */
+        function setPyramidFilter(filterKey) {
+            currentFilter = filterKey;
+
+            const buttons = {
+                piramidal: document.getElementById('btn-piramidal'),
+                vencimientos: document.getElementById('btn-vencimientos'),
+                avance: document.getElementById('btn-avance'),
+                rezago: document.getElementById('btn-rezago')
+            };
+
+            Object.keys(buttons).forEach(key => {
+                const btn = buttons[key];
+                if (key === filterKey) {
+                    btn.className = "filter-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 bg-emerald-200 text-emerald-950 border border-emerald-400/70 shadow-sm";
+                } else {
+                    btn.className = "filter-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 bg-slate-100/90 text-slate-700 border border-slate-200 hover:bg-emerald-50 hover:text-emerald-900";
+                }
+            });
+
+            renderPyramid();
+        }
+
+        /**
+         * Estructura las filas escalonadas de la pirámide (2, 3, 4...) debajo de la Cima General (1)
+         */
+        function buildPyramidRows(sortedItems) {
+            const tiers = [];
+            let index = 0;
+            let rowCapacity = 2;
+            
+            while (index < sortedItems.length) {
+                const slice = sortedItems.slice(index, index + rowCapacity);
+                tiers.push(slice);
+                index += rowCapacity;
+                rowCapacity++;
+            }
+            return tiers;
+        }
+
+        /**
+         * Renderiza la Pirámide Principal (Cima General + Cubos de Productos)
+         */
+        function renderPyramid() {
+            const loadingEl = document.getElementById('loadingState');
+            const container = document.getElementById('pyramidContainer');
+            loadingEl.classList.add('hidden');
+            container.classList.remove('hidden');
+            container.classList.add('flex');
+
+            const searchQuery = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+
+            let filtered = productsData.filter(item => {
+                if (!searchQuery) return true;
+                return (
+                    item.code.toLowerCase().includes(searchQuery) ||
+                    item.referent.toLowerCase().includes(searchQuery) ||
+                    item.fullName.toLowerCase().includes(searchQuery) ||
+                    item.responsable.toLowerCase().includes(searchQuery)
+                );
+            });
+
+            filtered.sort((a, b) => {
+                if (currentFilter === 'piramidal') {
+                    return a.originalIndex - b.originalIndex;
+                }
+                if (currentFilter === 'vencimientos') {
+                    const timeA = a.endDate ? a.endDate.getTime() : Number.MAX_SAFE_INTEGER;
+                    const timeB = b.endDate ? b.endDate.getTime() : Number.MAX_SAFE_INTEGER;
+                    return timeA - timeB;
+                }
+                if (currentFilter === 'avance') {
+                    if (b.completedPct !== a.completedPct) return b.completedPct - a.completedPct;
+                    return b.expectedPct - a.expectedPct;
+                }
+                if (currentFilter === 'rezago') {
+                    if (b.lag !== a.lag) return b.lag - a.lag;
+                    return b.expectedPct - a.expectedPct;
+                }
+                return 0;
+            });
+
+            const apex = calculateGeneralApexMetrics();
+            const generalLag = Math.round((apex.expectedGeneral - apex.completedGeneral) * 10) / 10;
+
+            let html = '';
+
+            // =========================================================================
+            // NIVEL 1 (CIMA DE LA PIRÁMIDE): PROGRESO GENERAL
+            // =========================================================================
+            html += `
+                <div class="w-full flex flex-col items-center">
+                    <div class="pyramid-cube apex-cube w-full max-w-lg rounded-2xl p-5 cursor-pointer group" onclick="openApexSummaryWindow()">
+                        <!-- Título Flotante de Responsable General -->
+                        <div class="responsable-tooltip absolute -top-14 left-1/2 -translate-x-1/2 z-40 w-max max-w-xs px-4 py-2 rounded-xl bg-emerald-950 text-white border border-emerald-400 shadow-xl text-center">
+                            <span class="block text-[10px] font-bold uppercase tracking-wider text-emerald-300">Responsable</span>
+                            <span class="text-xs font-semibold">Coordinación General Gestión de Riesgos</span>
+                            <div class="w-2.5 h-2.5 bg-emerald-950 border-r border-b border-emerald-400 rotate-45 absolute -bottom-1.5 left-1/2 -translate-x-1/2"></div>
+                        </div>
+
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                            <span class="px-3 py-1 rounded-lg text-xs font-extrabold bg-emerald-200/90 text-emerald-950 border border-emerald-400/60">
+                                CONSOLIDADO GENERAL
+                            </span>
+                            <span class="text-xs text-emerald-900 font-semibold flex items-center gap-1 bg-white/70 px-2.5 py-1 rounded-lg border border-emerald-200">
+                                <i class="ph-fill ph-calendar-blank text-emerald-700"></i>
+                                ${formatDateDisplay(apex.minStart)} — ${formatDateDisplay(apex.maxEnd)}
+                            </span>
+                        </div>
+
+                        <h3 class="text-base sm:text-lg font-extrabold text-emerald-950 leading-snug mb-3">
+                            Avance Global de Gestión de Riesgos de Desastres
+                        </h3>
+
+                        <!-- Barras de Progreso Esperado vs Completado -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-white/85 p-3.5 rounded-xl border border-emerald-200">
+                            <div>
+                                <div class="flex items-center justify-between text-xs mb-1.5">
+                                    <span class="text-slate-700 font-semibold">Progreso Esperado</span>
+                                    <span class="font-extrabold text-sky-800">${apex.expectedGeneral}%</span>
+                                </div>
+                                <div class="w-full h-3 bg-sky-100 rounded-full overflow-hidden border border-sky-200">
+                                    <div class="h-full bg-gradient-to-r from-sky-300 to-sky-500 rounded-full transition-all duration-500" style="width: ${apex.expectedGeneral}%"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex items-center justify-between text-xs mb-1.5">
+                                    <span class="text-slate-700 font-semibold">Progreso Completado</span>
+                                    <span class="font-extrabold text-emerald-800">${apex.completedGeneral}%</span>
+                                </div>
+                                <div class="w-full h-3 bg-emerald-100 rounded-full overflow-hidden border border-emerald-200">
+                                    <div class="h-full bg-gradient-to-r from-emerald-300 to-emerald-500 rounded-full transition-all duration-500" style="width: ${apex.completedGeneral}%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-3 flex items-center justify-between text-xs text-emerald-900 font-medium">
+                            <span>Diferencia frente a lo esperado hoy: <strong class="${generalLag > 0 ? 'text-amber-700' : 'text-emerald-700'}">${generalLag > 0 ? '-' + generalLag : '+' + Math.abs(generalLag)}%</strong></span>
+                            <span class="text-emerald-800 font-bold group-hover:underline flex items-center gap-1">Ver detalle general <i class="ph-bold ph-caret-right"></i></span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // =========================================================================
+            // NIVELES DE LA PIRÁMIDE: CUBOS DE PRODUCTOS
+            // =========================================================================
+            if (filtered.length === 0) {
+                html += `
+                    <div class="py-12 text-center bg-white/80 border border-emerald-200 rounded-2xl px-8 shadow-sm">
+                        <i class="ph ph-magnifying-glass text-3xl text-emerald-600 mb-2"></i>
+                        <p class="text-sm text-emerald-950 font-semibold">No se encontraron productos que coincidan con tu búsqueda.</p>
+                    </div>
+                `;
+            } else {
+                const pyramidTiers = buildPyramidRows(filtered);
+
+                pyramidTiers.forEach((tierItems) => {
+                    html += `
+                        <div class="w-full flex flex-col items-center mt-3">
+                            <div class="flex flex-wrap justify-center gap-4 w-full">
+                                ${tierItems.map(item => renderProductCubeHTML(item)).join('')}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            container.innerHTML = html;
+        }
+
+        /**
+         * Genera el HTML de cada Cubo de Producto asegurando que el nombre de referencia quepa completo
+         */
+        function renderProductCubeHTML(item) {
+            let badgeColor = "bg-emerald-100 text-emerald-900 border-emerald-300";
+            if (item.lag > 25) {
+                badgeColor = "bg-rose-100 text-rose-900 border-rose-300";
+            } else if (item.lag > 0) {
+                badgeColor = "bg-amber-100 text-amber-900 border-amber-300";
+            } else if (item.completedPct > 0) {
+                badgeColor = "bg-sky-100 text-sky-900 border-sky-300";
+            }
+
+            return `
+                <div onclick="openProductDetailWindow(${item.originalIndex})" 
+                     class="pyramid-cube w-full sm:w-72 rounded-2xl p-4 cursor-pointer flex flex-col justify-between group select-none min-h-[215px]">
+                    
+                    <!-- TÍTULO FLOTANTE "RESPONSABLE" AL PARARSE EN EL CUBO -->
+                    <div class="responsable-tooltip absolute -top-16 left-1/2 -translate-x-1/2 z-40 w-max max-w-[270px] px-3.5 py-2 rounded-xl bg-emerald-950 text-white border border-emerald-300 shadow-xl text-center">
+                        <div class="flex items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-300 mb-0.5">
+                            <i class="ph-fill ph-user-circle"></i> Responsable
+                        </div>
+                        <div class="text-xs font-semibold text-white leading-snug break-words whitespace-normal">
+                            ${item.responsable}
+                        </div>
+                        <div class="w-2.5 h-2.5 bg-emerald-950 border-r border-b border-emerald-300 rotate-45 absolute -bottom-1.5 left-1/2 -translate-x-1/2"></div>
+                    </div>
+
+                    <!-- Cabecera del Cubo: Código y Fecha -->
+                    <div>
+                        <div class="flex items-center justify-between gap-2 mb-2.5">
+                            <span class="px-2.5 py-0.5 rounded-lg text-xs font-extrabold border ${badgeColor}">
+                                ${item.code}
+                            </span>
+                            <div class="text-[10px] text-emerald-900/80 font-bold flex flex-col items-end gap-0.5">
+                                <span class="flex items-center gap-1">
+                                    I: ${formatDateDisplay(item.startDate)}
+                                </span>
+                                <span class="flex items-center gap-1">
+                                    F: ${formatDateDisplay(item.endDate)}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Nombre General / Referente que cabe completamente en el cubo -->
+                        <h4 class="text-xs sm:text-[13px] font-bold text-emerald-950 group-hover:text-emerald-700 transition leading-snug break-words mb-3">
+                            ${item.referent}
+                        </h4>
+                    </div>
+
+                    <!-- Progreso Esperado y Completado dentro del cubo -->
+                    <div class="space-y-2.5 pt-2.5 border-t border-emerald-200/80 bg-white/60 -mx-2 px-2.5 pb-1 rounded-xl">
+                        <!-- Barra Esperado -->
+                        <div>
+                            <div class="flex justify-between text-[11px] mb-1">
+                                <span class="text-slate-700 font-semibold">Progreso Esperado</span>
+                                <span class="font-extrabold text-sky-800">${item.expectedPct}%</span>
+                            </div>
+                            <div class="w-full h-2.5 bg-sky-100 rounded-full overflow-hidden border border-sky-200">
+                                <div class="h-full bg-gradient-to-r from-sky-300 to-sky-500 rounded-full transition-all duration-500" style="width: ${item.expectedPct}%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Barra Completado -->
+                        <div>
+                            <div class="flex justify-between text-[11px] mb-1">
+                                <span class="text-slate-700 font-semibold">Progreso Completado</span>
+                                <span class="font-extrabold text-emerald-800">${item.completedPct}%</span>
+                            </div>
+                            <div class="w-full h-2.5 bg-emerald-100 rounded-full overflow-hidden border border-emerald-200">
+                                <div class="h-full bg-gradient-to-r from-emerald-300 to-emerald-500 rounded-full transition-all duration-500" style="width: ${item.completedPct}%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Pie del cubo -->
+                        <div class="pt-1 flex items-center justify-between text-[11px] text-emerald-900/80 font-medium">
+                            <span class="truncate max-w-[165px]">
+                                <i class="ph-fill ph-user text-emerald-600"></i> ${item.responsable}
+                            </span>
+                            <span class="text-emerald-800 font-bold group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
+                                Abrir <i class="ph-bold ph-caret-right"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        /**
+         * Abre la Ventana Piramidal dedicada para mostrar toda la información de la fila seleccionada
+         * sin desbordamientos y sin mostrar textos técnicos de nombres de columnas.
+         */
+        function openProductDetailWindow(originalIndex) {
+            const product = productsData.find(p => p.originalIndex === originalIndex);
+            if (!product) return;
+
+            const mainWin = document.getElementById('mainPyramidWindow');
+            const detailWin = document.getElementById('detailPyramidWindow');
+            const content = document.getElementById('detailPyramidContent');
+
+            // Extraer los campos adicionales (D, G, H, I, K, etc.) para organizarlos en los escalones de la pirámide
+            // Índices ya destacados en niveles superiores: 0 (Código), 1 (Nombre), 2 (Responsable), 4 (Inicio), 5 (Fin), 9 (% Completado)
+            const highlightedIndices = new Set([0, 1, 2, 4, 5, 9]);
+            const extraAttributes = product.fullRow.filter(attr => !highlightedIndices.has(attr.colIndex));
+
+            content.innerHTML = `
+                <!-- NIVEL 1 (CIMA DEL PRODUCTO): CÓDIGO Y REFERENTE -->
+                <div class="w-full max-w-md pyramid-cube apex-cube rounded-2xl p-5 text-center">
+                    <span class="px-3.5 py-1 rounded-lg text-xs font-extrabold bg-emerald-200 text-emerald-950 border border-emerald-400">
+                        ${product.code}
+                    </span>
+                    <h2 class="text-base sm:text-lg font-extrabold text-emerald-950 mt-2.5 leading-snug break-words">
+                        ${product.referent}
+                    </h2>
+                </div>
+
+                <div class="w-0.5 h-4 bg-emerald-300 -my-3"></div>
+
+                <!-- NIVEL 2: PROGRESO ESPERADO, PROGRESO COMPLETADO Y FECHAS -->
+                <div class="w-full max-w-2xl grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div class="pyramid-cube rounded-2xl p-5">
+                        <div class="text-xs font-extrabold uppercase tracking-wider text-sky-800 mb-1 flex items-center gap-1.5">
+                            <i class="ph-fill ph-calendar-check text-base"></i> Progreso Esperado a Hoy
+                        </div>
+                        <div class="text-2xl font-extrabold text-sky-950 mb-2">${product.expectedPct}%</div>
+                        <div class="w-full h-3 bg-sky-100 rounded-full overflow-hidden border border-sky-200 mb-3">
+                            <div class="h-full bg-gradient-to-r from-sky-300 to-sky-500 rounded-full" style="width: ${product.expectedPct}%"></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs text-emerald-950 bg-sky-50/80 p-2.5 rounded-xl border border-sky-200/60">
+                            <div>
+                                <span class="block text-[10px] uppercase font-bold text-sky-700">Fecha de Inicio</span>
+                                <span class="font-bold">${formatDateDisplay(product.startDate)}</span>
+                            </div>
+                            <div>
+                                <span class="block text-[10px] uppercase font-bold text-sky-700">Fecha de Fin</span>
+                                <span class="font-bold">${formatDateDisplay(product.endDate)}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pyramid-cube rounded-2xl p-5">
+                        <div class="text-xs font-extrabold uppercase tracking-wider text-emerald-800 mb-1 flex items-center gap-1.5">
+                            <i class="ph-fill ph-check-circle text-base"></i> Progreso Completado
+                        </div>
+                        <div class="text-2xl font-extrabold text-emerald-950 mb-2">${product.completedPct}%</div>
+                        <div class="w-full h-3 bg-emerald-100 rounded-full overflow-hidden border border-emerald-200 mb-3">
+                            <div class="h-full bg-gradient-to-r from-emerald-300 to-emerald-500 rounded-full" style="width: ${product.completedPct}%"></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs text-emerald-950 bg-emerald-50/80 p-2.5 rounded-xl border border-emerald-200/60">
+                            <div>
+                                <span class="block text-[10px] uppercase font-bold text-emerald-700">Avance Reportado</span>
+                                <span class="font-bold">${product.completedPct}%</span>
+                            </div>
+                            <div>
+                                <span class="block text-[10px] uppercase font-bold text-emerald-700">Diferencia / Rezago</span>
+                                <span class="font-bold">${product.lag}%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="w-0.5 h-4 bg-emerald-300 -my-3"></div>
+
+                <!-- NIVEL 3: RESPONSABLE Y DESCRIPCIÓN COMPLETA DEL PRODUCTO -->
+                <div class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div class="pyramid-cube rounded-2xl p-5 md:col-span-1 flex flex-col justify-center bg-amber-50/40">
+                        <div class="text-xs font-extrabold uppercase tracking-wider text-amber-900 mb-1.5 flex items-center gap-1.5">
+                            <i class="ph-fill ph-users text-base text-amber-700"></i> Responsable
+                        </div>
+                        <p class="text-sm font-bold text-emerald-950 leading-relaxed break-words">
+                            ${product.responsable}
+                        </p>
+                    </div>
+
+                    <div class="pyramid-cube rounded-2xl p-5 md:col-span-2">
+                        <div class="text-xs font-extrabold uppercase tracking-wider text-emerald-800 mb-1.5 flex items-center gap-1.5">
+                            <i class="ph-fill ph-file-text text-base text-emerald-700"></i> Descripción del Producto
+                        </div>
+                        <p class="text-xs sm:text-sm font-medium text-emerald-950 leading-relaxed break-words">
+                            ${product.fullName}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="w-0.5 h-4 bg-emerald-300 -my-3"></div>
+
+                <!-- NIVEL 4 (BASE DE LA PIRÁMIDE): INFORMACIÓN COMPLEMENTARIA DE LA FILA -->
+                <div class="w-full max-w-6xl">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                        ${extraAttributes.map(attr => `
+                            <div class="pyramid-cube rounded-2xl p-4 flex flex-col justify-between">
+                                <div class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-800 mb-1.5 flex items-center gap-1.5">
+                                    <i class="ph-fill ph-leaf text-emerald-600"></i>
+                                    <span class="break-words">${attr.header}</span>
+                                </div>
+                                <div class="text-xs sm:text-sm font-semibold text-emerald-950 break-words leading-relaxed bg-white/80 p-3 rounded-xl border border-emerald-100">
+                                    ${attr.value}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            mainWin.classList.add('hidden');
+            detailWin.classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        /**
+         * Abre la ventana piramidal con el resumen del Progreso General (Cima)
+         */
+        function openApexSummaryWindow() {
+            const apex = calculateGeneralApexMetrics();
+            const mainWin = document.getElementById('mainPyramidWindow');
+            const detailWin = document.getElementById('detailPyramidWindow');
+            const content = document.getElementById('detailPyramidContent');
+
+            content.innerHTML = `
+                <div class="w-full max-w-md pyramid-cube apex-cube rounded-2xl p-6 text-center">
+                    <span class="px-3.5 py-1 rounded-full text-xs font-extrabold bg-emerald-200 text-emerald-950 border border-emerald-400">
+                        CIMA DE LA PIRÁMIDE
+                    </span>
+                    <h3 class="text-xl font-extrabold text-emerald-950 mt-3">Progreso General Consolidado</h3>
+                    <p class="text-xs text-emerald-800 font-medium mt-1">Consolidado de ${apex.totalProducts} productos de Gestión de Riesgos de Desastres</p>
+                </div>
+
+                <div class="w-0.5 h-4 bg-emerald-300 -my-3"></div>
+
+                <div class="w-full max-w-3xl grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div class="pyramid-cube rounded-2xl p-5">
+                        <h4 class="text-xs font-extrabold uppercase text-sky-800 mb-1">Progreso Esperado General a Hoy</h4>
+                        <div class="text-3xl font-extrabold text-sky-950 mb-2">${apex.expectedGeneral}%</div>
+                        <div class="w-full h-3 bg-sky-100 rounded-full overflow-hidden border border-sky-200 mb-3">
+                            <div class="h-full bg-gradient-to-r from-sky-300 to-sky-500 rounded-full" style="width: ${apex.expectedGeneral}%"></div>
+                        </div>
+                        <p class="text-xs text-emerald-900 leading-relaxed">
+                            Calculado tomando la fecha de inicio y finalización de los productos respecto al día de hoy (${formatDateDisplay(new Date())}).
+                        </p>
+                        <div class="mt-3 pt-3 border-t border-emerald-200 text-xs text-emerald-950">
+                            <strong>Inicio General:</strong> ${formatDateDisplay(apex.minStart)}<br>
+                            <strong>Fin General:</strong> ${formatDateDisplay(apex.maxEnd)}
+                        </div>
+                    </div>
+
+                    <div class="pyramid-cube rounded-2xl p-5">
+                        <h4 class="text-xs font-extrabold uppercase text-emerald-800 mb-1">Progreso Completado General</h4>
+                        <div class="text-3xl font-extrabold text-emerald-950 mb-2">${apex.completedGeneral}%</div>
+                        <div class="w-full h-3 bg-emerald-100 rounded-full overflow-hidden border border-emerald-200 mb-3">
+                            <div class="h-full bg-gradient-to-r from-emerald-300 to-emerald-500 rounded-full" style="width: ${apex.completedGeneral}%"></div>
+                        </div>
+                        <p class="text-xs text-emerald-900 leading-relaxed">
+                            Consolidado mediante el promedio del avance completado registrado en todos los productos del tablero.
+                        </p>
+                    </div>
+                </div>
+            `;
+
+            mainWin.classList.add('hidden');
+            detailWin.classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        /**
+         * Regresa de la ventana de detalle piramidal a la pirámide principal
+         */
+        function closeDetailWindow() {
+            document.getElementById('detailPyramidWindow').classList.add('hidden');
+            document.getElementById('mainPyramidWindow').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Permitir volver también con la tecla Escape
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeDetailWindow();
+        });
+    </script>
+</body>
+</html>
