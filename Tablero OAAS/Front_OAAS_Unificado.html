@@ -5,8 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Oficina de Asuntos Ambientales y Sociales</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SheetJS para lectura en vivo de los archivos de Google Sheets -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <script>
         tailwind.config = {
@@ -29,8 +31,8 @@
     <style>
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .fade-in { animation: fadeIn 0.4s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.35s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .bg-colombia { position: relative; }
         .bg-colombia::before {
             content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -43,21 +45,27 @@
 </head>
 <body class="bg-brand-bg text-gray-800 font-sans h-screen overflow-hidden flex flex-col selection:bg-brand-light selection:text-white">
 
-    <header class="w-full bg-brand-dark text-white flex flex-col z-30 shadow-md">
-        <div class="p-4 flex items-center gap-4 border-b border-brand-primary/50">
-            <div class="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-brand-earth shadow-inner shrink-0">
-                <i class="fa-solid fa-leaf text-xl"></i>
+    <header class="w-full bg-brand-dark text-white flex flex-col z-30 shadow-md shrink-0">
+        <div class="px-4 py-3 flex items-center justify-between gap-4 border-b border-brand-primary/50">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center text-brand-earth shadow-inner shrink-0">
+                    <i class="fa-solid fa-leaf text-lg"></i>
+                </div>
+                <h1 class="text-lg md:text-xl font-bold tracking-wide text-gray-100">
+                    Oficina de Asuntos <span class="text-brand-earth">Ambientales y Sociales</span>
+                </h1>
             </div>
-            <h1 class="text-xl md:text-2xl font-bold tracking-wide text-gray-100">
-                Oficina de Asuntos <span class="text-brand-earth">Ambientales y Sociales</span>
-            </h1>
+            <div class="hidden sm:flex items-center gap-2 text-xs text-gray-300 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10">
+                <i class="fa-regular fa-calendar-check text-brand-earth"></i>
+                <span>Corte: <strong id="header-cutoff-date" class="text-white">--/--/----</strong></span>
+            </div>
         </div>
 
         <nav id="main-nav" class="flex overflow-x-auto no-scrollbar bg-brand-dark/95 px-4 py-2 gap-2 relative">
             
-            <button onclick="showWelcome()" class="shrink-0 flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-brand-primary transition-colors text-left text-white">
-                <i class="fa-solid fa-house text-brand-earth/80 w-5 text-center"></i>
-                <span class="font-medium whitespace-nowrap">Front - OAAS</span>
+            <button onclick="showWelcome()" class="shrink-0 flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-primary/60 hover:bg-brand-primary transition-colors text-left text-white">
+                <i class="fa-solid fa-house text-brand-earth w-5 text-center"></i>
+                <span class="font-semibold whitespace-nowrap">Front - OAAS</span>
             </button>
 
             <div class="relative group shrink-0">
@@ -106,17 +114,44 @@
         
         <div id="dashboard-container" class="content-layer flex-1 bg-transparent p-0 m-0 w-full h-full fade-in flex flex-col">
             
-            <div id="welcome-message" class="flex flex-col items-center justify-center h-full text-center py-12 p-4">
-                <div class="w-24 h-24 bg-brand-primary/10 rounded-full flex items-center justify-center mb-6">
-                    <i class="fa-solid fa-earth-americas text-5xl text-brand-primary"></i>
+            <!-- VISTA PRINCIPAL: RESUMEN EJECUTIVO DE LOS 7 TABLEROS -->
+            <div id="welcome-message" class="w-full h-full overflow-y-auto p-4 md:p-6 lg:p-8">
+                <div class="max-w-7xl mx-auto space-y-6">
+                    
+                    <!-- Banner Consolidado Global -->
+                    <div class="bg-white/90 backdrop-blur-md rounded-2xl p-5 md:p-6 border border-brand-primary/20 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                        <div class="space-y-1">
+                            <h2 class="text-xl md:text-2xl font-extrabold text-brand-dark">
+                                Estado Consolidado de Tableros de Gestión
+                            </h2>
+                            <p class="text-xs md:text-sm text-gray-600">
+                                Seguimiento en tiempo real del % completado, % esperado y horizonte de fechas de cada frente estratégico. Haz clic en cualquier tarjeta para ir al tablero.
+                            </p>
+                        </div>
+
+                        <!-- Promedios Globales de toda la Oficina -->
+                        <div class="flex flex-wrap sm:flex-nowrap items-center gap-4 bg-brand-bg/60 p-4 rounded-xl border border-brand-primary/15 shrink-0">
+                            <div class="px-3">
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block">Completado Global</span>
+                                <span id="global-oaas-comp" class="text-2xl md:text-3xl font-extrabold text-brand-primary">--%</span>
+                            </div>
+                            <div class="h-10 w-px bg-gray-300 hidden sm:block"></div>
+                            <div class="px-3">
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block">Esperado Global</span>
+                                <span id="global-oaas-exp" class="text-2xl md:text-3xl font-extrabold text-amber-700">--%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cuadrícula de Tarjetas de los 7 Botones -->
+                    <div id="summary-cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                        <!-- Renderizado dinámicamente por JS -->
+                    </div>
+
                 </div>
-                <h3 class="text-2xl font-bold text-gray-700 mb-2">Bienvenido al Sistema de Tableros</h3>
-                <p class="text-gray-500 max-w-md">
-                    Este es el espacio central para visualizar los indicadores y gestión de la Oficina de Asuntos Ambientales y Sociales. 
-                    Por favor, seleccione una categoría en la parte superior para cargar el tablero correspondiente.
-                </p>
             </div>
 
+            <!-- CONTENEDOR DEL IFRAME SIN MÁRGENES CUANDO SE SELECCIONA UN TABLERO -->
             <div id="dynamic-content" class="hidden w-full h-full flex-1">
                 <iframe id="dashboard-iframe" src="" class="w-full h-full border-0 bg-transparent block" title="Tablero Dinámico" style="min-height: 100%;"></iframe>
             </div>
@@ -125,6 +160,938 @@
     </main>
 
     <script>
+        // ============================================================================
+        // CONFIGURACIÓN DE LOS 7 TABLEROS Y SUS FUENTES DE DATOS EN VIVO
+        // ============================================================================
+        const DASHBOARDS_CONFIG = [
+            {
+                id: 'gestion-desastres',
+                name: 'Gestión de Desastres',
+                category: 'Coordinación Ambiental',
+                icon: 'fa-mountain-sun',
+                accent: '#047857',
+                fileUrl: 'Tablero de Gestión de Riesgos.html',
+                isExternal: false,
+                dataUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTNF_xUz3xN-BvgUgSMy3BI593nGnvyTID5Eq56WklQtaLj6Go9as6-OYh2yC0yzg/pub?output=xlsx'
+            },
+            {
+                id: 'pol-relacionamiento',
+                name: 'Pol. Relacionamiento',
+                category: 'Coordinación Ambiental',
+                icon: 'fa-leaf',
+                accent: '#0d9488',
+                fileUrl: 'Politica de relacionamiento Ambiental.html',
+                isExternal: false,
+                dataUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS29Ytx_hrn6yHFbdXFew1ZYBCGwW4uS_QVjc90fqclm_nxIeWOKy49k9tD6GTXtw/pub?output=xlsx'
+            },
+            {
+                id: 'cambio-climatico',
+                name: 'Cambio Climático',
+                category: 'Coordinación Ambiental',
+                icon: 'fa-cloud-sun-rain',
+                accent: '#2d6a4f',
+                fileUrl: 'Cambio climático.html',
+                isExternal: false,
+                dataUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSk75EVa0Os6ZQHIx5IP3DNOS_vyVpKqd_9R1r4q3q4n6OT-rWkvjivxDwVtJH_kw/pub?output=xlsx'
+            },
+            {
+                id: 'conpes',
+                name: 'CONPES',
+                category: 'Política Nacional',
+                icon: 'fa-file-contract',
+                accent: '#4f46e5',
+                fileUrl: 'CONPES - Tablero.html',
+                isExternal: false,
+                dataUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSgdr8eUvVGho4jA-sJ2IzZwPswG9zebNzbVQn-JOIWHqmm6esb1fgMsfYbyKcFfw/pub?output=xlsx'
+            },
+            {
+                id: 'plan-estrategico',
+                name: 'Plan Estratégico',
+                category: 'Interinstitucional',
+                icon: 'fa-handshake-angle',
+                accent: '#b45309',
+                fileUrl: 'Plan Estratégico Interinstitucional.html',
+                isExternal: false,
+                dataUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSnAp2SxoY71IDaBQLY_UK8z7RDfhYhSByeGHOhsHSMAck2mYVDmhORHm3XiJ8lmg/pub?output=xlsx'
+            },
+            {
+                id: 'planes-accion',
+                name: 'Planes de Acción',
+                category: 'Seguimiento Táctico',
+                icon: 'fa-chart-line',
+                accent: '#0f4c5c',
+                fileUrl: 'Planes de acción.html',
+                isExternal: false,
+                dataUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSB7os9O2XIlI2-lxpYIIrxbV-iVWp_YvcOiyzYCwaMWDDgcL5Vch_1Qt3QmaFpCA/pub?output=xlsx'
+            },
+            {
+                id: 'gerencia-guajira',
+                name: 'Gerencia Guajira',
+                category: 'Tablero Territorial',
+                icon: 'fa-map-location-dot',
+                accent: '#1e3a8a',
+                fileUrl: 'https://jesusvillamizarroman-gif.github.io/tablero-gerencial/OAAS.html',
+                isExternal: true,
+                dataUrl: 'https://docs.google.com/spreadsheets/d/1CWZlW4Ij8KhhYqPJdMKozk_bAHXmRQlq/gviz/tq?tqx=out:json'
+            }
+        ];
+
+        const summaryState = {};
+
+        // ============================================================================
+        // UTILIDADES DE FECHAS Y NÚMEROS
+        // ============================================================================
+        const MONTHS_ES = {
+            ene: 0, enero: 0, jan: 0, feb: 1, febrero: 1, mar: 2, marzo: 2,
+            abr: 3, abril: 3, apr: 3, may: 4, mayo: 4, jun: 5, junio: 5,
+            jul: 6, julio: 6, ago: 7, agosto: 7, aug: 7, sep: 8, sept: 8, septiembre: 8, set: 8,
+            oct: 9, octubre: 9, nov: 10, noviembre: 10, dic: 11, diciembre: 11, dec: 11
+        };
+
+        function parseFlexibleDate(val) {
+            if (val === null || val === undefined || val === '') return null;
+            if (val instanceof Date) return isNaN(val.getTime()) ? null : val;
+
+            if (typeof val === 'number') {
+                if (val > 25000 && val < 80000) {
+                    const utcDays = Math.floor(val - 25569);
+                    const d = new Date(utcDays * 86400 * 1000);
+                    return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 12, 0, 0);
+                }
+                return null;
+            }
+
+            const str = String(val).trim();
+            if (!str) return null;
+
+            // Formato Date(YYYY,MM,DD) de Google Visualization
+            if (str.includes('Date')) {
+                const m = str.match(/Date\((\d+),(\d+),(\d+)/);
+                if (m) return new Date(parseInt(m[1], 10), parseInt(m[2], 10), parseInt(m[3], 10), 12, 0, 0);
+            }
+
+            // Serial numérico en texto
+            if (/^\d{5}(\.\d+)?$/.test(str)) {
+                const serial = parseFloat(str);
+                if (serial > 25000 && serial < 80000) {
+                    const utcDays = Math.floor(serial - 25569);
+                    const d = new Date(utcDays * 86400 * 1000);
+                    return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 12, 0, 0);
+                }
+            }
+
+            // YYYY-MM-DD
+            let m = str.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+            if (m) {
+                const d = new Date(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10), 12, 0, 0);
+                if (!isNaN(d.getTime())) return d;
+            }
+
+            // DD/MM/YYYY o DD-MM-YYYY
+            m = str.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/);
+            if (m) {
+                let p1 = parseInt(m[1], 10), p2 = parseInt(m[2], 10), year = parseInt(m[3], 10);
+                if (year < 100) year += 2000;
+                let day = p1, month = p2 - 1;
+                if (p2 > 12 && p1 <= 12) { month = p1 - 1; day = p2; }
+                const d = new Date(year, month, day, 12, 0, 0);
+                if (!isNaN(d.getTime())) return d;
+            }
+
+            // Texto en español (ej: "15 de enero de 2026" o "15-Ene-2026")
+            const cleanStr = str.toLowerCase().replace(/de\s+/g, ' ').replace(/[,\.]/g, ' ').trim();
+            m = cleanStr.match(/^(\d{1,2})[\s\-\/]+([a-záéíóú]+)[\s\-\/]+(\d{2,4})/);
+            if (m && MONTHS_ES[m[2]] !== undefined) {
+                let year = parseInt(m[3], 10);
+                if (year < 100) year += 2000;
+                return new Date(year, MONTHS_ES[m[2]], parseInt(m[1], 10), 12, 0, 0);
+            }
+
+            const parsed = new Date(str);
+            if (!isNaN(parsed.getTime()) && parsed.getFullYear() >= 2000 && parsed.getFullYear() <= 2100) {
+                return parsed;
+            }
+            return null;
+        }
+
+        function formatDateShort(date) {
+            if (!date || isNaN(date.getTime())) return 'Por definir';
+            const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            return `${String(date.getDate()).padStart(2, '0')} ${meses[date.getMonth()]} ${date.getFullYear()}`;
+        }
+
+        function clamp(val, min, max) {
+            return Math.min(Math.max(val, min), max);
+        }
+
+        function round1(num) {
+            return Math.round((Number(num) + Number.EPSILON) * 10) / 10;
+        }
+
+        function average(arr) {
+            if (!arr || !arr.length) return 0;
+            return arr.reduce((a, b) => a + (Number(b) || 0), 0) / arr.length;
+        }
+
+        function calcLinearExpected(start, end, refDate = new Date()) {
+            if (!start || !end || isNaN(start.getTime()) || isNaN(end.getTime())) return 0;
+            const s = start.getTime(), e = end.getTime(), r = refDate.getTime();
+            if (r <= s) return 0;
+            if (r >= e || e <= s) return 100;
+            return clamp(((r - s) / (e - s)) * 100, 0, 100);
+        }
+
+        function unmergeSheet(ws) {
+            if (!ws || !ws['!merges']) return;
+            ws['!merges'].forEach(merge => {
+                const srcAddr = XLSX.utils.encode_cell({ r: merge.s.r, c: merge.s.c });
+                const srcCell = ws[srcAddr];
+                if (!srcCell) return;
+                for (let r = merge.s.r; r <= merge.e.r; r++) {
+                    for (let c = merge.s.c; c <= merge.e.c; c++) {
+                        const addr = XLSX.utils.encode_cell({ r, c });
+                        if (!ws[addr] || ws[addr].v === undefined || ws[addr].v === '') {
+                            ws[addr] = { ...srcCell };
+                        }
+                    }
+                }
+            });
+        }
+
+        async function fetchWorkbookWithFallback(xlsxUrl) {
+            const urls = [
+                xlsxUrl,
+                xlsxUrl.replace('output=xlsx', 'output=csv'),
+                `https://corsproxy.io/?${encodeURIComponent(xlsxUrl)}`,
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(xlsxUrl)}`
+            ];
+            for (const u of urls) {
+                try {
+                    const res = await fetch(u, { cache: 'no-store' });
+                    if (!res.ok) continue;
+                    const buf = await res.arrayBuffer();
+                    const wb = XLSX.read(new Uint8Array(buf), { type: 'array', cellDates: false, cellNF: true, cellText: true });
+                    if (wb && wb.SheetNames && wb.SheetNames.length > 0) return wb;
+                } catch (e) {}
+            }
+            throw new Error('No se pudo descargar el archivo');
+        }
+
+        // ============================================================================
+        // CÁLCULO EXACTO DE CADA UNO DE LOS 7 TABLEROS
+        // ============================================================================
+
+        // 1. GESTIÓN DE DESASTRES
+        async function computeGestionDesastres(cfg) {
+            const wb = await fetchWorkbookWithFallback(cfg.dataUrl);
+            const ws = wb.Sheets[wb.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+            const dataRows = rows.slice(1).filter(r => r && (String(r[0] || '').trim() !== '' || String(r[1] || '').trim() !== ''));
+
+            const today = new Date();
+            let totalWeight = 0, weightedExp = 0, sumComp = 0;
+            let minStart = null, maxEnd = null;
+
+            dataRows.forEach(r => {
+                const start = parseFlexibleDate(r[4]);
+                const end = parseFlexibleDate(r[5]);
+                let comp = 0;
+                if (r[9] !== '' && r[9] !== null && r[9] !== undefined) {
+                    const raw = typeof r[9] === 'number' ? r[9] : parseFloat(String(r[9]).replace('%', '').replace(',', '.').trim());
+                    if (!isNaN(raw)) comp = raw <= 1 && raw > 0 && !String(r[9]).includes('%') ? raw * 100 : raw;
+                }
+                comp = clamp(comp, 0, 100);
+                const exp = calcLinearExpected(start, end, today);
+
+                sumComp += comp;
+                if (start && (!minStart || start < minStart)) minStart = start;
+                if (end && (!maxEnd || end > maxEnd)) maxEnd = end;
+
+                const durationDays = (start && end) ? Math.max(1, Math.round((end - start) / 86400000)) : 1;
+                totalWeight += durationDays;
+                weightedExp += exp * durationDays;
+            });
+
+            return {
+                completed: dataRows.length ? round1(sumComp / dataRows.length) : 0,
+                expected: totalWeight ? round1(weightedExp / totalWeight) : 0,
+                startDate: formatDateShort(minStart),
+                endDate: formatDateShort(maxEnd)
+            };
+        }
+
+        // 2. POLÍTICA DE RELACIONAMIENTO AMBIENTAL
+        async function computePolRelacionamiento(cfg) {
+            const wb = await fetchWorkbookWithFallback(cfg.dataUrl);
+            const ws = Object.assign({}, wb.Sheets[wb.SheetNames[0]]);
+            unmergeSheet(ws);
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            const numRows = range.e.r + 1;
+            const numCols = Math.max(range.e.c + 1, 8);
+
+            const matrix = Array.from({ length: numRows }, (_, r) =>
+                Array.from({ length: numCols }, (__, c) => {
+                    const cell = ws[XLSX.utils.encode_cell({ r, c })];
+                    return cell ? { v: cell.v ?? '', w: String(cell.w ?? cell.v ?? '').trim() } : { v: '', w: '' };
+                })
+            );
+
+            let headerIdx = 0, bestScore = -1;
+            for (let r = 0; r < Math.min(10, numRows - 1); r++) {
+                const nonEmpty = matrix[r].filter(c => c.w !== '').length;
+                if (nonEmpty < 3) continue;
+                let score = nonEmpty + (/producto|entregable|inicio|fin|avance|%/i.test(matrix[r].map(c => c.w).join(' ')) ? 20 : 0);
+                if (score > bestScore) { bestScore = score; headerIdx = r; }
+            }
+
+            let colPct = 7;
+            for (let c = 0; c < numCols; c++) {
+                if ([0, 1, 4, 5].includes(c)) continue;
+                if (/%|avance|completado|progreso|cumplimiento/i.test(matrix[headerIdx][c]?.w || '')) {
+                    colPct = c; break;
+                }
+            }
+
+            const dataRows = matrix.slice(headerIdx + 1).filter(row => row.some(c => c.w !== ''));
+            const numericVals = dataRows.map(r => r[colPct]?.v).filter(v => typeof v === 'number' && !isNaN(v));
+            const isDecimal = numericVals.length > 0 && Math.max(...numericVals) <= 1.0001;
+
+            const productMap = new Map();
+            let lastA = '', lastB = '', minDate = null, maxDate = null;
+
+            dataRows.forEach(cells => {
+                let valA = cells[0]?.w || '', valB = cells[1]?.w || '';
+                const valG = cells[6]?.w || '';
+                let sDate = parseFlexibleDate(cells[4]?.v !== '' ? cells[4]?.v : cells[4]?.w);
+                let eDate = parseFlexibleDate(cells[5]?.v !== '' ? cells[5]?.v : cells[5]?.w);
+                if (sDate && !eDate) eDate = sDate;
+                if (!sDate && eDate) sDate = eDate;
+
+                if (!valA && !valB && (valG || sDate || eDate)) { valA = lastA; valB = lastB; }
+                else if (valA && !valB && valA === lastA) { valB = lastB; }
+                if (valA) lastA = valA;
+                if (valB) lastB = valB;
+                if (!valA && !valB && !sDate && !eDate) return;
+
+                if (sDate && (!minDate || sDate < minDate)) minDate = sDate;
+                if (eDate && (!maxDate || eDate > maxDate)) maxDate = eDate;
+
+                let pct = 0;
+                const cObj = cells[colPct];
+                if (cObj) {
+                    if (cObj.w.includes('%')) {
+                        pct = parseFloat(cObj.w.replace(/[^0-9.,\-]/g, '').replace(',', '.')) || 0;
+                    } else if (typeof cObj.v === 'number') {
+                        pct = isDecimal && cObj.v <= 1 ? cObj.v * 100 : cObj.v;
+                    }
+                }
+                pct = clamp(pct, 0, 100);
+
+                const key = valA ? `${valA.toUpperCase()}||${valB.toUpperCase()}` : `B||${valB.toUpperCase()}`;
+                if (!productMap.has(key)) productMap.set(key, []);
+                productMap.get(key).push(pct);
+            });
+
+            const prodAvgs = [];
+            productMap.forEach(list => prodAvgs.push(average(list)));
+
+            return {
+                completed: round1(average(prodAvgs)),
+                expected: round1(calcLinearExpected(minDate, maxDate, new Date())),
+                startDate: formatDateShort(minDate),
+                endDate: formatDateShort(maxDate)
+            };
+        }
+
+        // 3. CAMBIO CLIMÁTICO
+        async function computeCambioClimatico(cfg) {
+            const wb = await fetchWorkbookWithFallback(cfg.dataUrl);
+            const ws = wb.Sheets[wb.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+
+            const rawJValues = rows.map(r => r[9]).filter(v => typeof v === 'number' && !isNaN(v));
+            const maxJ = Math.max(...rawJValues, 0);
+
+            const today = new Date();
+            let sumComp = 0, sumExp = 0, countExp = 0, total = 0;
+            let minStart = null, maxEnd = null;
+
+            for (let i = 0; i < rows.length; i++) {
+                const r = rows[i];
+                if (!r || !r.length) continue;
+                const rawA = String(r[0] ?? '').trim(), rawB = String(r[1] ?? '').trim();
+                if (!rawA && !rawB) continue;
+
+                const headerCheck = `${rawA} ${rawB} ${r[4]} ${r[5]} ${r[9]}`.toLowerCase();
+                if (i < 5 && (headerCheck.includes('fecha') || headerCheck.includes('completado') || rawA.toLowerCase() === 'entregable')) continue;
+
+                const sDate = parseFlexibleDate(r[4]);
+                const eDate = parseFlexibleDate(r[5]);
+                const hasValidJ = r[9] !== '' && r[9] !== null && r[9] !== undefined && !isNaN(parseFloat(String(r[9]).replace('%', '').replace(',', '.')));
+                if (!sDate && !eDate && !hasValidJ && i < 3) continue;
+
+                let comp = 0;
+                if (typeof r[9] === 'number') {
+                    comp = (maxJ <= 1.05 && r[9] <= 1.05 && r[9] >= 0) ? r[9] * 100 : r[9];
+                } else if (typeof r[9] === 'string' && r[9].trim() !== '') {
+                    const num = parseFloat(r[9].replace(',', '.').replace(/[^0-9.-]/g, ''));
+                    if (!isNaN(num)) comp = (!r[9].includes('%') && maxJ <= 1.05 && num <= 1.05) ? num * 100 : num;
+                }
+                comp = clamp(comp, 0, 100);
+
+                if (sDate && (!minStart || sDate < minStart)) minStart = sDate;
+                if (eDate && (!maxEnd || eDate > maxEnd)) maxEnd = eDate;
+
+                if (sDate && eDate && eDate > sDate) {
+                    const exp = calcLinearExpected(sDate, eDate, today);
+                    if (exp > 0) {
+                        sumExp += exp;
+                        countExp++;
+                    }
+                }
+
+                sumComp += comp;
+                total++;
+            }
+
+            return {
+                completed: total ? round1(sumComp / total) : 0,
+                expected: countExp ? round1(sumExp / countExp) : 0,
+                startDate: formatDateShort(minStart),
+                endDate: formatDateShort(maxEnd)
+            };
+        }
+
+        // 4. CONPES
+        async function computeConpes(cfg) {
+            const wb = await fetchWorkbookWithFallback(cfg.dataUrl);
+            const ws = wb.Sheets[wb.SheetNames[0]];
+            const jsonData = XLSX.utils.sheet_to_json(ws, { defval: '' });
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            const cols = [];
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+                const cell = ws[XLSX.utils.encode_cell({ c: C, r: range.s.r })];
+                if (cell && cell.v) cols.push(cell.v);
+            }
+
+            const hoy = new Date();
+            let sumExp = 0, sumLogrado = 0, count = 0;
+            let minStart = null, maxEnd = null;
+
+            jsonData.forEach(row => {
+                const fIni = parseFlexibleDate(row[cols[3]]);
+                const fFin = parseFlexibleDate(row[cols[4]]);
+                const rawLog = row[cols[8]];
+
+                let logradoNum = 0;
+                if (typeof rawLog === 'number') logradoNum = rawLog <= 1 ? rawLog * 100 : rawLog;
+                else if (rawLog !== '') logradoNum = parseFloat(String(rawLog).replace(/[^\d.-]/g, '')) || 0;
+                logradoNum = clamp(logradoNum, 0, 100);
+
+                let espNum = 0;
+                if (fIni && fFin) {
+                    espNum = calcLinearExpected(fIni, fFin, hoy);
+                    if (!minStart || fIni < minStart) minStart = fIni;
+                    if (!maxEnd || fFin > maxEnd) maxEnd = fFin;
+                }
+
+                sumLogrado += logradoNum;
+                sumExp += espNum;
+                count++;
+            });
+
+            return {
+                completed: count ? Math.round(sumLogrado / count) : 0,
+                expected: count ? Math.round(sumExp / count) : 0,
+                startDate: formatDateShort(minStart),
+                endDate: formatDateShort(maxEnd)
+            };
+        }
+
+        // 5. PLAN ESTRATÉGICO INTERINSTITUCIONAL
+        async function computePlanEstrategico(cfg) {
+            const wb = await fetchWorkbookWithFallback(cfg.dataUrl);
+            const ws = Object.assign({}, wb.Sheets[wb.SheetNames[0]]);
+            unmergeSheet(ws);
+            const range = XLSX.utils.decode_range(ws['!ref']);
+
+            const rawMatrix = [], fmtMatrix = [];
+            for (let r = range.s.r; r <= range.e.r; r++) {
+                const rV = [], rF = [];
+                for (let c = 0; c <= Math.max(range.e.c, 12); c++) {
+                    const cell = ws[XLSX.utils.encode_cell({ r, c })];
+                    rV.push(cell ? cell.v : undefined);
+                    rF.push(cell ? String(cell.w ?? cell.v ?? '').trim() : '');
+                }
+                rawMatrix.push(rV);
+                fmtMatrix.push(rF);
+            }
+
+            let headerIdx = 0, bestScore = -1;
+            for (let r = 0; r < Math.min(10, rawMatrix.length); r++) {
+                const cnt = fmtMatrix[r].filter((v, i) => i <= 11 && v.length > 0).length;
+                if (cnt > bestScore) { bestScore = cnt; headerIdx = r; }
+            }
+
+            let lastA = '', lastB = '', lastRawC = undefined, lastFmtC = '';
+            const rows = [];
+            let maxRawH = 0, maxRawC = 0, maxRawI = 0, maxRawJ = 0;
+            let minDate = null, maxDate = null;
+
+            for (let r = headerIdx + 1; r < rawMatrix.length; r++) {
+                const raw = rawMatrix[r], fmt = fmtMatrix[r];
+                if (!fmt.some(v => v !== '')) continue;
+
+                let valA = fmt[0], valB = fmt[1], rawC = raw[2], fmtC = fmt[2], valF = fmt[5];
+                if (valA) {
+                    if (valA !== lastA) { lastA = valA; lastB = ''; lastRawC = undefined; lastFmtC = ''; }
+                } else if (lastA && (valB || valF)) valA = lastA;
+
+                if (valB) {
+                    if (valB !== lastB) { lastB = valB; lastRawC = rawC; lastFmtC = fmtC; }
+                    else if (!fmtC) { rawC = lastRawC; fmtC = lastFmtC; }
+                } else if (lastB && valF) {
+                    valB = lastB;
+                    if (!fmtC) { rawC = lastRawC; fmtC = lastFmtC; }
+                }
+                if (!valA && !valB && !valF) continue;
+
+                if (typeof raw[7] === 'number' && raw[7] > maxRawH) maxRawH = raw[7];
+                if (typeof rawC === 'number' && rawC > maxRawC) maxRawC = rawC;
+
+                // Detectar fechas en la fila si existen
+                for (let c = 0; c <= 11; c++) {
+                    const d = parseFlexibleDate(raw[c] ?? fmt[c]);
+                    if (d && d.getFullYear() >= 2020 && d.getFullYear() <= 2035) {
+                        if (!minDate || d < minDate) minDate = d;
+                        if (!maxDate || d > maxDate) maxDate = d;
+                    }
+                }
+
+                rows.push({
+                    siloName: valA || 'Silo General',
+                    rootName: valB || 'Objetivo General',
+                    rawC, fmtC,
+                    rawH: raw[7], fmtH: fmt[7],
+                    rawI: raw[8], fmtI: fmt[8],
+                    rawJ: raw[9], fmtJ: fmt[9]
+                });
+            }
+
+            const parsePctCol = (rVal, fStr, maxCol) => {
+                if (fStr && fStr.includes('%')) {
+                    const v = parseFloat(fStr.replace(/[^0-9.,\-]/g, '').replace(',', '.'));
+                    if (!isNaN(v)) return clamp(v, 0, 100);
+                }
+                if (typeof rVal === 'number' && !isNaN(rVal)) {
+                    return clamp(maxCol <= 1.0001 && rVal <= 1.0001 ? rVal * 100 : rVal, 0, 100);
+                }
+                const n = parseFloat(String(fStr || rVal || '').replace(/[^0-9.,\-]/g, '').replace(',', '.'));
+                if (isNaN(n)) return 0;
+                return clamp(maxCol <= 1.0001 && n <= 1.0001 ? n * 100 : n, 0, 100);
+            };
+
+            const now = new Date();
+            rows.forEach(r => {
+                r.completedPct = parsePctCol(r.rawH, r.fmtH, maxRawH);
+                r.rootWeightPct = parsePctCol(r.rawC, r.fmtC, maxRawC);
+
+                const dI = parseFlexibleDate(r.rawI ?? r.fmtI);
+                const dJ = parseFlexibleDate(r.rawJ ?? r.fmtJ);
+                if (dI && dJ) {
+                    r.expectedPct = calcLinearExpected(dI, dJ, now);
+                } else {
+                    const nI = parseFloat(String(r.fmtI || r.rawI || '').replace(/[^0-9.,\-]/g, '').replace(',', '.'));
+                    const nJ = parseFloat(String(r.fmtJ || r.rawJ || '').replace(/[^0-9.,\-]/g, '').replace(',', '.'));
+                    if (!isNaN(nI) && !isNaN(nJ) && nJ !== 0) {
+                        const ratio = nI / nJ;
+                        r.expectedPct = clamp(ratio <= 1.0001 ? ratio * 100 : ratio, 0, 100);
+                    } else if (!isNaN(nI)) {
+                        r.expectedPct = parsePctCol(r.rawI, r.fmtI, 100);
+                    } else {
+                        r.expectedPct = 0;
+                    }
+                }
+            });
+
+            const calcSiloMetric = (field) => {
+                const siloMap = new Map();
+                rows.forEach(r => {
+                    if (!siloMap.has(r.siloName)) siloMap.set(r.siloName, new Map());
+                    const rootMap = siloMap.get(r.siloName);
+                    if (!rootMap.has(r.rootName)) rootMap.set(r.rootName, { weight: r.rootWeightPct, values: [] });
+                    const entry = rootMap.get(r.rootName);
+                    if (r.rootWeightPct > 0 && entry.weight === 0) entry.weight = r.rootWeightPct;
+                    entry.values.push(r[field] || 0);
+                });
+                const siloScores = [];
+                for (const rootMap of siloMap.values()) {
+                    const roots = Array.from(rootMap.values());
+                    const totalW = roots.reduce((s, x) => s + (x.weight > 0 ? x.weight : 0), 0);
+                    if (totalW > 0) {
+                        const wSum = roots.reduce((s, x) => s + average(x.values) * (x.weight > 0 ? x.weight : 0), 0);
+                        siloScores.push(clamp(wSum / totalW, 0, 100));
+                    } else {
+                        siloScores.push(clamp(average(roots.map(x => average(x.values))), 0, 100));
+                    }
+                }
+                return round1(average(siloScores));
+            };
+
+            return {
+                completed: calcSiloMetric('completedPct'),
+                expected: calcSiloMetric('expectedPct'),
+                startDate: minDate ? formatDateShort(minDate) : 'Ene 2026',
+                endDate: maxDate ? formatDateShort(maxDate) : 'Dic 2026'
+            };
+        }
+
+        // 6. PLANES DE ACCIÓN
+        async function computePlanesAccion(cfg) {
+            const wb = await fetchWorkbookWithFallback(cfg.dataUrl);
+            const ws = Object.assign({}, wb.Sheets[wb.SheetNames[0]]);
+            unmergeSheet(ws);
+            const range = XLSX.utils.decode_range(ws['!ref']);
+
+            const rawMatrix = [], fmtMatrix = [];
+            for (let r = range.s.r; r <= range.e.r; r++) {
+                const rV = [], rF = [];
+                for (let c = 0; c <= Math.max(range.e.c, 15); c++) {
+                    const cell = ws[XLSX.utils.encode_cell({ r, c })];
+                    rV.push(cell ? cell.v : undefined);
+                    rF.push(cell ? String(cell.w ?? cell.v ?? '').trim() : '');
+                }
+                rawMatrix.push(rV);
+                fmtMatrix.push(rF);
+            }
+
+            let headerIdx = 0, bestScore = -1;
+            for (let r = 0; r < Math.min(10, rawMatrix.length); r++) {
+                const cnt = fmtMatrix[r].filter((v, i) => i <= 15 && v.length > 0).length;
+                if (cnt > bestScore) { bestScore = cnt; headerIdx = r; }
+            }
+
+            let lastA = '', lastB = '', lastC = '', lastD = '';
+            const rows = [];
+            let maxRawO = 0, maxRawN = 0;
+            let minDate = null, maxDate = null;
+
+            for (let r = headerIdx + 1; r < rawMatrix.length; r++) {
+                const raw = rawMatrix[r], fmt = fmtMatrix[r];
+                if (!fmt.some(v => v !== '')) continue;
+
+                let valA = fmt[0], valB = fmt[1], valC = fmt[2], valD = fmt[3], valJ = fmt[9];
+                if (valA) {
+                    if (valA !== lastA) { lastA = valA; lastB = ''; lastC = ''; lastD = ''; }
+                } else if (lastA && (valB || valC || valD || valJ)) valA = lastA;
+
+                if (valB) lastB = valB; else if (lastB && (valC || valD || valJ)) valB = lastB;
+                if (valC) lastC = valC; else if (lastC && (valD || valJ)) valC = lastC;
+                if (valD) lastD = valD; else if (lastD && valJ) valD = lastD;
+
+                if (!valA && !valB && !valD && !valJ) continue;
+
+                if (typeof raw[14] === 'number' && raw[14] > maxRawO) maxRawO = raw[14];
+                if (typeof raw[13] === 'number' && raw[13] > maxRawN) maxRawN = raw[13];
+
+                const dK = parseFlexibleDate(raw[10] ?? fmt[10]);
+                const dL = parseFlexibleDate(raw[11] ?? fmt[11]);
+                if (dK && (!minDate || dK < minDate)) minDate = dK;
+                if (dL && (!maxDate || dL > maxDate)) maxDate = dL;
+
+                rows.push({
+                    siloName: valA || 'General',
+                    rootCategory: valB || 'General',
+                    branchLine: valD || 'Actividad General',
+                    rawK: raw[10], fmtK: fmt[10],
+                    rawL: raw[11], fmtL: fmt[11],
+                    rawN: raw[13], fmtN: fmt[13],
+                    rawO: raw[14], fmtO: fmt[14]
+                });
+            }
+
+            const parsePctCol = (rVal, fStr, maxCol) => {
+                if (fStr && fStr.includes('%')) {
+                    const v = parseFloat(fStr.replace(/[^0-9.,\-]/g, '').replace(',', '.'));
+                    if (!isNaN(v)) return clamp(v, 0, 100);
+                }
+                if (typeof rVal === 'number' && !isNaN(rVal)) {
+                    return clamp(maxCol <= 1.0001 && rVal <= 1.0001 ? rVal * 100 : rVal, 0, 100);
+                }
+                const n = parseFloat(String(fStr || rVal || '').replace(/[^0-9.,\-]/g, '').replace(',', '.'));
+                if (isNaN(n)) return 0;
+                return clamp(maxCol <= 1.0001 && n <= 1.0001 ? n * 100 : n, 0, 100);
+            };
+
+            const now = new Date();
+            rows.forEach(r => {
+                r.rawCompletedPct = parsePctCol(r.rawO, r.fmtO, maxRawO);
+                r.weightPct = parsePctCol(r.rawN, r.fmtN, maxRawN);
+
+                const dK = parseFlexibleDate(r.rawK ?? r.fmtK);
+                const dL = parseFlexibleDate(r.rawL ?? r.fmtL);
+                if (dK && dL) {
+                    r.expectedPct = calcLinearExpected(dK, dL, now);
+                } else {
+                    const nK = parseFloat(String(r.fmtK || r.rawK || '').replace(/[^0-9.,\-]/g, '').replace(',', '.'));
+                    const nL = parseFloat(String(r.fmtL || r.rawL || '').replace(/[^0-9.,\-]/g, '').replace(',', '.'));
+                    if (!isNaN(nK) && !isNaN(nL) && nL !== 0) {
+                        const ratio = nK / nL;
+                        r.expectedPct = clamp(ratio <= 1.0001 ? ratio * 100 : ratio, 0, 100);
+                    } else {
+                        r.expectedPct = 0;
+                    }
+                }
+            });
+
+            const calcMotherMetric = (field) => {
+                const groups = new Map();
+                rows.forEach(r => {
+                    const key = `${r.siloName}||${r.rootCategory}||${r.branchLine}`;
+                    if (!groups.has(key)) groups.set(key, []);
+                    groups.get(key).push(r);
+                });
+                const scores = [];
+                for (const gRows of groups.values()) {
+                    const totalW = gRows.reduce((s, r) => s + (r.weightPct > 0 ? r.weightPct : 0), 0);
+                    if (totalW > 0) {
+                        const wSum = gRows.reduce((s, r) => s + r[field] * (r.weightPct > 0 ? r.weightPct : 0), 0);
+                        scores.push(clamp(wSum / totalW, 0, 100));
+                    } else {
+                        scores.push(average(gRows.map(r => r[field])));
+                    }
+                }
+                return round1(average(scores));
+            };
+
+            return {
+                completed: calcMotherMetric('rawCompletedPct'),
+                expected: calcMotherMetric('expectedPct'),
+                startDate: minDate ? formatDateShort(minDate) : 'Ene 2026',
+                endDate: maxDate ? formatDateShort(maxDate) : 'Dic 2026'
+            };
+        }
+
+        // 7. GERENCIA GUAJIRA (OAAS.html)
+        async function computeGerenciaGuajira(cfg) {
+            const res = await fetch(cfg.dataUrl, { cache: 'no-store' });
+            const text = await res.text();
+            const json = JSON.parse(text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1));
+
+            const parseGvizVal = (cell) => {
+                if (!cell) return 0;
+                let val = cell.v;
+                if (typeof val === 'string') val = parseFloat(val.replace('%', '').replace(',', '.').trim());
+                if (typeof val === 'number' && !isNaN(val)) {
+                    if (val > 0 && val <= 1 && (cell.f && !cell.f.includes('%'))) return val * 100;
+                    if (cell.f && cell.f.includes('%')) return val;
+                    return val > 1 ? val : val * 100;
+                }
+                return 0;
+            };
+
+            let globalRow = null;
+            let minStart = null, maxEnd = null;
+
+            (json.table.rows || []).forEach(r => {
+                if (!r.c) return;
+                const id = r.c[0]?.v?.toString().trim();
+                if (!id) return;
+
+                const sDate = parseFlexibleDate(r.c[6]?.f || r.c[6]?.v);
+                const eDate = parseFlexibleDate(r.c[7]?.f || r.c[7]?.v);
+
+                if (id.startsWith('1')) {
+                    if (sDate && (!minStart || sDate < minStart)) minStart = sDate;
+                    if (eDate && (!maxEnd || eDate > maxEnd)) maxEnd = eDate;
+                }
+
+                if (id === '1') {
+                    globalRow = {
+                        real: Math.round(parseGvizVal(r.c[3])),
+                        esp: Math.round(parseGvizVal(r.c[4])),
+                        start: sDate,
+                        end: eDate
+                    };
+                }
+            });
+
+            return {
+                completed: globalRow ? globalRow.real : 0,
+                expected: globalRow ? globalRow.esp : 0,
+                startDate: formatDateShort(globalRow?.start || minStart),
+                endDate: formatDateShort(globalRow?.end || maxEnd)
+            };
+        }
+
+        // ============================================================================
+        // RENDERIZADO DE LAS TARJETAS EN EL FRONT - OAAS
+        // ============================================================================
+        function renderSummaryCards() {
+            const grid = document.getElementById('summary-cards-grid');
+            if (!grid) return;
+
+            grid.innerHTML = DASHBOARDS_CONFIG.map(cfg => {
+                const data = summaryState[cfg.id];
+                const isLoading = !data || data.loading;
+                const hasError = data && data.error;
+
+                const comp = data && !isLoading && !hasError ? data.completed : 0;
+                const exp = data && !isLoading && !hasError ? data.expected : 0;
+                const diff = round1(comp - exp);
+
+                let statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-600">Sincronizando...</span>`;
+                if (!isLoading && !hasError) {
+                    if (diff >= -2) {
+                        statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Al Día (${diff >= 0 ? '+' : ''}${diff}%)</span>`;
+                    } else if (diff >= -15) {
+                        statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">En Seguimiento (${diff}%)</span>`;
+                    } else {
+                        statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">Rezago (${diff}%)</span>`;
+                    }
+                } else if (hasError) {
+                    statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700">Ver Tablero</span>`;
+                }
+
+                return `
+                    <div onclick="handleCardClick(${cfg.isExternal}, '${cfg.fileUrl}')" 
+                         class="bg-white/95 hover:bg-white rounded-2xl p-5 border border-gray-200/90 hover:border-brand-primary shadow-sm hover:shadow-xl transition-all duration-200 cursor-pointer flex flex-col justify-between group relative overflow-hidden">
+                        
+                        <!-- Barra superior de color acento -->
+                        <div class="absolute top-0 left-0 right-0 h-1.5" style="background-color: ${cfg.accent}"></div>
+
+                        <div>
+                            <!-- Categoría y Estado -->
+                            <div class="flex items-center justify-between gap-2 mb-3 pt-1">
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                                    ${cfg.category}
+                                </span>
+                                ${statusBadge}
+                            </div>
+
+                            <!-- Ícono y Nombre del Botón -->
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-11 h-11 rounded-xl flex items-center justify-center text-white shadow-sm shrink-0 transition-transform group-hover:scale-105" style="background-color: ${cfg.accent}">
+                                    <i class="fa-solid ${cfg.icon} text-lg"></i>
+                                </div>
+                                <div class="min-w-0">
+                                    <h3 class="text-base font-extrabold text-gray-900 group-hover:text-brand-primary transition-colors truncate">
+                                        ${cfg.name}
+                                    </h3>
+                                    <span class="text-[11px] text-gray-500 flex items-center gap-1">
+                                        ${cfg.isExternal ? '<i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i> Enlace externo' : '<i class="fa-solid fa-layer-group text-[9px]"></i> Módulo integrado'}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Fechas de Inicio y Fin -->
+                            <div class="bg-gray-50 rounded-xl p-2.5 border border-gray-200/70 mb-4 flex items-center justify-between text-xs">
+                                <div>
+                                    <span class="text-[10px] uppercase font-bold text-gray-400 block">Inicio</span>
+                                    <span class="font-bold text-gray-700">${isLoading ? '...' : (data.startDate || 'Por definir')}</span>
+                                </div>
+                                <i class="fa-solid fa-arrow-right text-gray-300 text-[10px]"></i>
+                                <div class="text-right">
+                                    <span class="text-[10px] uppercase font-bold text-gray-400 block">Fin</span>
+                                    <span class="font-bold text-gray-700">${isLoading ? '...' : (data.endDate || 'Por definir')}</span>
+                                </div>
+                            </div>
+
+                            <!-- Indicadores % Completado y % Esperado -->
+                            <div class="space-y-3">
+                                <!-- % Completado -->
+                                <div>
+                                    <div class="flex justify-between items-baseline text-xs mb-1">
+                                        <span class="font-semibold text-gray-600">% Completado</span>
+                                        <span class="text-base font-extrabold text-emerald-700">${isLoading ? '--%' : comp + '%'}</span>
+                                    </div>
+                                    <div class="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden border border-gray-200/60">
+                                        <div class="h-full bg-emerald-600 rounded-full transition-all duration-700" style="width: ${clamp(comp, 0, 100)}%"></div>
+                                    </div>
+                                </div>
+
+                                <!-- % Esperado -->
+                                <div>
+                                    <div class="flex justify-between items-baseline text-xs mb-1">
+                                        <span class="font-semibold text-gray-600">% Esperado</span>
+                                        <span class="text-sm font-bold text-amber-700">${isLoading ? '--%' : exp + '%'}</span>
+                                    </div>
+                                    <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden border border-gray-200/60">
+                                        <div class="h-full bg-amber-500 rounded-full transition-all duration-700" style="width: ${clamp(exp, 0, 100)}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pie de Tarjeta -->
+                        <div class="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-xs font-bold text-brand-primary group-hover:text-brand-dark">
+                            <span>Abrir tablero completo</span>
+                            <i class="fa-solid ${cfg.isExternal ? 'fa-up-right-from-square' : 'fa-arrow-right'} transition-transform group-hover:translate-x-1"></i>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            updateGlobalRollup();
+        }
+
+        function updateGlobalRollup() {
+            const validItems = Object.values(summaryState).filter(d => d && !d.loading && !d.error);
+            const compEl = document.getElementById('global-oaas-comp');
+            const expEl = document.getElementById('global-oaas-exp');
+
+            if (!validItems.length) {
+                compEl.textContent = '--%';
+                expEl.textContent = '--%';
+                return;
+            }
+
+            const avgComp = round1(average(validItems.map(d => d.completed)));
+            const avgExp = round1(average(validItems.map(d => d.expected)));
+
+            compEl.textContent = `${avgComp}%`;
+            expEl.textContent = `${avgExp}%`;
+        }
+
+        window.handleCardClick = function(isExternal, fileUrl) {
+            if (isExternal) {
+                window.open(fileUrl, '_blank');
+            } else {
+                loadContent(fileUrl);
+            }
+        };
+
+        async function loadAllSummaries() {
+            DASHBOARDS_CONFIG.forEach(cfg => {
+                summaryState[cfg.id] = { loading: true };
+            });
+            renderSummaryCards();
+
+            const tasks = DASHBOARDS_CONFIG.map(async cfg => {
+                try {
+                    let result = null;
+                    if (cfg.id === 'gestion-desastres') result = await computeGestionDesastres(cfg);
+                    else if (cfg.id === 'pol-relacionamiento') result = await computePolRelacionamiento(cfg);
+                    else if (cfg.id === 'cambio-climatico') result = await computeCambioClimatico(cfg);
+                    else if (cfg.id === 'conpes') result = await computeConpes(cfg);
+                    else if (cfg.id === 'plan-estrategico') result = await computePlanEstrategico(cfg);
+                    else if (cfg.id === 'planes-accion') result = await computePlanesAccion(cfg);
+                    else if (cfg.id === 'gerencia-guajira') result = await computeGerenciaGuajira(cfg);
+
+                    summaryState[cfg.id] = { ...result, loading: false, error: false };
+                } catch (err) {
+                    console.warn(`Error cargando resumen de ${cfg.name}:`, err);
+                    summaryState[cfg.id] = { completed: 0, expected: 0, startDate: 'Ver tablero', endDate: 'Ver tablero', loading: false, error: true };
+                }
+                renderSummaryCards();
+            });
+
+            await Promise.allSettled(tasks);
+        }
+
+        // ============================================================================
+        // NAVEGACIÓN Y MENÚ DESPLEGABLE
+        // ============================================================================
         function toggleDropdown(id) {
             const element = document.getElementById(id);
             const icon = document.getElementById('icon-coordinacion');
@@ -186,6 +1153,12 @@
             void container.offsetWidth;
             container.classList.add('fade-in');
         }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const cutoffEl = document.getElementById('header-cutoff-date');
+            if (cutoffEl) cutoffEl.textContent = formatDateShort(new Date());
+            loadAllSummaries();
+        });
     </script>
 </body>
 </html>
