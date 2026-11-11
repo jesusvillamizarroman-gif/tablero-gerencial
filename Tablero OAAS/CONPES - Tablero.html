@@ -332,7 +332,13 @@
             lucide.createIcons();
 
             let sorted = [...processedDataCache];
-            if (mode === 'vencimientos') sorted.sort((a, b) => a.fFin - b.fFin);
+            if (mode === 'vencimientos') {
+                sorted.sort((a, b) => {
+                    const aOk = a.lNum >= 100, bOk = b.lNum >= 100;
+                    if (aOk !== bOk) return aOk ? 1 : -1; // Los 100% se van al final
+                    return a.fFin - b.fFin; // Si ambos están (o no están) al 100%, ordena por fecha
+                });
+            }
             else if (mode === 'avance') sorted.sort((a, b) => b.lNum - a.lNum);
             else if (mode === 'rezago') sorted.sort((a, b) => a.diff - b.diff);
 
