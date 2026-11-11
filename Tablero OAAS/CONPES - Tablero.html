@@ -9,6 +9,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Librería ECharts para el Diagrama Sankey -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -75,33 +77,51 @@
         </div>
 
         <div id="dashboard-content" class="hidden space-y-6">
-            <!-- Botones inyectados vía JS -->
-            <div id="controls-container" class="bg-white p-2 rounded-2xl shadow-sm border border-slate-200/60 flex flex-wrap gap-2 w-full justify-center md:justify-start relative z-20"></div>
-            
-            <div id="interactive-canvas" class="relative w-full node-anim overflow-visible min-h-[800px]">
-                <!-- Nodo Central Global -->
-                <div id="global-status-node" class="absolute node-anim bg-white p-6 rounded-3xl shadow-lg border-2 border-indigo-100 flex flex-col items-center justify-center gap-4 w-[340px] z-30">
-                    <div class="flex items-center gap-3 w-full justify-center border-b border-slate-100 pb-3 text-indigo-600">
-                        <div class="p-3 bg-indigo-50 rounded-xl"><i data-lucide="target" class="w-6 h-6"></i></div>
-                        <h3 class="text-lg font-bold text-slate-800 tracking-tight uppercase">ESTADO GENERAL</h3>
-                    </div>
-                    
-                    <div class="w-full flex justify-between bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
-                        <div><span class="block text-[10px] font-bold text-slate-400 uppercase">Inicio</span><span id="global-start" class="text-sm font-semibold text-slate-700">--/--/----</span></div>
-                        <div class="w-px h-8 bg-slate-200 self-center"></div>
-                        <div><span class="block text-[10px] font-bold text-slate-400 uppercase">Fin</span><span id="global-end" class="text-sm font-semibold text-slate-700">--/--/----</span></div>
-                    </div>
+            <!-- Nodo Central Global (Layout Superior Estático) -->
+            <div id="global-status-node" class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col md:flex-row items-center justify-between gap-6 w-full z-30">
+                <div class="flex items-center gap-3 border-b md:border-b-0 md:border-r border-slate-100 pb-3 md:pb-0 md:pr-6 text-indigo-600 shrink-0">
+                    <div class="p-3 bg-indigo-50 rounded-xl"><i data-lucide="target" class="w-6 h-6"></i></div>
+                    <h3 class="text-lg font-bold text-slate-800 tracking-tight uppercase">ESTADO GENERAL</h3>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row gap-4 items-center bg-slate-50 p-3 rounded-xl border border-slate-100 shrink-0">
+                    <div class="text-center"><span class="block text-[10px] font-bold text-slate-400 uppercase">CONPES</span><span id="global-conpes-count" class="text-sm font-semibold text-slate-700">0</span></div>
+                    <div class="w-full sm:w-px h-px sm:h-8 bg-slate-200"></div>
+                    <div class="text-center"><span class="block text-[10px] font-bold text-slate-400 uppercase">Acciones</span><span id="global-acciones-count" class="text-sm font-semibold text-slate-700">0</span></div>
+                    <div class="w-full sm:w-px h-px sm:h-8 bg-slate-200"></div>
+                    <div class="text-center"><span class="block text-[10px] font-bold text-slate-400 uppercase">Inicio</span><span id="global-start" class="text-sm font-semibold text-slate-700">--/--/----</span></div>
+                    <div class="w-full sm:w-px h-px sm:h-8 bg-slate-200"></div>
+                    <div class="text-center"><span class="block text-[10px] font-bold text-slate-400 uppercase">Fin</span><span id="global-end" class="text-sm font-semibold text-slate-700">--/--/----</span></div>
+                </div>
 
-                    <div class="w-full space-y-3">
-                        <div>
-                            <div class="flex justify-between text-xs mb-1 font-medium"><span class="text-slate-500">Logrado General:</span><span id="global-logrado-text" class="font-extrabold text-indigo-600">0%</span></div>
-                            <div class="w-full bg-slate-100 rounded-full h-2"><div id="global-logrado-bar" class="h-2 bg-indigo-500 rounded-full transition-all duration-500" style="width: 0%"></div></div>
-                        </div>
-                        <div>
-                            <div class="flex justify-between text-xs mb-1 font-medium"><span class="text-slate-500">Esperado General:</span><span id="global-esperado-text" class="font-bold text-slate-700">0%</span></div>
-                            <div class="w-full bg-slate-100 rounded-full h-1.5"><div id="global-esperado-bar" class="h-1.5 bg-slate-400 rounded-full transition-all duration-500" style="width: 0%"></div></div>
-                        </div>
+                <div class="w-full flex-1 flex flex-col justify-center gap-3">
+                    <div>
+                        <div class="flex justify-between text-xs mb-1 font-medium"><span class="text-slate-500">Logrado General:</span><span id="global-logrado-text" class="font-extrabold text-indigo-600">0%</span></div>
+                        <div class="w-full bg-slate-100 rounded-full h-2"><div id="global-logrado-bar" class="h-2 bg-indigo-500 rounded-full transition-all duration-500" style="width: 0%"></div></div>
                     </div>
+                    <div>
+                        <div class="flex justify-between text-xs mb-1 font-medium"><span class="text-slate-500">Esperado General:</span><span id="global-esperado-text" class="font-bold text-slate-700">0%</span></div>
+                        <div class="w-full bg-slate-100 rounded-full h-1.5"><div id="global-esperado-bar" class="h-1.5 bg-slate-400 rounded-full transition-all duration-500" style="width: 0%"></div></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Controles de Navegación del Aislamiento -->
+            <div id="nav-controls" class="hidden flex flex-wrap items-center gap-3">
+                <button data-action="clear-selection" class="px-4 py-2 bg-white border border-slate-200 shadow-sm rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition-all">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i> Volver a todos los CONPES
+                </button>
+                <div id="breadcrumb-text" class="text-sm font-semibold text-slate-500 flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm"></div>
+            </div>
+
+            <!-- Contenedor del Plan Estratégico (Jerárquico Horizontal) -->
+            <div id="strategic-container" class="w-full">
+                <!-- Vista 1: Cuadrícula de Nivel 1 -->
+                <div id="conpes-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+                
+                <!-- Vista 2: Lienzo de Aislamiento Horizontal (3 Columnas) -->
+                <div id="isolated-workspace" class="hidden overflow-x-auto pb-6 custom-scrollbar">
+                    <div class="flex gap-6 min-w-max items-start" id="workspace-columns"></div>
                 </div>
             </div>
         </div>
@@ -128,7 +148,8 @@
         const setUIState = state => ['loader', 'error-container', 'dashboard-content'].forEach(id => $(id).classList.toggle('hidden', id !== state));
         const dataUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSgdr8eUvVGho4jA-sJ2IzZwPswG9zebNzbVQn-JOIWHqmm6esb1fgMsfYbyKcFfw/pub?output=xlsx';
         
-        let jsonData = [], cols = [], processedDataCache = [], currentMode = 'radial', cardElements = [];
+        let jsonData = [], cols = [], processedDataCache = [], groupedData = {};
+        let appState = { conpes: null, obj: null };
 
         // 1. Inicialización
         window.onload = async () => {
@@ -202,27 +223,13 @@
             initDashboard();
         };
 
-        // 3. Renderizado de Controles
-        const controlBtns = [
-            { id: 'radial', icon: 'circle', text: 'Vista Radial' },
-            { id: 'vencimientos', icon: 'clock', text: 'Próximos Vencimientos' },
-            { id: 'avance', icon: 'trending-up', text: 'Mayor Avance' },
-            { id: 'rezago', icon: 'alert-triangle', text: 'Mayor Rezago' }
-        ];
-
-        const initControls = () => {
-            $('controls-container').innerHTML = controlBtns.map(b => 
-                `<button id="btn-${b.id}" onclick="renderLayout('${b.id}')" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200"></button>`
-            ).join('');
-        };
+        // 3. Renderizado de Controles (Deshabilitado para layout Sankey)
+        const initControls = () => {};
 
         // 4. Inicialización principal del tablero
         const initDashboard = () => {
             const hoy = new Date();
             let sumE = 0, sumL = 0, validRows = 0;
-            
-            cardElements.forEach(el => el.remove());
-            cardElements = [];
             
             processedDataCache = jsonData.map((row, i) => {
                 const fInicio = parseExcelDate(row[cols[3]]), fFin = parseExcelDate(row[cols[4]]);
@@ -238,13 +245,44 @@
                 lNum = Math.max(0, Math.min(100, lNum));
                 eNum = Math.max(0, Math.min(100, eNum));
                 
-                const dias = fFin.getFullYear() !== 9999 ? Math.ceil((fFin - hoy) / 86400000) : null;
-                
                 sumE += eNum; sumL += lNum; validRows++;
-                return { id: `card-${i}`, row, conpes: row[cols[0]]||"N/A", accion: row[cols[1]]||"Sin descripción", fInicio, fFin, lNum, eNum, diff: lNum - eNum, dias };
+
+                // Mapeo estricto de los 3 niveles solicitados
+                const n2B = row[cols[1]] || ''; // Columna B
+                const n2C = row[cols[2]] || ''; // Columna C
+                const nivel2 = (n2B + (n2B && n2C ? ' - ' : '') + n2C).trim() || 'Sin Objetivo / Acción Padre';
+                
+                const nivel3 = row[cols[6]] || 'Sin Acción Detallada'; // Columna G
+
+                return { id: `row-${i}`, row, conpes: row[cols[0]]||"N/A", nivel2, nivel3, fInicio, fFin, lNum, eNum };
+            });
+
+            // Agrupación de datos por Nivel 1 y Nivel 2
+            groupedData = {};
+            processedDataCache.forEach(item => {
+                let c = item.conpes, o = item.nivel2;
+                if (!groupedData[c]) {
+                    groupedData[c] = { 
+                        id: c, sumL: 0, sumE: 0, count: 0, objs: {},
+                        fInicio: item.fInicio, fFin: item.fFin
+                    };
+                } else {
+                    if (item.fInicio < groupedData[c].fInicio) groupedData[c].fInicio = item.fInicio;
+                    if (item.fFin > groupedData[c].fFin && item.fFin.getFullYear() !== 9999) groupedData[c].fFin = item.fFin;
+                    if (groupedData[c].fFin.getFullYear() === 9999 && item.fFin.getFullYear() !== 9999) groupedData[c].fFin = item.fFin;
+                }
+                
+                if (!groupedData[c].objs[o]) groupedData[c].objs[o] = { id: o, sumL: 0, sumE: 0, count: 0, items: [] };
+
+                groupedData[c].sumL += item.lNum; groupedData[c].sumE += item.eNum; groupedData[c].count++;
+                groupedData[c].objs[o].sumL += item.lNum; groupedData[c].objs[o].sumE += item.eNum; groupedData[c].objs[o].count++;
+                groupedData[c].objs[o].items.push(item);
             });
 
             // Resumen Global
+            $('global-conpes-count').textContent = Object.keys(groupedData).length;
+            $('global-acciones-count').textContent = validRows;
+            
             const getValidDates = (key) => processedDataCache.map(d => d[key]).filter(d => d.getFullYear() !== 9999);
             const starts = getValidDates('fInicio'), ends = getValidDates('fFin');
             const fmt = { year: 'numeric', month: 'short', day: 'numeric' };
@@ -263,121 +301,321 @@
                 $('global-logrado-bar').classList.replace('bg-indigo-500', 'bg-amber-500');
             }
 
-            createCards();
-            renderLayout('radial');
-            window.addEventListener('resize', () => renderLayout(currentMode));
+            renderView();
         };
 
-        // Generación de DOM dinámico
-        const createCards = () => {
-            const canvas = $('interactive-canvas');
-            const colorThemes = {
-                red: "text-red-600 bg-red-50 border-red-100", orange: "text-orange-600 bg-orange-50 border-orange-100",
-                amber: "text-amber-600 bg-amber-50 border-amber-100", emerald: "text-emerald-600 bg-emerald-50 border-emerald-100"
-            };
+        // Función para mostrar el modal flotante con los detalles
+        const openModal = (item) => {
+            let html = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
+            
+            // Tarjetas de Resumen Estadístico 
+            html += `
+                <div class="col-span-1 md:col-span-2 grid grid-cols-3 gap-4 mb-4">
+                    <div class="bg-indigo-50 rounded-xl p-4 border border-indigo-100 flex flex-col justify-center items-center">
+                        <span class="text-[10px] md:text-xs font-bold text-indigo-500 uppercase text-center">Progreso Logrado</span>
+                        <div class="text-xl md:text-3xl font-extrabold text-indigo-700">${item.lNum.toFixed(1)}%</div>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 flex flex-col justify-center items-center">
+                        <span class="text-[10px] md:text-xs font-bold text-slate-500 uppercase text-center">Progreso Esperado</span>
+                        <div class="text-xl md:text-3xl font-extrabold text-slate-700">${item.eNum.toFixed(1)}%</div>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex flex-col justify-center items-center">
+                        <span class="text-[10px] md:text-xs font-bold text-slate-400 uppercase text-center">Estado</span>
+                        <span class="text-lg md:text-2xl font-bold ${item.lNum >= 100 ? 'text-emerald-600' : item.lNum >= item.eNum ? 'text-blue-600' : 'text-amber-600'}">
+                            ${item.lNum >= 100 ? 'Completado' : item.lNum >= item.eNum ? 'Al día' : 'Atrasado'}
+                        </span>
+                    </div>
+                </div>
+            `;
 
-            processedDataCache.forEach(item => {
-                const isDelayed = item.diff < 0;
-                let badges = '';
+            // Agregar cada columna disponible del archivo Excel
+            cols.forEach(col => {
+                let val = item.row[col];
+                if(val !== undefined && val !== "") {
+                    html += `
+                    <div class="bg-slate-50 rounded-xl p-3 md:p-4 border border-slate-100">
+                        <span class="block text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">${col}</span>
+                        <span class="text-xs md:text-sm font-medium text-slate-800 break-words">${val}</span>
+                    </div>`;
+                }
+            });
+            html += `</div>`;
+            
+            // Insertar en el DOM y animar
+            $('modal-content').innerHTML = html;
+            $('detail-modal').classList.remove('hidden');
+            setTimeout(() => {
+                $('detail-modal').classList.remove('opacity-0');
+                $('detail-modal').querySelector('div').classList.replace('scale-95', 'scale-100');
+            }, 10);
+        };
 
-                // Si está completado al 100%, no mostramos advertencias de tiempo o rezago
-                if (item.lNum >= 100) {
-                    badges += `<div class="px-2 py-1 rounded-lg border border-emerald-100 bg-emerald-50 flex items-center gap-1.5 text-[10px] font-bold text-emerald-600"><i data-lucide="check-circle" class="w-3 h-3"></i> Completado</div>`;
-                } else {
-                    if (item.dias !== null) {
-                        const [theme, txt] = item.dias < 0 ? ['red', `Vencido (${Math.abs(item.dias)}d)`] : item.dias <= 30 ? ['orange', `Crítico (${item.dias}d)`] : item.dias <= 90 ? ['amber', `Cercano (${item.dias}d)`] : ['emerald', `A tiempo (${item.dias}d)`];
-                        badges += `<div class="px-2 py-1 rounded-lg border flex items-center gap-1.5 text-[10px] font-bold ${colorThemes[theme]}"><i data-lucide="clock" class="w-3 h-3"></i> ${txt}</div>`;
+        // Evento global para delegación de clics
+        document.addEventListener('click', e => {
+            // Modal de detalle
+            const card = e.target.closest('.action-card');
+            if (card) {
+                const id = card.getAttribute('data-id');
+                const item = processedDataCache.find(x => x.id === id);
+                if (item) openModal(item);
+                return;
+            }
+            
+            // Navegación de Aislamiento
+            const btnConpes = e.target.closest('[data-action="select-conpes"]');
+            if (btnConpes) {
+                appState.conpes = btnConpes.getAttribute('data-id');
+                appState.obj = null;
+                renderView();
+                return;
+            }
+
+            const btnObj = e.target.closest('[data-action="select-obj"]');
+            if (btnObj) {
+                // Si hace clic en el mismo, lo deselecciona (toggle)
+                const targetId = btnObj.getAttribute('data-id');
+                appState.obj = appState.obj === targetId ? null : targetId;
+                renderView();
+                return;
+            }
+
+            const btnClear = e.target.closest('[data-action="clear-selection"]');
+            if (btnClear) {
+                appState.conpes = null;
+                appState.obj = null;
+                renderView();
+                return;
+            }
+        });
+
+        // Controlador de Vistas (Render Principal)
+        const renderView = () => {
+            if (!appState.conpes) {
+                $('nav-controls').classList.add('hidden');
+                $('isolated-workspace').classList.add('hidden');
+                $('conpes-grid').classList.remove('hidden');
+                renderConpesGrid();
+            } else {
+                $('nav-controls').classList.remove('hidden');
+                $('conpes-grid').classList.add('hidden');
+                $('isolated-workspace').classList.remove('hidden');
+                
+                let bcHtml = `<i data-lucide="layers" class="w-4 h-4 text-indigo-500"></i> <span class="text-indigo-700 font-extrabold">${appState.conpes}</span>`;
+                if(appState.obj) {
+                    bcHtml += `<i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 mx-1"></i> <span class="text-slate-700 font-semibold truncate max-w-[200px] sm:max-w-md" title="${appState.obj}">${appState.obj}</span>`;
+                }
+                $('breadcrumb-text').innerHTML = bcHtml;
+                
+                renderIsolatedWorkspace();
+            }
+            lucide.createIcons();
+        };
+
+        // Render: Cuadrícula General de CONPES (Nivel 1)
+        const renderConpesGrid = () => {
+            let html = '';
+            const fmt = { year: 'numeric', month: 'short', day: 'numeric' };
+            const getValidDateStr = (d) => d && d.getFullYear() !== 9999 ? d.toLocaleDateString('es-CO', fmt) : '--/--/----';
+            const hoy = new Date();
+            const hoyDate = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+
+            Object.values(groupedData).forEach(conpes => {
+                const cLog = conpes.sumL / conpes.count;
+                const cEsp = conpes.sumE / conpes.count;
+                const totalObjs = Object.keys(conpes.objs).length;
+
+                let dateBadge = '';
+                if (conpes.fFin && conpes.fFin.getFullYear() !== 9999) {
+                    const fFinDate = new Date(conpes.fFin.getFullYear(), conpes.fFin.getMonth(), conpes.fFin.getDate());
+                    const diffDays = Math.ceil((fFinDate - hoyDate) / (1000 * 60 * 60 * 24));
+                    
+                    if (cEsp >= 99.9 && cLog < 99.9) {
+                        const delayedDays = Math.abs(diffDays);
+                        dateBadge = `<div class="mt-2 text-[10px] font-bold text-red-600 bg-red-50 px-2 py-1 rounded inline-block"><i data-lucide="alert-circle" class="w-3 h-3 inline"></i> ${delayedDays} días atrasado</div>`;
+                    } else if (cLog >= 99.9) {
+                        dateBadge = `<div class="mt-2 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded inline-block"><i data-lucide="check-circle-2" class="w-3 h-3 inline"></i> Completado</div>`;
+                    } else {
+                        const left = diffDays > 0 ? diffDays : 0;
+                        dateBadge = `<div class="mt-2 text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded inline-block"><i data-lucide="calendar" class="w-3 h-3 inline"></i> ${left} días restantes</div>`;
                     }
-                    if (isDelayed) badges += `<div class="px-2 py-1 rounded-lg border border-red-100 bg-red-50 flex items-center gap-1 text-[10px] font-bold text-red-600"><i data-lucide="trending-down" class="w-3 h-3"></i> ${Math.abs(Math.round(item.diff))}%</div>`;
                 }
 
-                const card = document.createElement('div');
-                card.className = "absolute node-anim card-hover bg-white p-4 rounded-2xl border border-slate-200 shadow-sm cursor-pointer w-[280px] h-[190px] flex flex-col justify-between overflow-hidden";
-                card.innerHTML = `
+                html += `
+                <div data-action="select-conpes" data-id="${conpes.id}" class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all cursor-pointer group flex flex-col justify-between">
                     <div>
-                        <div class="flex justify-between items-start mb-2"><span class="text-[10px] font-bold text-indigo-500 uppercase tracking-wider block">C-${item.conpes}</span><div class="flex gap-1">${badges}</div></div>
-                        <h4 class="text-xs font-semibold text-slate-800 leading-tight mb-3 line-clamp-3">${item.accion}</h4>
+                        <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                            <i data-lucide="layers" class="w-5 h-5"></i>
+                        </div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">CONPES</span>
+                        <h3 class="text-lg font-extrabold text-slate-800 leading-tight mb-1 group-hover:text-indigo-700 transition-colors">${conpes.id}</h3>
+                        <p class="text-[10px] text-slate-400 font-medium mb-1">${getValidDateStr(conpes.fInicio)} - ${getValidDateStr(conpes.fFin)}</p>
+                        <p class="text-xs text-slate-500 font-medium">${totalObjs} ${totalObjs === 1 ? 'objetivo' : 'objetivos'} • ${conpes.count} acciones</p>
+                        ${dateBadge}
                     </div>
-                    <div class="space-y-2 mt-auto">
+                    <div class="space-y-3 mt-5 pt-4 border-t border-slate-100">
                         <div>
-                            <div class="flex justify-between text-[10px] mb-1 font-medium"><span class="text-slate-500">Logrado</span><span class="font-bold ${isDelayed ? 'text-amber-600' : 'text-emerald-600'}">${Math.round(item.lNum)}%</span></div>
-                            <div class="w-full bg-slate-100 rounded-full h-1.5"><div class="h-1.5 ${isDelayed ? 'bg-amber-500' : 'bg-emerald-500'} rounded-full" style="width: ${item.lNum}%"></div></div>
+                            <div class="flex justify-between text-[10px] font-bold mb-1"><span class="text-indigo-600 uppercase">Logrado</span><span class="text-indigo-700">${cLog.toFixed(1)}%</span></div>
+                            <div class="w-full bg-slate-100 rounded-full h-1.5"><div class="h-1.5 bg-indigo-500 rounded-full" style="width: ${cLog}%"></div></div>
                         </div>
                         <div>
-                            <div class="flex justify-between text-[10px] mb-1 font-medium"><span class="text-slate-500">Esperado</span><span class="font-bold text-slate-700">${Math.round(item.eNum)}%</span></div>
-                            <div class="w-full bg-slate-100 rounded-full h-1"><div class="h-1 bg-slate-300 rounded-full" style="width: ${item.eNum}%"></div></div>
+                            <div class="flex justify-between text-[10px] font-bold mb-1"><span class="text-slate-400 uppercase">Esperado</span><span class="text-slate-600">${cEsp.toFixed(1)}%</span></div>
+                            <div class="w-full bg-slate-100 rounded-full h-1"><div class="h-1 bg-slate-400 rounded-full" style="width: ${cEsp}%"></div></div>
                         </div>
-                    </div>`;
-                
-                card.onclick = () => openModal(item.row);
-                canvas.appendChild(card);
-                item.element = card;
-                cardElements.push(card);
+                    </div>
+                </div>`;
             });
-            lucide.createIcons();
+            $('conpes-grid').innerHTML = html;
         };
 
-        // Motor Lógico de Distribución de Layouts
-        const renderLayout = (mode) => {
-            currentMode = mode;
-            const canvas = $('interactive-canvas'), center = $('global-status-node');
-            const cw = canvas.clientWidth, cx = cw / 2, isMobile = cw < 768;
+        // Render: Espacio de trabajo Aislado (3 Columnas)
+        const renderIsolatedWorkspace = () => {
+            const data = groupedData[appState.conpes];
+            const cLog = data.sumL / data.count;
+            const cEsp = data.sumE / data.count;
 
-            // Actualizar UI Botones
-            controlBtns.forEach(b => {
-                const btn = $(`btn-${b.id}`), active = b.id === mode;
-                btn.className = `flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 border ${active ? 'bg-slate-800 text-white shadow-md border-transparent' : 'bg-white text-slate-600 hover:bg-slate-100 shadow-sm border-slate-200'}`;
-                btn.innerHTML = `<i data-lucide="${b.icon}" class="w-4 h-4"></i> ${b.text}`;
-            });
-            lucide.createIcons();
-
-            let sorted = [...processedDataCache];
-            if (mode === 'vencimientos') {
-                sorted.sort((a, b) => {
-                    const aOk = a.lNum >= 100, bOk = b.lNum >= 100;
-                    if (aOk !== bOk) return aOk ? 1 : -1; // Los 100% se van al final
-                    return a.fFin - b.fFin; // Si ambos están (o no están) al 100%, ordena por fecha
-                });
-            }
-            else if (mode === 'avance') sorted.sort((a, b) => b.lNum - a.lNum);
-            else if (mode === 'rezago') sorted.sort((a, b) => a.diff - b.diff);
-
-            if (mode === 'radial') {
-                canvas.style.height = '900px';
-                center.style.cssText = `top:450px; left:${cx}px; transform:translate(-50%, -50%) scale(1); z-index:30;`;
-                const r = Math.max(200, Math.min(isMobile ? cx - 40 : 380, cx - 150));
-                
-                sorted.forEach((item, i) => {
-                    const angle = (i / sorted.length) * 2 * Math.PI - Math.PI / 2;
-                    item.element.style.cssText = `top:${450 + r * Math.sin(angle)}px; left:${cx + r * Math.cos(angle)}px; transform:translate(-50%, -50%) scale(1); z-index:10;`;
-                });
-            } else {
-                center.style.cssText = `top:40px; left:${cx}px; transform:translate(-50%, 0) scale(0.9); z-index:30;`;
-                const colsNum = Math.max(1, Math.floor((cw - 24) / 304)); 
-                const startX = (cw - (colsNum * 280 + (colsNum - 1) * 24)) / 2 + 140; 
-                
-                sorted.forEach((item, i) => {
-                    item.element.style.cssText = `top:${280 + Math.floor(i / colsNum) * 214 + 95}px; left:${startX + (i % colsNum) * 304}px; transform:translate(-50%, -50%) scale(1); z-index:${20 + i};`;
-                });
-                canvas.style.height = `${280 + Math.ceil(sorted.length / colsNum) * 214 + 50}px`;
-            }
-        };
-
-        // Generación dinámica del Modal (Plantillas)
-        const openModal = row => {
-            const m = $('detail-modal');
-            $('modal-content').innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">` + 
-                cols.map(c => row[c] !== undefined && row[c] !== '' ? 
-                    `<div class="bg-slate-50 p-5 rounded-2xl border border-slate-200/70 shadow-sm hover:border-blue-300 transition-colors">
-                        <span class="block text-[11px] font-bold text-blue-600/80 uppercase tracking-widest mb-2">${c}</span>
-                        <span class="block text-sm md:text-base text-slate-700 font-medium break-words leading-relaxed">${typeof row[c] === 'number' && !Number.isInteger(row[c]) ? Number(row[c]).toFixed(2) : row[c]}</span>
-                    </div>` : '').join('') + 
-                `</div>`;
+            const fmt = { year: 'numeric', month: 'short', day: 'numeric' };
+            const getValidDateStr = (d) => d && d.getFullYear() !== 9999 ? d.toLocaleDateString('es-CO', fmt) : '--/--/----';
+            const hoy = new Date();
+            const hoyDate = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
             
-            m.classList.remove('hidden');
-            void m.offsetWidth; // Reflow forcing para animación css
-            m.classList.remove('opacity-0');
-            m.querySelector('div').classList.replace('scale-95', 'scale-100');
+            let dateBadge = '';
+            if (data.fFin && data.fFin.getFullYear() !== 9999) {
+                const fFinDate = new Date(data.fFin.getFullYear(), data.fFin.getMonth(), data.fFin.getDate());
+                const diffDays = Math.ceil((fFinDate - hoyDate) / (1000 * 60 * 60 * 24));
+                
+                if (cEsp >= 99.9 && cLog < 99.9) {
+                    const delayedDays = Math.abs(diffDays);
+                    dateBadge = `<div class="mt-3 text-[11px] font-bold text-red-600 bg-red-50 px-2 py-1 rounded inline-block border border-red-200"><i data-lucide="alert-circle" class="w-3.5 h-3.5 inline"></i> ${delayedDays} días atrasado</div>`;
+                } else if (cLog >= 99.9) {
+                    dateBadge = `<div class="mt-3 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded inline-block border border-emerald-200"><i data-lucide="check-circle-2" class="w-3.5 h-3.5 inline"></i> Completado</div>`;
+                } else {
+                    const left = diffDays > 0 ? diffDays : 0;
+                    dateBadge = `<div class="mt-3 text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded inline-block border border-blue-200"><i data-lucide="calendar" class="w-3.5 h-3.5 inline"></i> ${left} días restantes de trabajo</div>`;
+                }
+            }
+
+            // --- COLUMNA 1: Nivel 1 (CONPES) ---
+            let html = `
+            <div class="w-80 shrink-0 flex flex-col gap-3">
+                <div class="px-3 py-1.5 rounded-xl bg-slate-800 text-white flex items-center justify-between">
+                    <span class="text-[11px] font-extrabold uppercase tracking-wider">Nivel 1 • CONPES</span>
+                    <i data-lucide="layers" class="w-3.5 h-3.5 opacity-70"></i>
+                </div>
+                
+                <div class="bg-white rounded-2xl p-5 border-t-4 border-t-indigo-600 border border-slate-200 shadow-sm relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 w-16 h-16 bg-indigo-50 rounded-full opacity-50 pointer-events-none"></div>
+                    <h3 class="text-xl font-extrabold text-slate-800 leading-tight mb-2 relative z-10">${data.id}</h3>
+                    <p class="text-[11px] text-slate-500 font-medium mb-4 relative z-10">${getValidDateStr(data.fInicio)} - ${getValidDateStr(data.fFin)}</p>
+                    
+                    <div class="space-y-4 relative z-10">
+                        <div class="bg-slate-50 rounded-xl p-3 border border-slate-100 flex justify-between items-center">
+                            <span class="text-xs text-slate-500 font-bold">Total Acciones:</span>
+                            <span class="text-sm font-extrabold font-mono text-slate-800">${data.count}</span>
+                        </div>
+                        
+                        <div class="space-y-1.5">
+                            <div class="flex justify-between text-[11px] font-bold"><span class="text-indigo-600">Avance Logrado</span><span class="text-indigo-700">${cLog.toFixed(1)}%</span></div>
+                            <div class="w-full bg-slate-100 rounded-full h-2"><div class="h-2 bg-indigo-500 rounded-full" style="width: ${cLog}%"></div></div>
+                        </div>
+                        <div class="space-y-1.5">
+                            <div class="flex justify-between text-[11px] font-bold"><span class="text-slate-500">Avance Esperado</span><span class="text-slate-700">${cEsp.toFixed(1)}%</span></div>
+                            <div class="w-full bg-slate-100 rounded-full h-1.5"><div class="h-1.5 bg-slate-400 rounded-full" style="width: ${cEsp}%"></div></div>
+                        </div>
+                        ${dateBadge}
+                    </div>
+                </div>
+            </div>`;
+
+            // --- COLUMNAS 2 & 3: Acción y Objetivo + Actividades Alineadas ---
+            html += `<div class="flex-1 flex flex-col gap-6">
+                <div class="flex gap-6">
+                    <div class="w-96 shrink-0 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-between">
+                        <span class="text-[11px] font-extrabold text-slate-700 uppercase tracking-wider">Nivel 2 • Acción y Objetivo</span>
+                        <span class="text-[10px] font-bold text-slate-500">${Object.keys(data.objs).length} registros</span>
+                    </div>
+                    <div class="w-96 shrink-0 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-between">
+                        <span class="text-[11px] font-extrabold text-slate-700 uppercase tracking-wider">Nivel 3 • Actividades</span>
+                    </div>
+                </div>`;
+
+            Object.values(data.objs).forEach(obj => {
+                if (appState.obj && appState.obj !== obj.id) return;
+
+                const oLog = obj.sumL / obj.count;
+                const oEsp = obj.sumE / obj.count;
+                const isActive = appState.obj === obj.id;
+                
+                const bgClass = isActive ? 'bg-indigo-50 border-indigo-400' : 'bg-white border-slate-200 hover:border-indigo-300';
+                const ringClass = isActive ? 'ring-2 ring-indigo-500/20' : '';
+                const indicatorColor = isActive ? 'bg-indigo-600' : 'bg-slate-300';
+
+                html += `<div class="flex gap-6 items-start">
+                    <div class="w-96 shrink-0 h-full">
+                        <div data-action="select-obj" data-id="${obj.id}" class="${bgClass} ${ringClass} rounded-2xl p-4 border shadow-sm cursor-pointer transition-all flex gap-3 h-full">
+                            <div class="w-1.5 rounded-full ${indicatorColor} shrink-0"></div>
+                            <div class="flex-1 min-w-0 flex flex-col justify-between">
+                                <div><h4 class="text-sm font-bold text-slate-800 leading-snug mb-3">${obj.id}</h4></div>
+                                <div>
+                                    <div class="grid grid-cols-2 gap-2 mb-2">
+                                        <div class="bg-white/60 p-2 rounded-lg border border-slate-200/60">
+                                            <div class="text-[9px] font-bold text-slate-400 uppercase">Logrado</div>
+                                            <div class="text-sm font-extrabold text-indigo-700">${oLog.toFixed(1)}%</div>
+                                        </div>
+                                        <div class="bg-white/60 p-2 rounded-lg border border-slate-200/60">
+                                            <div class="text-[9px] font-bold text-slate-400 uppercase">Esperado</div>
+                                            <div class="text-sm font-bold text-slate-600">${oEsp.toFixed(1)}%</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-[10px] font-semibold text-slate-500 text-right mt-1">
+                                        ${obj.count} ${obj.count === 1 ? 'acción hija' : 'acciones hijas'} ${isActive ? '→' : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="w-96 shrink-0 flex flex-col gap-3">`;
+
+                obj.items.forEach(item => {
+                    const isCompletado = item.lNum >= 100;
+                    const isAlDia = item.lNum >= item.eNum;
+                    
+                    const badgeClass = isCompletado ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                                     : (isAlDia ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-amber-50 text-amber-700 border-amber-200');
+                    const badgeIcon = isCompletado ? 'check-circle-2' : (isAlDia ? 'clock' : 'alert-triangle');
+                    const badgeText = isCompletado ? 'Completado' : (isAlDia ? 'Al día' : 'Atrasado');
+                    const lColor = isCompletado ? 'bg-emerald-500' : (isAlDia ? 'bg-blue-500' : 'bg-amber-500');
+                    const leftBorder = isCompletado ? 'border-emerald-500' : (isAlDia ? 'border-blue-500' : 'border-amber-500');
+
+                    html += `
+                        <div class="action-card group bg-white border-y border-r border-l-4 ${leftBorder} rounded-xl p-4 shadow-sm hover:shadow-md hover:bg-slate-50 transition-all cursor-pointer flex flex-col justify-between" data-id="${item.id}">
+                            <div>
+                                <div class="flex justify-between items-start mb-2 gap-2">
+                                    <div class="px-2 py-0.5 rounded border ${badgeClass} text-[9px] font-bold uppercase tracking-wider flex items-center gap-1 shrink-0">
+                                        <i data-lucide="${badgeIcon}" class="w-3 h-3"></i> ${badgeText}
+                                    </div>
+                                </div>
+                                <h5 class="text-sm font-semibold text-slate-800 leading-snug mb-4 group-hover:text-indigo-700 transition-colors">${item.nivel3}</h5>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-3 mt-1 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                                <div>
+                                    <div class="flex justify-between text-[10px] font-bold mb-1"><span class="text-slate-500 uppercase">Logrado</span><span class="${isCompletado ? 'text-emerald-600' : 'text-slate-700'}">${item.lNum.toFixed(1)}%</span></div>
+                                    <div class="w-full bg-slate-200 rounded-full h-1.5"><div class="h-1.5 rounded-full ${lColor}" style="width: ${item.lNum}%"></div></div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-[10px] font-bold mb-1"><span class="text-slate-400 uppercase">Esperado</span><span class="text-slate-500">${item.eNum.toFixed(1)}%</span></div>
+                                    <div class="w-full bg-slate-200 rounded-full h-1.5"><div class="h-1.5 bg-slate-400 rounded-full" style="width: ${item.eNum}%"></div></div>
+                                </div>
+                            </div>
+                            <div class="text-[10px] text-slate-400 font-medium mt-3 text-right group-hover:text-indigo-500 transition-colors">Ver ficha técnica →</div>
+                        </div>
+                    `;
+                });
+                html += `</div></div>`;
+            });
+            html += `</div>`;
+            
+            $('workspace-columns').innerHTML = html;
         };
     </script>
 </body>
