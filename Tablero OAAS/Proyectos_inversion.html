@@ -1,0 +1,3855 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Seguimiento Proyectos de Inversión</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <!-- SheetJS (XLSX) para lectura directa del archivo publicado -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            mineral: {
+              copper: '#b45309',
+              gold: '#d97706',
+              emerald: '#047857',
+              petrol: '#0f4c5c',
+              terracotta: '#9a3412',
+              slate: '#1e293b'
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #f4f1ea;
+      color: #0f172a;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Escenario de Fondo con Temática de Minas y Estratos Geológicos */
+    .mining-bg-scene {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 15% 12%, rgba(217, 119, 6, 0.14) 0%, transparent 45%),
+        radial-gradient(circle at 85% 18%, rgba(4, 120, 87, 0.10) 0%, transparent 45%),
+        radial-gradient(circle at 50% 90%, rgba(180, 83, 9, 0.12) 0%, transparent 55%),
+        linear-gradient(180deg, #faf8f5 0%, #f3efe6 52%, #ebe4d8 100%);
+    }
+
+    /* Patrón de curvas topográficas y terrazas en el lienzo de raíces */
+    .geology-stage {
+      background-color: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(8px);
+      background-image:
+        radial-gradient(rgba(180, 83, 9, 0.18) 1px, transparent 1px),
+        repeating-linear-gradient(
+          -18deg,
+          rgba(217, 119, 6, 0.03) 0px,
+          rgba(217, 119, 6, 0.03) 2px,
+          transparent 2px,
+          transparent 28px
+        );
+      background-size: 24px 24px, 100% 100%;
+    }
+
+    /* Scrollbars limpias y suaves */
+    .smooth-scroll-x {
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+    }
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 9px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 999px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #b45309;
+    }
+
+    /* Estructura de Silo Industrial / Minero-Energético */
+    .silo-card {
+      position: relative;
+      background: #ffffff;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 20px 20px 16px 16px;
+      box-shadow: 0 8px 24px -6px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+      transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow: hidden;
+    }
+    .silo-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 18px 34px -8px rgba(15, 23, 42, 0.12), 0 4px 10px -2px rgba(15, 23, 42, 0.06);
+    }
+    .silo-dome {
+      height: 10px;
+      width: 100%;
+      border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+    }
+
+    /* Nodos de Raíces y Vetas */
+    .root-node {
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      z-index: 10;
+      background: #ffffff;
+      border: 1.5px solid #e2e8f0;
+      box-shadow: 0 4px 16px -4px rgba(15, 23, 42, 0.06);
+    }
+    .root-node:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px -6px rgba(15, 23, 42, 0.11);
+    }
+    .root-node.active-root {
+      box-shadow: 0 0 0 2px var(--node-accent, #b45309), 0 12px 28px -6px rgba(180, 83, 9, 0.18);
+    }
+
+    /* Columnas fijas dentro del lienzo horizontal de 5 niveles */
+    .level-col {
+      flex: 0 0 auto;
+    }
+
+    /* Trazos SVG de Raíces Orgánicas y Vetas de Energía */
+    .root-vein-main {
+      fill: none;
+      stroke-linecap: round;
+      transition: stroke-opacity 0.35s ease, stroke-width 0.35s ease;
+    }
+    .root-vein-secondary {
+      fill: none;
+      stroke-linecap: round;
+      pointer-events: none;
+    }
+    .root-energy-pulse {
+      fill: none;
+      stroke-linecap: round;
+      stroke-dasharray: 6 18;
+      animation: rootFlow 2.2s linear infinite;
+      pointer-events: none;
+    }
+    @keyframes rootFlow {
+      to {
+        stroke-dashoffset: -48;
+      }
+    }
+
+    /* Animación de entrada de tarjetas */
+    @keyframes rootAppear {
+      from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+    .animate-root {
+      animation: rootAppear 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Sub-nodos de Años (Columna J) dentro de la tarjeta de Producto Principal (Nivel 4) */
+    .year-subnode {
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .year-subnode:hover {
+      transform: translateX(2px);
+    }
+    .year-subnode.active-year {
+      box-shadow: 0 0 0 2px #047857, 0 6px 16px -4px rgba(4, 120, 87, 0.22);
+    }
+
+    /* Tooltip flotante de la gráfica presupuestal */
+    #budgetChartTooltip {
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+    }
+  </style>
+</head>
+<body class="selection:bg-amber-600 selection:text-white">
+
+  <!-- FONDO TEMÁTICO DE MINAS Y ESTRATOS GEOLÓGICOS -->
+  <div class="mining-bg-scene" aria-hidden="true">
+    <svg class="w-full h-full opacity-90" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="mineMountainGrad1" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#d6cbb9" stop-opacity="0.45" />
+          <stop offset="100%" stop-color="#b8a68e" stop-opacity="0.2" />
+        </linearGradient>
+        <linearGradient id="mineMountainGrad2" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#c7b69e" stop-opacity="0.5" />
+          <stop offset="100%" stop-color="#9c8567" stop-opacity="0.25" />
+        </linearGradient>
+        <linearGradient id="goldVeinGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#b45309" stop-opacity="0.18" />
+          <stop offset="50%" stop-color="#d97706" stop-opacity="0.28" />
+          <stop offset="100%" stop-color="#047857" stop-opacity="0.16" />
+        </linearGradient>
+        <pattern id="mineStrataPattern" width="120" height="120" patternUnits="userSpaceOnUse">
+          <path d="M 0 30 Q 30 22, 60 30 T 120 30" fill="none" stroke="#b45309" stroke-width="0.7" stroke-opacity="0.10" />
+          <path d="M 0 70 Q 30 62, 60 70 T 120 70" fill="none" stroke="#78716c" stroke-width="0.7" stroke-opacity="0.09" />
+          <path d="M 0 105 Q 30 95, 60 105 T 120 105" fill="none" stroke="#047857" stroke-width="0.6" stroke-opacity="0.08" />
+        </pattern>
+      </defs>
+
+      <rect width="1920" height="1080" fill="url(#mineStrataPattern)" />
+      <path d="M-100,220 C320,160 640,340 1080,240 C1420,160 1680,290 2020,200" fill="none" stroke="url(#goldVeinGrad)" stroke-width="3" stroke-dasharray="10 6" />
+      <path d="M-80,480 C380,410 790,560 1240,440 C1540,360 1750,470 2000,410" fill="none" stroke="url(#goldVeinGrad)" stroke-width="2.2" />
+      <path d="M0,780 L220,650 L410,720 L690,560 L960,700 L1250,580 L1540,690 L1760,600 L1920,670 L1920,1080 L0,1080 Z" fill="url(#mineMountainGrad1)" />
+      <path d="M0,850 L280,850 L330,815 L620,815 L670,780 L980,780 L1030,815 L1360,815 L1410,850 L1920,850 L1920,1080 L0,1080 Z" fill="url(#mineMountainGrad2)" />
+      <path d="M120,900 L360,900 L400,870 L720,870 L760,840 L1120,840 L1160,870 L1490,870 L1530,900 L1920,900" fill="none" stroke="#9a3412" stroke-opacity="0.18" stroke-width="2" />
+      <path d="M60,945 L420,945 L460,918 L810,918 L850,895 L1220,895 L1260,918 L1610,918 L1650,945 L1920,945" fill="none" stroke="#b45309" stroke-opacity="0.16" stroke-width="1.8" />
+      <path d="M0,990 L490,990 L530,965 L910,965 L950,945 L1310,945 L1350,965 L1720,965 L1760,990 L1920,990" fill="none" stroke="#78350f" stroke-opacity="0.15" stroke-width="1.5" />
+
+      <g transform="translate(110, 565)" stroke="#78350f" stroke-opacity="0.22" fill="none" stroke-width="2.2">
+        <line x1="20" y1="120" x2="45" y2="15" />
+        <line x1="70" y1="120" x2="45" y2="15" />
+        <line x1="45" y1="15" x2="95" y2="120" />
+        <line x1="27" y1="85" x2="63" y2="85" />
+        <line x1="34" y1="52" x2="56" y2="52" />
+        <circle cx="45" cy="15" r="10" />
+        <circle cx="45" cy="15" r="4" />
+        <rect x="5" y="120" width="105" height="10" fill="#78350f" fill-opacity="0.12" />
+      </g>
+
+      <g transform="translate(1640, 575)" stroke="#78350f" stroke-opacity="0.2" fill="none" stroke-width="2">
+        <path d="M0,95 L0,40 C0,12 55,12 55,40 L55,95" fill="#78350f" fill-opacity="0.08" />
+        <line x1="-20" y1="95" x2="140" y2="95" />
+        <rect x="72" y="72" width="26" height="16" rx="2" fill="#b45309" fill-opacity="0.15" />
+        <circle cx="78" cy="91" r="3.5" />
+        <circle cx="92" cy="91" r="3.5" />
+        <rect x="106" y="72" width="26" height="16" rx="2" fill="#b45309" fill-opacity="0.15" />
+        <circle cx="112" cy="91" r="3.5" />
+        <circle cx="126" cy="91" r="3.5" />
+      </g>
+    </svg>
+  </div>
+
+  <!-- TOOLTIP FLOTANTE PARA LA GRÁFICA PRESUPUESTAL -->
+  <div
+    id="budgetChartTooltip"
+    class="fixed z-50 hidden opacity-0 w-72 sm:w-80 bg-slate-900/95 text-white backdrop-blur-md p-3.5 rounded-2xl shadow-2xl border border-amber-500/40 text-xs space-y-2"
+  ></div>
+
+  <!-- ENCABEZADO PRINCIPAL -->
+  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-amber-900/15 shadow-sm">
+    <div class="max-w-[1640px] mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
+      <!-- Marca y Título -->
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-700 via-amber-600 to-emerald-700 flex items-center justify-center text-white shadow-md shadow-amber-900/15">
+          <i data-lucide="landmark" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h1 class="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900">
+            Seguimiento Proyectos de Inversión
+          </h1>
+        </div>
+      </div>
+
+      <!-- Controles de Navegación -->
+      <div class="flex flex-wrap items-center gap-2.5">
+        <button
+          id="backToAllSilosBtn"
+          onclick="resetToAllSilos()"
+          class="hidden items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-100 hover:bg-amber-200 text-amber-950 border border-amber-300 transition-all shadow-sm"
+        >
+          <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-amber-800"></i>
+          <span>Ver todos los Silos</span>
+        </button>
+
+        <!-- Selector de Hoja (visible si el Excel publicado tiene más de una pestaña) -->
+        <div id="sheetSelectorWrap" class="hidden items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
+          <i data-lucide="layers" class="w-3.5 h-3.5 text-amber-700"></i>
+          <select id="sheetSelect" class="bg-transparent text-xs font-semibold text-slate-700 focus:outline-none cursor-pointer"></select>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="max-w-[1640px] mx-auto px-4 sm:px-6 py-6 space-y-6">
+    <!-- Banner de Carga Inicial -->
+    <div
+      id="loadingBanner"
+      class="bg-white/95 backdrop-blur-md rounded-3xl p-8 border border-slate-200/90 shadow-sm flex flex-col items-center justify-center text-center gap-3"
+    >
+      <div class="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 animate-pulse">
+        <i data-lucide="landmark" class="w-6 h-6"></i>
+      </div>
+      <div class="space-y-1">
+        <h2 class="text-sm font-extrabold text-slate-900">Cargando Proyectos de Inversión...</h2>
+        <p class="text-xs text-slate-500">Conectando con la fuente de datos y estructurando silos, objetivos, productos y actividades</p>
+      </div>
+    </div>
+
+    <!-- TARJETAS KPI RESUMEN -->
+    <section id="kpiSection" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- KPI 1: Volumen de Actividades y Silos -->
+      <div class="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-sm flex items-center justify-between">
+        <div class="space-y-1">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Actividades</span>
+          <div class="flex items-baseline gap-2">
+            <span id="kpiTotalActivities" class="text-2xl sm:text-3xl font-extrabold font-mono text-slate-900">0</span>
+            <span id="kpiTotalSilos" class="text-xs text-amber-800 font-semibold">en 0 silos</span>
+          </div>
+          <p id="kpiActiveFilterText" class="text-[11px] text-slate-500 truncate max-w-[240px]">Consolidado de todos los silos</p>
+        </div>
+        <div class="w-11 h-11 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 shrink-0">
+          <i data-lucide="cylinder" class="w-5 h-5"></i>
+        </div>
+      </div>
+
+      <!-- KPI 2: % Esperado (sin fecha de corte) -->
+      <div class="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-sm space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-amber-800">% Esperado</span>
+          <i data-lucide="calendar-clock" class="w-4 h-4 text-amber-600"></i>
+        </div>
+        <div class="flex items-baseline justify-between">
+          <span id="kpiAvgExpected" class="text-2xl sm:text-3xl font-extrabold font-mono text-amber-700">0.0%</span>
+          <span class="text-[11px] text-slate-500">Según fechas de actividades</span>
+        </div>
+        <div class="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+          <div id="kpiExpectedBar" class="h-full bg-gradient-to-r from-amber-600 to-amber-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- KPI 3: % Completado (basado en progreso ponderado y jerárquico) -->
+      <div class="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-sm space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-800">% Completado</span>
+          <i data-lucide="trending-up" class="w-4 h-4 text-emerald-600"></i>
+        </div>
+        <div class="flex items-baseline justify-between">
+          <span id="kpiAvgCompleted" class="text-2xl sm:text-3xl font-extrabold font-mono text-emerald-700">0.0%</span>
+          <span class="text-[11px] text-slate-500">Avance ponderado y jerárquico</span>
+        </div>
+        <div class="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+          <div id="kpiCompletedBar" class="h-full bg-gradient-to-r from-emerald-700 to-emerald-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- KPI 4: Balance de Ejecución (siempre muestra fechas generales de inicio y fin) -->
+      <div class="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-sm flex items-center justify-between gap-2">
+        <div class="space-y-1 min-w-0">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Balance de Ejecución</span>
+          <div class="flex items-baseline gap-2 flex-wrap">
+            <span id="kpiGapValue" class="text-2xl sm:text-3xl font-extrabold font-mono text-slate-900">0.0%</span>
+            <span id="kpiGapStatus" class="text-xs px-2.5 py-0.5 rounded-full font-bold bg-slate-100 text-slate-700">Al Día</span>
+          </div>
+          <div id="kpiGlobalDates" class="flex items-center gap-1.5 text-[11px] font-mono font-semibold text-slate-600 pt-0.5">
+            <i data-lucide="calendar-range" class="w-3.5 h-3.5 text-amber-700 shrink-0"></i>
+            <span id="kpiGlobalDatesText">Inicio: - • Fin: -</span>
+          </div>
+        </div>
+        <div id="kpiGapIconBox" class="w-11 h-11 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-700 shrink-0">
+          <i data-lucide="zap" class="w-5 h-5"></i>
+        </div>
+      </div>
+    </section>
+
+    <!-- GRÁFICA DE EJECUCIÓN PRESUPUESTAL POR AÑO -->
+    <section id="budgetChartSection" class="hidden bg-white/95 backdrop-blur-md rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-sm space-y-5">
+      <!-- Encabezado y Resumen Financiero -->
+      <div class="flex flex-wrap items-start justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 flex items-center justify-center shrink-0">
+            <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h2 class="text-sm sm:text-base font-extrabold text-slate-900">
+              Ejecución Presupuestal por Año
+            </h2>
+            <p class="text-xs text-slate-500">
+              Presupuesto Asignado vs. Presupuesto Ejecutado por proyecto (cifras en Millones de pesos COP)
+            </p>
+          </div>
+        </div>
+
+        <!-- Totales dinámicos del proyecto seleccionado -->
+        <div class="flex flex-wrap items-center gap-2.5">
+          <div class="px-3.5 py-2 rounded-xl bg-amber-50/80 border border-amber-200">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-amber-900 block">Presupuesto Asignado</span>
+            <span id="budgetTotalAssigned" class="text-sm sm:text-base font-extrabold font-mono text-amber-950">$ 0 M</span>
+          </div>
+          <div class="px-3.5 py-2 rounded-xl bg-emerald-50/80 border border-emerald-200">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-900 block">Presupuesto Ejecutado</span>
+            <span id="budgetTotalExecuted" class="text-sm sm:text-base font-extrabold font-mono text-emerald-800">$ 0 M</span>
+          </div>
+          <div class="px-3.5 py-2 rounded-xl bg-slate-900 text-white">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-amber-300 block">% Ejecución</span>
+            <span id="budgetTotalExecPct" class="text-sm sm:text-base font-extrabold font-mono text-white">0.0%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtros para seleccionar el Proyecto en la gráfica (solo vista individual por proyecto) -->
+      <div class="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 mr-1 flex items-center gap-1">
+          <i data-lucide="filter" class="w-3.5 h-3.5 text-amber-700"></i>
+          <span>Proyecto:</span>
+        </span>
+        <div id="budgetProjectFilters" class="flex flex-wrap items-center gap-1.5">
+          <!-- Botones de filtro generados dinámicamente -->
+        </div>
+      </div>
+
+      <!-- Contenedor SVG de la Gráfica de Barras -->
+      <div class="w-full overflow-x-auto smooth-scroll-x pb-2">
+        <div id="budgetChartCanvas" class="min-w-[640px] w-full">
+          <!-- Gráfica SVG generada dinámicamente -->
+        </div>
+      </div>
+
+      <!-- Leyenda fija de dos colores (Asignado vs. Ejecutado) -->
+      <div id="budgetChartLegend" class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100 text-[11px] text-slate-600">
+        <!-- Generado dinámicamente -->
+      </div>
+    </section>
+
+    <!-- SECCIÓN DE SILOS (DETALLE PROYECTOS DE INVERSIÓN) -->
+    <section id="silosSection" class="hidden space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-7 h-7 rounded-xl bg-amber-100 border border-amber-300 text-amber-900 flex items-center justify-center">
+            <i data-lucide="cylinder" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h2 id="silosSectionTitle" class="text-sm sm:text-base font-extrabold text-slate-900">
+              Detalle Proyectos de Inversión
+            </h2>
+            <p id="silosSectionSubtitle" class="text-xs text-slate-500">
+              Haz clic en un proyecto para aislarlo y explorar en cascada su Objetivo General, Objetivos Específicos, Productos por Año y Actividades
+            </p>
+          </div>
+        </div>
+
+        <!-- Controles cuando un Silo está aislado -->
+        <div id="activeSiloControls" class="hidden flex-wrap items-center gap-2">
+          <button
+            onclick="toggleExpandAllInSilo()"
+            id="expandAllBtn"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-300 transition-all"
+          >
+            <i data-lucide="git-fork" class="w-3.5 h-3.5 text-emerald-700"></i>
+            <span id="expandAllBtnText">Desplegar todo el Silo</span>
+          </button>
+          <button
+            onclick="resetToAllSilos()"
+            class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white transition-all shadow-sm"
+          >
+            <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+            <span>Volver a todos los Silos</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Cuadrícula de Silos -->
+      <div id="silosHorizontalGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        <!-- Generado dinámicamente -->
+      </div>
+    </section>
+
+    <!-- ESPACIO DE TRABAJO DE RAÍCES Y SANKEY (5 NIVELES CON SCROLL HORIZONTAL SUAVE) -->
+    <section id="rootsWorkspace" class="hidden space-y-4">
+      <!-- Barra de Ruta Activa + Controles de Desplazamiento Horizontal -->
+      <div class="bg-white rounded-2xl px-4 py-3 border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+        <div id="breadcrumbTrail" class="flex flex-wrap items-center gap-1.5 text-xs">
+          <!-- Ruta dinámica -->
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <!-- Leyenda -->
+          <div class="hidden xl:flex items-center gap-3.5 text-[11px] font-medium text-slate-600 border-r border-slate-200 pr-3">
+            <div class="flex items-center gap-1.5">
+              <span class="w-3 h-2.5 rounded-sm bg-amber-500 inline-block"></span>
+              <span>% Esperado</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-3 h-2.5 rounded-sm bg-emerald-600 inline-block"></span>
+              <span>% Completado</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-teal-600 inline-block"></span>
+              <span>&gt;100% Sobrecumplimiento</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-rose-600 inline-block"></span>
+              <span>Atención</span>
+            </div>
+          </div>
+
+          <!-- Botones rápidos de scroll horizontal suave -->
+          <div class="flex items-center gap-1.5">
+            <button
+              onclick="scrollStageBy(-420)"
+              title="Desplazar hacia la izquierda"
+              class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-slate-100 hover:bg-amber-100 text-slate-700 hover:text-amber-900 border border-slate-200 transition-colors"
+            >
+              <i data-lucide="chevron-left" class="w-4 h-4"></i>
+            </button>
+            <button
+              onclick="scrollStageBy(420)"
+              title="Desplazar hacia la derecha"
+              class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-slate-100 hover:bg-amber-100 text-slate-700 hover:text-amber-900 border border-slate-200 transition-colors"
+            >
+              <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- LIENZO DE RAÍCES Y SANKEY DE 5 NIVELES CON SCROLL HORIZONTAL SUAVE -->
+      <div
+        id="sankeyScrollContainer"
+        class="geology-stage smooth-scroll-x rounded-3xl p-4 sm:p-6 border border-slate-200 shadow-sm overflow-x-auto relative min-h-[540px]"
+      >
+        <div id="sankeyStage" class="relative inline-block min-w-full pb-4">
+          <!-- SVG de Raíces Orgánicas / Vetas Minerales -->
+          <svg id="sankeySvg" class="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-visible"></svg>
+
+          <!-- Columnas Jerárquicas (Flex horizontal de 5 niveles) -->
+          <div id="sankeyColumnsFlex" class="relative z-10 flex items-start gap-10">
+            <!-- Generado dinámicamente -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DETALLE DE ACTIVIDADES (TABLA GLOBAL CON FILTROS EN ENCABEZADOS) -->
+    <section id="activitiesTableSection" class="hidden bg-white/95 backdrop-blur-md rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-sm space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center justify-center shrink-0">
+            <i data-lucide="table-2" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h2 class="text-sm sm:text-base font-extrabold text-slate-900">
+              Detalle de actividades
+            </h2>
+            <p class="text-xs text-slate-500">
+              Consolidado de todas las actividades de todos los proyectos • Haz clic en una fila para ver su ficha técnica
+            </p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <span
+            id="activitiesTableCounter"
+            class="px-3 py-1.5 rounded-xl text-xs font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200"
+          >
+            0 actividades
+          </span>
+          <button
+            id="clearTableFiltersBtn"
+            onclick="resetTableFilters()"
+            class="hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-100 hover:bg-amber-200 text-amber-950 border border-amber-300 transition-colors"
+          >
+            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+            <span>Limpiar filtros</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabla responsiva con encabezado fijo y filtros integrados -->
+      <div class="rounded-2xl border border-slate-200 overflow-hidden bg-white">
+        <div class="overflow-x-auto max-h-[620px] overflow-y-auto smooth-scroll-x">
+          <table class="w-full text-left border-collapse min-w-[960px]">
+            <thead class="sticky top-0 z-20 bg-slate-50/95 backdrop-blur-sm border-b border-slate-200 shadow-sm">
+              <!-- Fila de títulos ordenables -->
+              <tr class="text-[11px] font-extrabold uppercase tracking-wider text-slate-700">
+                <th class="px-3.5 pt-3 pb-2 w-[21%]">
+                  <button onclick="toggleTableSort('project')" class="inline-flex items-center gap-1 hover:text-amber-800 transition-colors">
+                    <span>Proyecto de inversión</span>
+                    <span id="sort-ind-project" class="font-mono text-[10px] text-slate-400">⇅</span>
+                  </button>
+                </th>
+                <th class="px-3.5 pt-3 pb-2 w-[19%]">
+                  <button onclick="toggleTableSort('product')" class="inline-flex items-center gap-1 hover:text-amber-800 transition-colors">
+                    <span>Producto</span>
+                    <span id="sort-ind-product" class="font-mono text-[10px] text-slate-400">⇅</span>
+                  </button>
+                </th>
+                <th class="px-3 pt-3 pb-2 w-[9%]">
+                  <button onclick="toggleTableSort('year')" class="inline-flex items-center gap-1 hover:text-amber-800 transition-colors">
+                    <span>Año</span>
+                    <span id="sort-ind-year" class="font-mono text-[10px] text-slate-400">⇅</span>
+                  </button>
+                </th>
+                <th class="px-3.5 pt-3 pb-2 w-[25%]">
+                  <button onclick="toggleTableSort('activity')" class="inline-flex items-center gap-1 hover:text-amber-800 transition-colors">
+                    <span>Actividad</span>
+                    <span id="sort-ind-activity" class="font-mono text-[10px] text-slate-400">⇅</span>
+                  </button>
+                </th>
+                <th class="px-3 pt-3 pb-2 w-[13%]">
+                  <button onclick="toggleTableSort('completedPct')" class="inline-flex items-center gap-1 hover:text-emerald-800 transition-colors">
+                    <span>% Progreso</span>
+                    <span id="sort-ind-completedPct" class="font-mono text-[10px] text-slate-400">⇅</span>
+                  </button>
+                </th>
+                <th class="px-3 pt-3 pb-2 w-[13%]">
+                  <button onclick="toggleTableSort('expectedPct')" class="inline-flex items-center gap-1 hover:text-amber-800 transition-colors">
+                    <span>% Esperado</span>
+                    <span id="sort-ind-expectedPct" class="font-mono text-[10px] text-slate-400">⇅</span>
+                  </button>
+                </th>
+              </tr>
+
+              <!-- Fila de filtros por encabezado -->
+              <tr class="border-t border-slate-200/80 bg-slate-100/70">
+                <th class="px-3 py-2 font-normal">
+                  <select
+                    id="tblFilterProject"
+                    onchange="updateTableFilter('project', this.value)"
+                    class="w-full px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-white border border-slate-200 text-slate-700 focus:outline-none focus:border-amber-600 focus:ring-2 focus:ring-amber-500/15 cursor-pointer"
+                  >
+                    <option value="ALL">Todos los proyectos</option>
+                  </select>
+                </th>
+                <th class="px-3 py-2 font-normal">
+                  <select
+                    id="tblFilterProduct"
+                    onchange="updateTableFilter('product', this.value)"
+                    class="w-full px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-white border border-slate-200 text-slate-700 focus:outline-none focus:border-amber-600 focus:ring-2 focus:ring-amber-500/15 cursor-pointer"
+                  >
+                    <option value="ALL">Todos los productos</option>
+                  </select>
+                </th>
+                <th class="px-2.5 py-2 font-normal">
+                  <select
+                    id="tblFilterYear"
+                    onchange="updateTableFilter('year', this.value)"
+                    class="w-full px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-white border border-slate-200 text-slate-700 focus:outline-none focus:border-amber-600 focus:ring-2 focus:ring-amber-500/15 cursor-pointer"
+                  >
+                    <option value="ALL">Todos</option>
+                  </select>
+                </th>
+                <th class="px-3 py-2 font-normal">
+                  <input
+                    id="tblFilterActivity"
+                    type="text"
+                    oninput="updateTableFilter('activity', this.value)"
+                    placeholder="Buscar actividad..."
+                    class="w-full px-2.5 py-1.5 rounded-lg text-[11px] font-medium bg-white border border-slate-200 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-amber-600 focus:ring-2 focus:ring-amber-500/15"
+                  />
+                </th>
+                <th class="px-2.5 py-2 font-normal">
+                  <select
+                    id="tblFilterProgress"
+                    onchange="updateTableFilter('progress', this.value)"
+                    class="w-full px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-white border border-slate-200 text-slate-700 focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/15 cursor-pointer"
+                  >
+                    <option value="all">Todos</option>
+                    <option value="lag">Con rezago (&lt; Esp.)</option>
+                    <option value="incomplete">Faltantes (&lt; 100%)</option>
+                    <option value="zero">Sin avance (0%)</option>
+                    <option value="ontrack">Al día (≥ Esp.)</option>
+                    <option value="complete">Completas (≥ 100%)</option>
+                    <option value="over100">Sobrecumpl. (&gt; 100%)</option>
+                  </select>
+                </th>
+                <th class="px-2.5 py-2 font-normal">
+                  <select
+                    id="tblFilterExpected"
+                    onchange="updateTableFilter('expected', this.value)"
+                    class="w-full px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-white border border-slate-200 text-slate-700 focus:outline-none focus:border-amber-600 focus:ring-2 focus:ring-amber-500/15 cursor-pointer"
+                  >
+                    <option value="all">Todos</option>
+                    <option value="gt0">Esperado &gt; 0%</option>
+                    <option value="eq100">Plazo 100%</option>
+                    <option value="inprogress">En curso (1-99%)</option>
+                    <option value="eq0">Sin iniciar (0%)</option>
+                  </select>
+                </th>
+              </tr>
+            </thead>
+            <tbody id="activitiesTableBody" class="divide-y divide-slate-100 text-xs">
+              <!-- Filas generadas dinámicamente -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- MODAL DE FICHA TÉCNICA DE LA ACTIVIDAD -->
+  <div id="detailModal" class="fixed inset-0 z-50 hidden bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 border border-slate-200 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-start justify-between gap-3 border-b border-slate-200 pb-3.5">
+        <div>
+          <span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+            Ficha Técnica de la Actividad
+          </span>
+          <h3 id="detailModalTitle" class="text-base font-extrabold text-slate-900 mt-2">Detalle de la Actividad</h3>
+        </div>
+        <button onclick="closeDetailModal()" class="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div id="detailModalContent" class="space-y-4 text-xs">
+        <!-- Contenido dinámico -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /*************************************************************************
+     * CONFIGURACIÓN DE FUENTE DE DATOS Y ESTADO GLOBAL
+     *************************************************************************/
+    const SPREADSHEET_PUB_BASE =
+      'https://docs.google.com/spreadsheets/d/e/2PACX-1vR2znQ6Z706-bQmpoHkFEdRJtqPhZYCbM7gQbRG8q_rb2xNfKTuS32JAIW7Xi90fQ/pub';
+    const XLSX_URL = `${SPREADSHEET_PUB_BASE}?output=xlsx`;
+    const CSV_URL = `${SPREADSHEET_PUB_BASE}?output=csv`;
+
+    let globalWorkbook = null;
+    let allRows = [];
+    let cachedBudgetDataByYear = [];
+
+    // Encabezados semánticos extraídos dinámicamente de la hoja
+    let semanticHeaders = {
+      silo: 'Proyecto de Inversión',           // Col A (0)
+      code: 'Código',                          // Col B (1)
+      objGeneral: 'Objetivo General',          // Col C (2)
+      objSpecific: 'Objetivo Específico',      // Col D (3)
+      product: 'Producto Principal',           // Col E (4)
+      activity: 'Actividad',                   // Col G (6)
+      budgetAssignedH: 'Presupuesto Asignado', // Col H (7)
+      weightI: 'Peso en el Año',               // Col I (8)
+      yearJ: 'Año',                            // Col J (9)
+      metaK: 'Programado (K)',                 // Col K (10)
+      execL: 'Ejecutado (L)',                  // Col L (11)
+      budgetExecutedN: 'Presupuesto Ejecutado',// Col N (13)
+      dateStartO: 'Fecha Inicio',              // Col O (14)
+      dateEndP: 'Fecha Fin',                   // Col P (15)
+      all: []
+    };
+
+    // Estado de navegación por los 5 niveles jerárquicos y filtros de visualización
+    let state = {
+      selectedSiloKey: null,         // Nivel 1: Col A + Código B
+      selectedObjGenKey: null,       // Nivel 2: Col C
+      selectedObjSpecKey: null,      // Nivel 3: Col D
+      selectedProductKey: null,      // Nivel 4: Col E -> Despliega Años (Col J) dentro de la tarjeta
+      selectedYearKey: null,         // Subnivel en Nivel 4: Año (Col J) -> Despliega Nivel 5: Actividades (Col G)
+      activitySort: 'default',       // 'default' | 'best' (mayor cumplimiento) | 'delay' (mayor retraso/rezago)
+      budgetProjectFilter: null,     // Proyecto activo en la gráfica presupuestal (sincronizado con el Silo)
+      expandAllInSilo: false,
+      cutoffDate: new Date(),
+      tableFilters: {
+        project: 'ALL',
+        product: 'ALL',
+        year: 'ALL',
+        activity: '',
+        progress: 'all',
+        expected: 'all'
+      },
+      tableSort: {
+        key: 'default',
+        dir: 'asc'
+      }
+    };
+
+    // Paleta Minero-Energética sobre Fondo Claro
+    const MINING_ENERGY_PALETTE = [
+      {
+        name: 'Cobre y Minería Sostenible',
+        main: '#b45309',
+        accent: '#d97706',
+        lightBg: '#fffbeb',
+        border: '#fde68a',
+        badgeBg: '#fef3c7',
+        badgeText: '#92400e',
+        icon: 'pickaxe'
+      },
+      {
+        name: 'Transición y Energía Limpia',
+        main: '#047857',
+        accent: '#059669',
+        lightBg: '#ecfdf5',
+        border: '#a7f3d0',
+        badgeBg: '#d1fae5',
+        badgeText: '#065f46',
+        icon: 'zap'
+      },
+      {
+        name: 'Hidrocarburos y Seguridad Energética',
+        main: '#0f4c5c',
+        accent: '#0284c7',
+        lightBg: '#f0f9ff',
+        border: '#bae6fd',
+        badgeBg: '#e0f2fe',
+        badgeText: '#075985',
+        icon: 'flame'
+      },
+      {
+        name: 'Recursos Geológicos y Territorio',
+        main: '#9a3412',
+        accent: '#ea580c',
+        lightBg: '#fff7ed',
+        border: '#fed7aa',
+        badgeBg: '#ffedd5',
+        badgeText: '#9a3412',
+        icon: 'mountain'
+      },
+      {
+        name: 'Infraestructura y Redes',
+        main: '#334155',
+        accent: '#475569',
+        lightBg: '#f8fafc',
+        border: '#cbd5e1',
+        badgeBg: '#f1f5f9',
+        badgeText: '#1e293b',
+        icon: 'cpu'
+      },
+      {
+        name: 'Gestión Ambiental y Sostenibilidad',
+        main: '#15803d',
+        accent: '#16a34a',
+        lightBg: '#f0fdf4',
+        border: '#bbf7d0',
+        badgeBg: '#dcfce7',
+        badgeText: '#166534',
+        icon: 'leaf'
+      }
+    ];
+
+    /*************************************************************************
+     * INICIALIZACIÓN
+     *************************************************************************/
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+
+      window.addEventListener('resize', () => {
+        requestAnimationFrame(drawRootConnections);
+      });
+
+      const stageEl = document.getElementById('sankeyStage');
+      if (stageEl && typeof ResizeObserver !== 'undefined') {
+        const ro = new ResizeObserver(() => {
+          requestAnimationFrame(drawRootConnections);
+        });
+        ro.observe(stageEl);
+      }
+
+      // Cerrar modal al hacer clic en el fondo oscuro o presionar Escape
+      const modalEl = document.getElementById('detailModal');
+      if (modalEl) {
+        modalEl.addEventListener('click', (e) => {
+          if (e.target === modalEl) closeDetailModal();
+        });
+      }
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeDetailModal();
+      });
+
+      loadSpreadsheetData();
+    });
+
+    /*************************************************************************
+     * CARGA Y LECTURA DEL EXCEL PUBLICADO (XLSX CON RESPALDO CSV)
+     *************************************************************************/
+    async function loadSpreadsheetData() {
+      const banner = document.getElementById('loadingBanner');
+      if (banner) banner.classList.remove('hidden');
+
+      try {
+        let arrayBuffer = null;
+
+        try {
+          const response = await fetch(`${XLSX_URL}&_t=${Date.now()}`, { cache: 'no-store' });
+          if (response.ok) {
+            arrayBuffer = await response.arrayBuffer();
+          }
+        } catch (errDirect) {
+          console.warn('Descarga XLSX directa no disponible, intentando CSV:', errDirect);
+        }
+
+        if (!arrayBuffer) {
+          const csvRes = await fetch(`${CSV_URL}&_t=${Date.now()}`, { cache: 'no-store' });
+          if (csvRes.ok) {
+            const csvText = await csvRes.text();
+            globalWorkbook = XLSX.read(csvText, { type: 'string', raw: false });
+          } else {
+            throw new Error('No fue posible conectar con el archivo publicado en Google Sheets.');
+          }
+        } else {
+          globalWorkbook = XLSX.read(arrayBuffer, {
+            type: 'array',
+            cellDates: true,
+            cellNF: true,
+            cellText: true
+          });
+        }
+
+        setupSheetSelector(globalWorkbook);
+        const bestSheetName = pickBestSheet(globalWorkbook);
+        parseSheetData(globalWorkbook, bestSheetName);
+
+        if (banner) banner.classList.add('hidden');
+      } catch (error) {
+        console.error('Error cargando datos:', error);
+        if (banner) {
+          banner.innerHTML = `
+            <div class="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600">
+              <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+            </div>
+            <div class="space-y-1 max-w-md">
+              <h2 class="text-base font-bold text-slate-900">Error de conexión con la fuente de datos</h2>
+              <p class="text-xs text-slate-500">${escapeHtml(error.message)}</p>
+            </div>
+            <button onclick="loadSpreadsheetData()" class="px-4 py-2 rounded-xl text-xs font-bold bg-amber-700 hover:bg-amber-800 text-white">
+              Reintentar
+            </button>
+          `;
+        }
+        lucide.createIcons();
+      }
+    }
+
+    function setupSheetSelector(workbook) {
+      const wrap = document.getElementById('sheetSelectorWrap');
+      const select = document.getElementById('sheetSelect');
+      if (!workbook || !workbook.SheetNames || workbook.SheetNames.length <= 1) {
+        wrap.classList.add('hidden');
+        return;
+      }
+      wrap.classList.remove('hidden');
+      wrap.classList.add('flex');
+      select.innerHTML = workbook.SheetNames.map(
+        (name) => `<option value="${escapeHtml(name)}" class="bg-white text-slate-800">${escapeHtml(name)}</option>`
+      ).join('');
+      select.onchange = (e) => {
+        parseSheetData(globalWorkbook, e.target.value);
+      };
+    }
+
+    function pickBestSheet(workbook) {
+      for (const name of workbook.SheetNames) {
+        const ws = workbook.Sheets[name];
+        if (!ws || !ws['!ref']) continue;
+        const range = XLSX.utils.decode_range(ws['!ref']);
+        if (range.e.r >= 1 && range.e.c >= 6) {
+          return name;
+        }
+      }
+      return workbook.SheetNames[0];
+    }
+
+    /**
+     * Descombina únicamente las columnas jerárquicas y de clasificación (A..F y J)
+     * para evitar duplicar montos presupuestales (H, N) si estuvieran combinados.
+     */
+    function unmergeWorksheet(ws) {
+      if (!ws || !ws['!merges']) return;
+      const fillColumns = new Set([0, 1, 2, 3, 4, 5, 9]);
+      ws['!merges'].forEach((merge) => {
+        const startAddr = XLSX.utils.encode_cell({ r: merge.s.r, c: merge.s.c });
+        const sourceCell = ws[startAddr];
+        if (!sourceCell) return;
+
+        for (let r = merge.s.r; r <= merge.e.r; r++) {
+          for (let c = merge.s.c; c <= merge.e.c; c++) {
+            if (!fillColumns.has(c)) continue;
+            const targetAddr = XLSX.utils.encode_cell({ r, c });
+            if (!ws[targetAddr] || ws[targetAddr].v === undefined || ws[targetAddr].v === '') {
+              ws[targetAddr] = { ...sourceCell };
+            }
+          }
+        }
+      });
+    }
+
+    /**
+     * Mapeo de columnas de Proyectos de Inversión:
+     * - Col A (0): Nombre del Silo / Proyecto de Inversión
+     * - Col B (1): Código del Proyecto (se muestran los últimos 4 dígitos en tarjetas; completo en Ficha)
+     * - Col C (2): Objetivo General
+     * - Col D (3): Objetivo Específico
+     * - Col E (4): Producto Principal
+     * - Col G (6): Actividad
+     * - Col H (7): Presupuesto Asignado (pesos colombianos)
+     * - Col I (8): Peso % de la Actividad sobre el Producto en el Año (suma 100% por año)
+     * - Col J (9): Año
+     * - Col K (10): Programado / Denominador para % Completado
+     * - Col L (11): Ejecutado / Numerador para % Completado -> (L / K) * 100 sin tope
+     * - Col N (13): Presupuesto Ejecutado (pesos colombianos)
+     * - Col O (14): Fecha Inicio
+     * - Col P (15): Fecha Fin
+     */
+    function parseSheetData(workbook, sheetName) {
+      const wsOriginal = workbook.Sheets[sheetName];
+      if (!wsOriginal || !wsOriginal['!ref']) return;
+
+      const ws = Object.assign({}, wsOriginal);
+      unmergeWorksheet(ws);
+
+      const range = XLSX.utils.decode_range(ws['!ref']);
+      const maxCol = Math.max(range.e.c, 16);
+      const rawMatrix = [];
+      const formattedMatrix = [];
+
+      for (let r = range.s.r; r <= range.e.r; r++) {
+        const rowVals = [];
+        const rowFmts = [];
+        for (let c = 0; c <= maxCol; c++) {
+          const addr = XLSX.utils.encode_cell({ r, c });
+          const cell = ws[addr];
+          rowVals.push(cell ? cell.v : undefined);
+          rowFmts.push(
+            cell ? (cell.w !== undefined ? String(cell.w).trim() : String(cell.v ?? '').trim()) : ''
+          );
+        }
+        rawMatrix.push(rowVals);
+        formattedMatrix.push(rowFmts);
+      }
+
+      // Detectar fila de encabezados en las primeras 10 filas
+      let headerRowIdx = 0;
+      let bestScore = -1;
+      for (let r = 0; r < Math.min(10, rawMatrix.length); r++) {
+        const nonEmpty = formattedMatrix[r].filter((v, idx) => idx <= 15 && v && v.length > 0).length;
+        if (nonEmpty > bestScore) {
+          bestScore = nonEmpty;
+          headerRowIdx = r;
+        }
+      }
+
+      const hRow = formattedMatrix[headerRowIdx] || [];
+      semanticHeaders = {
+        silo: cleanHeader(hRow[0], 'Proyecto de Inversión'),
+        code: cleanHeader(hRow[1], 'Código'),
+        objGeneral: cleanHeader(hRow[2], 'Objetivo General'),
+        objSpecific: cleanHeader(hRow[3], 'Objetivo Específico'),
+        product: cleanHeader(hRow[4], 'Producto Principal'),
+        activity: cleanHeader(hRow[6], 'Actividad'),
+        budgetAssignedH: cleanHeader(hRow[7], 'Presupuesto Asignado'),
+        weightI: cleanHeader(hRow[8], 'Peso en el Año'),
+        yearJ: cleanHeader(hRow[9], 'Año'),
+        metaK: cleanHeader(hRow[10], 'Programado'),
+        execL: cleanHeader(hRow[11], 'Ejecutado'),
+        budgetExecutedN: cleanHeader(hRow[13], 'Presupuesto Ejecutado'),
+        dateStartO: cleanHeader(hRow[14], 'Fecha Inicio'),
+        dateEndP: cleanHeader(hRow[15], 'Fecha Fin'),
+        all: hRow.map((h, idx) => cleanHeader(h, `Campo ${idx + 1}`))
+      };
+
+      const parsed = [];
+      let lastA = '';
+      let lastB = '';
+      let lastC = '';
+      let lastD = '';
+      let lastE = '';
+      let lastYear = '';
+
+      for (let r = headerRowIdx + 1; r < rawMatrix.length; r++) {
+        const raw = rawMatrix[r];
+        const fmt = formattedMatrix[r];
+
+        const hasAnyContent = fmt.some((v) => v && v.trim() !== '');
+        if (!hasAnyContent) continue;
+
+        let valA = cleanText(fmt[0]);
+        let valB = cleanText(fmt[1]);
+        let valC = cleanText(fmt[2]);
+        let valD = cleanText(fmt[3]);
+        let valE = cleanText(fmt[4]);
+        let valG = cleanText(fmt[6]);
+        let valJ = cleanYearLabel(raw[9], fmt[9]);
+
+        // Ignorar posibles filas de "Total" al final de la hoja
+        if (/^total\b/i.test(valA) && !valG) continue;
+
+        // Propagación jerárquica controlada hacia abajo
+        if (valA) {
+          if (valA !== lastA) {
+            lastA = valA;
+            lastB = valB || '';
+            lastC = '';
+            lastD = '';
+            lastE = '';
+            lastYear = '';
+          }
+        } else if (lastA && (valB || valC || valD || valE || valG)) {
+          valA = lastA;
+        }
+
+        if (valB) {
+          lastB = valB;
+        } else if (lastB && valA === lastA) {
+          valB = lastB;
+        }
+
+        if (valC) {
+          if (valC !== lastC) {
+            lastC = valC;
+            lastD = '';
+            lastE = '';
+          }
+        } else if (lastC && (valD || valE || valG)) {
+          valC = lastC;
+        }
+
+        if (valD) {
+          if (valD !== lastD) {
+            lastD = valD;
+            lastE = '';
+          }
+        } else if (lastD && (valE || valG)) {
+          valD = lastD;
+        }
+
+        if (valE) {
+          lastE = valE;
+        } else if (lastE && valG) {
+          valE = lastE;
+        }
+
+        if (valJ) {
+          lastYear = valJ;
+        } else if (lastYear && valG) {
+          valJ = lastYear;
+        }
+
+        // Debe existir al menos un proyecto y una actividad o producto válido
+        if (!valA || (!valG && !valE)) continue;
+
+        const siloName = valA;
+        const siloCode = valB || 'S/C';
+        const siloKey = `${siloCode}|||${siloName}`;
+        const objGeneralName = valC || 'Objetivo General';
+        const objGeneralKey = `${siloKey}|||OG:${objGeneralName}`;
+        const objSpecificName = valD || 'Objetivo Específico';
+        const objSpecificKey = `${objGeneralKey}|||OE:${objSpecificName}`;
+        const productName = valE || 'Producto Principal';
+        const productKey = `${objSpecificKey}|||PR:${productName}`;
+        const yearLabel = valJ || 'Sin año';
+        const yearKey = `${productKey}|||YR:${yearLabel}`;
+        const activityName = valG || productName;
+
+        // Valores numéricos y fechas
+        const budgetAssigned = parseCOPAmount(raw[7], fmt[7]);
+        const budgetExecuted = parseCOPAmount(raw[13], fmt[13]);
+        const rawWeightI = raw[8];
+        const fmtI = cleanText(fmt[8]) || '-';
+
+        const numK = parseSmartNumber(raw[10], fmt[10]);
+        const numL = parseSmartNumber(raw[11], fmt[11]);
+        const fmtK = cleanText(fmt[10]) || '0';
+        const fmtL = cleanText(fmt[11]) || '0';
+
+        const startDate = parseDateFlexible(raw[14], fmt[14]);
+        const endDate = parseDateFlexible(raw[15], fmt[15]);
+        const fmtO = cleanText(fmt[14]) || '-';
+        const fmtP = cleanText(fmt[15]) || '-';
+
+        // Campos completos para la Ficha Técnica
+        const extraFields = [];
+        for (let c = 0; c < semanticHeaders.all.length; c++) {
+          if (fmt[c] !== undefined && fmt[c] !== '') {
+            extraFields.push({
+              header: semanticHeaders.all[c] || `Campo ${c + 1}`,
+              value: fmt[c]
+            });
+          }
+        }
+
+        parsed.push({
+          id: `act-${r}`,
+          rowIndex: r,
+          siloKey,
+          siloName,
+          siloCode,
+          objGeneralKey,
+          objGeneralName,
+          objSpecificKey,
+          objSpecificName,
+          productKey,
+          productName,
+          yearKey,
+          yearLabel,
+          activityName,
+          budgetAssigned,
+          budgetExecuted,
+          rawWeightI,
+          fmtI,
+          weightPct: 0,
+          numK,
+          numL,
+          fmtK,
+          fmtL,
+          startDate,
+          endDate,
+          fmtO,
+          fmtP,
+          completedPct: 0,
+          expectedPct: 0,
+          extraFields
+        });
+      }
+
+      allRows = parsed;
+      recalculateAllMetrics();
+
+      // Reiniciar estado de navegación y filtros al cargar nueva hoja
+      state.selectedSiloKey = null;
+      state.selectedObjGenKey = null;
+      state.selectedObjSpecKey = null;
+      state.selectedProductKey = null;
+      state.selectedYearKey = null;
+      state.activitySort = 'default';
+      state.budgetProjectFilter = null;
+      state.expandAllInSilo = false;
+      state.tableFilters = {
+        project: 'ALL',
+        product: 'ALL',
+        year: 'ALL',
+        activity: '',
+        progress: 'all',
+        expected: 'all'
+      };
+      state.tableSort = { key: 'default', dir: 'asc' };
+
+      const actInput = document.getElementById('tblFilterActivity');
+      if (actInput) actInput.value = '';
+
+      document.getElementById('kpiSection').classList.remove('hidden');
+      document.getElementById('budgetChartSection').classList.remove('hidden');
+      document.getElementById('silosSection').classList.remove('hidden');
+      document.getElementById('activitiesTableSection').classList.remove('hidden');
+
+      renderDashboard();
+    }
+
+    /*************************************************************************
+     * CÁLCULO DE MÉTRICAS (L/K SIN TOPE, FECHAS O-P Y PESO COLUMNA I)
+     *************************************************************************/
+    function recalculateAllMetrics() {
+      if (!allRows.length) return;
+
+      // Detectar si los pesos de Col I vienen en escala 0..1 o 0..100
+      let maxRawI = 0;
+      allRows.forEach((row) => {
+        const val = parseSmartNumber(row.rawWeightI, row.fmtI);
+        if (!isNaN(val) && val > maxRawI) maxRawI = val;
+      });
+      const weightsAreDecimal = maxRawI > 0 && maxRawI <= 1.0001;
+
+      const cutoffTime = state.cutoffDate.getTime();
+
+      allRows.forEach((row) => {
+        // 1. Peso % (Col I)
+        const parsedW = parsePercentageRaw(row.rawWeightI, row.fmtI, weightsAreDecimal);
+        row.weightPct = round2(Math.max(0, parsedW));
+
+        // 2. % Completado = (L / K) * 100 (sin tope superior para reflejar > 100%)
+        if (!isNaN(row.numK) && row.numK > 0 && !isNaN(row.numL)) {
+          row.completedPct = round1(Math.max(0, (row.numL / row.numK) * 100));
+        } else {
+          row.completedPct = 0;
+        }
+
+        // 3. % Esperado a partir de fechas Inicio (Col O) y Fin (Col P)
+        if (row.startDate && row.endDate) {
+          const tStart = Math.min(row.startDate.getTime(), row.endDate.getTime());
+          const tEnd = Math.max(row.startDate.getTime(), row.endDate.getTime());
+          if (cutoffTime <= tStart) {
+            row.expectedPct = 0;
+          } else if (cutoffTime >= tEnd || tEnd === tStart) {
+            row.expectedPct = 100;
+          } else {
+            row.expectedPct = round1(clamp(((cutoffTime - tStart) / (tEnd - tStart)) * 100, 0, 100));
+          }
+        } else {
+          row.expectedPct = 0;
+        }
+      });
+    }
+
+    /*************************************************************************
+     * CONSTRUCCIÓN DE LA JERARQUÍA (SILO -> C -> D -> E -> AÑO J -> ACTIVIDAD G)
+     *************************************************************************/
+    function buildHierarchy() {
+      const siloMap = new Map();
+
+      allRows.forEach((row) => {
+        if (!siloMap.has(row.siloKey)) {
+          siloMap.set(row.siloKey, {
+            key: row.siloKey,
+            name: row.siloName,
+            code: row.siloCode,
+            rows: [],
+            objGenMap: new Map()
+          });
+        }
+        const silo = siloMap.get(row.siloKey);
+        silo.rows.push(row);
+
+        if (!silo.objGenMap.has(row.objGeneralKey)) {
+          silo.objGenMap.set(row.objGeneralKey, {
+            key: row.objGeneralKey,
+            name: row.objGeneralName,
+            parentKey: row.siloKey,
+            rows: [],
+            objSpecMap: new Map()
+          });
+        }
+        const og = silo.objGenMap.get(row.objGeneralKey);
+        og.rows.push(row);
+
+        if (!og.objSpecMap.has(row.objSpecificKey)) {
+          og.objSpecMap.set(row.objSpecificKey, {
+            key: row.objSpecificKey,
+            name: row.objSpecificName,
+            parentKey: row.objGeneralKey,
+            rows: [],
+            prodMap: new Map()
+          });
+        }
+        const os = og.objSpecMap.get(row.objSpecificKey);
+        os.rows.push(row);
+
+        if (!os.prodMap.has(row.productKey)) {
+          os.prodMap.set(row.productKey, {
+            key: row.productKey,
+            name: row.productName,
+            parentKey: row.objSpecificKey,
+            rows: [],
+            yearMap: new Map()
+          });
+        }
+        const prod = os.prodMap.get(row.productKey);
+        prod.rows.push(row);
+
+        if (!prod.yearMap.has(row.yearKey)) {
+          prod.yearMap.set(row.yearKey, {
+            key: row.yearKey,
+            yearLabel: row.yearLabel,
+            parentKey: row.productKey,
+            rows: []
+          });
+        }
+        prod.yearMap.get(row.yearKey).rows.push(row);
+      });
+
+      const silos = [];
+      let themeIdx = 0;
+
+      for (const silo of siloMap.values()) {
+        const baseTheme = MINING_ENERGY_PALETTE[themeIdx % MINING_ENERGY_PALETTE.length];
+        const theme = {
+          ...baseTheme,
+          icon: getCoherentSiloIcon(silo.name, baseTheme.icon)
+        };
+        themeIdx++;
+
+        const objGenerals = [];
+        for (const og of silo.objGenMap.values()) {
+          const objSpecifics = [];
+          for (const os of og.objSpecMap.values()) {
+            const products = [];
+            for (const prod of os.prodMap.values()) {
+              // Construir subnivel de Años (Col J) dentro de cada Producto Principal
+              // Los pesos de Col I suman 100% por cada año dentro del producto
+              const years = Array.from(prod.yearMap.values())
+                .sort((a, b) => compareYearLabels(a.yearLabel, b.yearLabel))
+                .map((yr) => {
+                  const totalWeight = yr.rows.reduce((sum, r) => sum + (r.weightPct > 0 ? r.weightPct : 0), 0);
+                  let yrComp = 0;
+                  if (totalWeight > 0) {
+                    const weightedSum = yr.rows.reduce(
+                      (sum, r) => sum + r.completedPct * (r.weightPct > 0 ? r.weightPct : 0),
+                      0
+                    );
+                    yrComp = round1(weightedSum / totalWeight);
+                  } else {
+                    yrComp = round1(average(yr.rows.map((r) => r.completedPct)));
+                  }
+                  const yrExp = round1(average(yr.rows.map((r) => r.expectedPct)));
+
+                  return {
+                    key: yr.key,
+                    yearLabel: yr.yearLabel,
+                    parentKey: prod.key,
+                    rows: yr.rows,
+                    count: yr.rows.length,
+                    totalWeight: round1(totalWeight),
+                    avgComp: yrComp,
+                    avgExp: yrExp
+                  };
+                });
+
+              // Producto Principal (E): % Completado = promedio simple de sus años ponderados; % Esperado = promedio simple de fechas de todas sus actividades
+              const prodComp = round1(average(years.map((y) => y.avgComp)));
+              const prodExp = round1(average(prod.rows.map((r) => r.expectedPct)));
+
+              products.push({
+                key: prod.key,
+                name: prod.name,
+                parentKey: os.key,
+                rows: prod.rows,
+                count: prod.rows.length,
+                years,
+                avgComp: prodComp,
+                avgExp: prodExp
+              });
+            }
+
+            // Objetivo Específico (D): Promedio simple de sus Productos (E) en completado; promedio simple de actividades en esperado
+            const osComp = round1(average(products.map((p) => p.avgComp)));
+            const osExp = round1(average(os.rows.map((r) => r.expectedPct)));
+
+            objSpecifics.push({
+              key: os.key,
+              name: os.name,
+              parentKey: og.key,
+              rows: os.rows,
+              count: os.rows.length,
+              products,
+              avgComp: osComp,
+              avgExp: osExp
+            });
+          }
+
+          // Objetivo General (C): Promedio simple de sus Objetivos Específicos (D) en completado; promedio simple de actividades en esperado
+          const ogComp = round1(average(objSpecifics.map((d) => d.avgComp)));
+          const ogExp = round1(average(og.rows.map((r) => r.expectedPct)));
+
+          objGenerals.push({
+            key: og.key,
+            name: og.name,
+            parentKey: silo.key,
+            rows: og.rows,
+            count: og.rows.length,
+            objSpecifics,
+            avgComp: ogComp,
+            avgExp: ogExp
+          });
+        }
+
+        // Silo (A + Código B): Promedio simple de sus Objetivos Generales (C) en completado; promedio simple de actividades en esperado
+        const siloComp = round1(average(objGenerals.map((g) => g.avgComp)));
+        const siloExp = round1(average(silo.rows.map((r) => r.expectedPct)));
+        const totalProducts = objGenerals.reduce(
+          (acc, og) => acc + og.objSpecifics.reduce((a2, os) => a2 + os.products.length, 0),
+          0
+        );
+
+        silos.push({
+          key: silo.key,
+          name: silo.name,
+          code: silo.code,
+          rows: silo.rows,
+          count: silo.rows.length,
+          totalProducts,
+          objGenerals,
+          avgComp: siloComp,
+          avgExp: siloExp,
+          theme
+        });
+      }
+
+      return silos;
+    }
+
+    /*************************************************************************
+     * RENDERIZADO GENERAL DEL TABLERO
+     *************************************************************************/
+    function renderDashboard(focusColId = null) {
+      hideBudgetTooltip();
+      const silos = buildHierarchy();
+
+      renderKPIs(silos);
+      renderBudgetChartSection(silos);
+      renderSilosSection(silos);
+      renderRootsWorkspace(silos);
+      renderActivitiesTable();
+
+      lucide.createIcons();
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          drawRootConnections();
+          if (focusColId) {
+            focusColumnSmoothly(focusColId);
+          }
+        });
+      });
+    }
+
+    /*************************************************************************
+     * TARJETAS KPI RESUMEN
+     *************************************************************************/
+    function renderKPIs(silos) {
+      let activeComp = 0;
+      let activeExp = 0;
+      let activeCount = allRows.length;
+      let scopeLabel = 'Consolidado de todos los silos';
+
+      if (!state.selectedSiloKey) {
+        activeComp = round1(average(silos.map((s) => s.avgComp)));
+        activeExp = round1(average(allRows.map((r) => r.expectedPct)));
+      } else {
+        const curSilo = silos.find((s) => s.key === state.selectedSiloKey);
+        if (curSilo) {
+          activeComp = curSilo.avgComp;
+          activeExp = curSilo.avgExp;
+          activeCount = curSilo.count;
+          scopeLabel = `${formatShortCode(curSilo.code)} • ${curSilo.name}`;
+
+          if (!state.expandAllInSilo && state.selectedObjGenKey) {
+            const og = curSilo.objGenerals.find((g) => g.key === state.selectedObjGenKey);
+            if (og) {
+              activeComp = og.avgComp;
+              activeExp = og.avgExp;
+              activeCount = og.count;
+              scopeLabel = `Obj. General: ${og.name}`;
+
+              if (state.selectedObjSpecKey) {
+                const os = og.objSpecifics.find((d) => d.key === state.selectedObjSpecKey);
+                if (os) {
+                  activeComp = os.avgComp;
+                  activeExp = os.avgExp;
+                  activeCount = os.count;
+                  scopeLabel = `Obj. Específico: ${os.name}`;
+
+                  if (state.selectedProductKey) {
+                    const pr = os.products.find((p) => p.key === state.selectedProductKey);
+                    if (pr) {
+                      activeComp = pr.avgComp;
+                      activeExp = pr.avgExp;
+                      activeCount = pr.count;
+                      scopeLabel = `Producto: ${pr.name}`;
+
+                      if (state.selectedYearKey) {
+                        const yr = pr.years.find((y) => y.key === state.selectedYearKey);
+                        if (yr) {
+                          activeComp = yr.avgComp;
+                          activeExp = yr.avgExp;
+                          activeCount = yr.count;
+                          scopeLabel = `${pr.name} • Año ${yr.yearLabel}`;
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      const gap = round1(activeComp - activeExp);
+
+      document.getElementById('kpiTotalActivities').textContent = activeCount;
+      document.getElementById('kpiTotalSilos').textContent = state.selectedSiloKey
+        ? 'en el silo activo'
+        : `en ${silos.length} ${silos.length === 1 ? 'silo' : 'silos'}`;
+      document.getElementById('kpiActiveFilterText').textContent = scopeLabel;
+
+      document.getElementById('kpiAvgExpected').textContent = `${activeExp.toFixed(1)}%`;
+      document.getElementById('kpiExpectedBar').style.width = `${clamp(activeExp, 0, 100)}%`;
+
+      document.getElementById('kpiAvgCompleted').textContent = `${activeComp.toFixed(1)}%`;
+      document.getElementById('kpiCompletedBar').style.width = `${clamp(activeComp, 0, 100)}%`;
+
+      // Fechas generales (mínima Col O y máxima Col P de TODOS los proyectos siempre)
+      const allStartDates = allRows.filter((r) => r.startDate).map((r) => r.startDate.getTime());
+      const allEndDates = allRows.filter((r) => r.endDate).map((r) => r.endDate.getTime());
+      const globalMinStart = allStartDates.length ? new Date(Math.min(...allStartDates)) : null;
+      const globalMaxEnd = allEndDates.length ? new Date(Math.max(...allEndDates)) : null;
+      document.getElementById('kpiGlobalDatesText').textContent = `Inicio: ${formatDateShort(globalMinStart)} • Fin: ${formatDateShort(globalMaxEnd)}`;
+
+      const gapEl = document.getElementById('kpiGapValue');
+      const statusEl = document.getElementById('kpiGapStatus');
+      const iconBox = document.getElementById('kpiGapIconBox');
+
+      gapEl.textContent = `${gap >= 0 ? '+' : ''}${gap.toFixed(1)}%`;
+      if (activeComp > 100) {
+        gapEl.className = 'text-2xl sm:text-3xl font-extrabold font-mono text-teal-700';
+        statusEl.className = 'text-xs px-2.5 py-0.5 rounded-full font-bold bg-teal-50 text-teal-800 border border-teal-200';
+        statusEl.textContent = 'Sobrecumplimiento';
+        iconBox.className = 'w-11 h-11 rounded-2xl bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-700 shrink-0';
+      } else if (gap >= -2) {
+        gapEl.className = 'text-2xl sm:text-3xl font-extrabold font-mono text-emerald-700';
+        statusEl.className = 'text-xs px-2.5 py-0.5 rounded-full font-bold bg-emerald-50 text-emerald-800 border border-emerald-200';
+        statusEl.textContent = gap > 2 ? 'Adelantado' : 'Al Día';
+        iconBox.className = 'w-11 h-11 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 shrink-0';
+      } else if (gap >= -15) {
+        gapEl.className = 'text-2xl sm:text-3xl font-extrabold font-mono text-amber-700';
+        statusEl.className = 'text-xs px-2.5 py-0.5 rounded-full font-bold bg-amber-50 text-amber-800 border border-amber-200';
+        statusEl.textContent = 'En Seguimiento';
+        iconBox.className = 'w-11 h-11 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 shrink-0';
+      } else {
+        gapEl.className = 'text-2xl sm:text-3xl font-extrabold font-mono text-rose-700';
+        statusEl.className = 'text-xs px-2.5 py-0.5 rounded-full font-bold bg-rose-50 text-rose-800 border border-rose-200';
+        statusEl.textContent = 'Rezagado';
+        iconBox.className = 'w-11 h-11 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-700 shrink-0';
+      }
+    }
+
+    /*************************************************************************
+     * GRÁFICA DE EJECUCIÓN PRESUPUESTAL POR AÑO (COL H vs. COL N POR AÑO J)
+     *************************************************************************/
+    function renderBudgetChartSection(silos) {
+      const filtersWrap = document.getElementById('budgetProjectFilters');
+      const canvasWrap = document.getElementById('budgetChartCanvas');
+      const legendWrap = document.getElementById('budgetChartLegend');
+
+      if (!silos.length) {
+        canvasWrap.innerHTML = `<div class="p-8 text-center text-xs text-slate-500">Sin datos presupuestales disponibles.</div>`;
+        return;
+      }
+
+      // Seleccionar siempre un proyecto individual válido (por defecto el primero)
+      if (!state.budgetProjectFilter || !silos.some((s) => s.key === state.budgetProjectFilter)) {
+        state.budgetProjectFilter = silos[0].key;
+      }
+
+      const activeSilo = silos.find((s) => s.key === state.budgetProjectFilter) || silos[0];
+
+      // 1. Renderizar botones de filtro solo por proyecto individual
+      filtersWrap.innerHTML = silos
+        .map((silo) => {
+          const isActive = state.budgetProjectFilter === silo.key;
+          const shortCode = formatShortCode(silo.code);
+          return `
+            <button
+              onclick="setBudgetProjectFilter('${escapeQuotes(silo.key)}')"
+              title="Código completo: ${escapeHtml(silo.code)} — ${escapeHtml(silo.name)}"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+                isActive
+                  ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                  : 'bg-white text-slate-700 border-slate-200 hover:bg-amber-50 hover:border-amber-300'
+              }"
+            >
+              <span class="px-1.5 py-0.5 rounded-md font-mono text-[10px] ${
+                isActive ? 'bg-amber-400/20 text-amber-300' : 'bg-slate-100 text-slate-600'
+              }">${escapeHtml(shortCode)}</span>
+              <span class="truncate max-w-[180px]">${escapeHtml(truncate(silo.name, 26))}</span>
+            </button>
+          `;
+        })
+        .join('');
+
+      // 2. Agrupar presupuestos por Año (Col J) para el proyecto seleccionado
+      const yearMap = new Map();
+      activeSilo.rows.forEach((row) => {
+        const yr = row.yearLabel || 'Sin año';
+        if (!yearMap.has(yr)) {
+          yearMap.set(yr, {
+            year: yr,
+            totalAssigned: 0,
+            totalExecuted: 0,
+            projectName: activeSilo.name,
+            projectCode: activeSilo.code
+          });
+        }
+        const entry = yearMap.get(yr);
+        entry.totalAssigned += row.budgetAssigned || 0;
+        entry.totalExecuted += row.budgetExecuted || 0;
+      });
+
+      const yearDataList = Array.from(yearMap.values()).sort((a, b) => compareYearLabels(a.year, b.year));
+      cachedBudgetDataByYear = yearDataList;
+
+      // 3. Actualizar tarjetas de totales del proyecto activo (en Millones de pesos COP)
+      const grandAssigned = yearDataList.reduce((acc, y) => acc + y.totalAssigned, 0);
+      const grandExecuted = yearDataList.reduce((acc, y) => acc + y.totalExecuted, 0);
+      const grandPct = grandAssigned > 0 ? round1((grandExecuted / grandAssigned) * 100) : 0;
+
+      document.getElementById('budgetTotalAssigned').textContent = formatMillionsShort(grandAssigned);
+      document.getElementById('budgetTotalExecuted').textContent = formatMillionsShort(grandExecuted);
+      document.getElementById('budgetTotalExecPct').textContent = `${grandPct.toFixed(1)}%`;
+
+      if (!yearDataList.length || (grandAssigned === 0 && grandExecuted === 0)) {
+        canvasWrap.innerHTML = `
+          <div class="p-8 text-center text-xs text-slate-500 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+            No se registran valores de presupuesto asignado o ejecutado para este proyecto.
+          </div>
+        `;
+        legendWrap.innerHTML = '';
+        return;
+      }
+
+      // 4. Dimensiones y escala de la gráfica SVG
+      const maxVal = Math.max(
+        ...yearDataList.map((y) => Math.max(y.totalAssigned, y.totalExecuted)),
+        1
+      );
+      const niceMax = computeNiceAxisMax(maxVal);
+
+      const svgHeight = 355;
+      const padLeft = 86;
+      const padRight = 32;
+      const padTop = 62;
+      const padBottom = 56;
+      const plotH = svgHeight - padTop - padBottom;
+      const baseY = padTop + plotH;
+
+      const minGroupWidth = 148;
+      const svgWidth = Math.max(760, padLeft + padRight + yearDataList.length * minGroupWidth);
+      const plotW = svgWidth - padLeft - padRight;
+      const groupSlotW = plotW / yearDataList.length;
+
+      // Líneas de cuadrícula horizontales (Eje Y en Millones de pesos)
+      const ticks = 5;
+      let gridLinesSvg = '';
+      for (let i = 0; i <= ticks; i++) {
+        const ratio = i / ticks;
+        const val = niceMax * ratio;
+        const yPos = baseY - ratio * plotH;
+        gridLinesSvg += `
+          <line
+            x1="${padLeft}" y1="${yPos}"
+            x2="${svgWidth - padRight}" y2="${yPos}"
+            stroke="${i === 0 ? '#94a3b8' : '#e2e8f0'}"
+            stroke-width="${i === 0 ? '1.5' : '1'}"
+            stroke-dasharray="${i === 0 ? 'none' : '4 4'}"
+          />
+          <text
+            x="${padLeft - 10}" y="${yPos + 4}"
+            text-anchor="end"
+            fill="#64748b"
+            font-size="10.5"
+            font-family="JetBrains Mono, monospace"
+            font-weight="600"
+          >
+            ${escapeHtml(formatAxisMillions(val))}
+          </text>
+        `;
+      }
+
+      // Barras pareadas con colores fijos: Ámbar (Asignado) y Esmeralda (Ejecutado)
+      let barsSvg = '';
+      yearDataList.forEach((yd, idx) => {
+        const groupCenterX = padLeft + groupSlotW * idx + groupSlotW / 2;
+        const barW = Math.min(44, Math.max(24, groupSlotW * 0.27));
+        const gapBetweenBars = 8;
+
+        const assignedX = groupCenterX - barW - gapBetweenBars / 2;
+        const executedX = groupCenterX + gapBetweenBars / 2;
+
+        const assignedH = yd.totalAssigned > 0 ? Math.max(4, (yd.totalAssigned / niceMax) * plotH) : 0;
+        const executedH = yd.totalExecuted > 0 ? Math.max(4, (yd.totalExecuted / niceMax) * plotH) : 0;
+
+        const assignedY = baseY - assignedH;
+        const executedY = baseY - executedH;
+
+        const highestTopY = Math.min(
+          assignedH > 0 ? assignedY : baseY,
+          executedH > 0 ? executedY : baseY
+        );
+
+        const execPct = yd.totalAssigned > 0 ? round1((yd.totalExecuted / yd.totalAssigned) * 100) : 0;
+
+        // Pill superior con Ejecutado y Asignado (sin porcentaje entre paréntesis)
+        const pillW = Math.min(groupSlotW - 10, 134);
+        const pillH = 38;
+        const pillX = groupCenterX - pillW / 2;
+        const pillY = Math.max(8, highestTopY - pillH - 10);
+
+        barsSvg += `
+          <g
+            class="cursor-pointer group"
+            onmouseenter="showBudgetTooltip(event, ${idx})"
+            onmousemove="moveBudgetTooltip(event)"
+            onmouseleave="hideBudgetTooltip()"
+          >
+            <!-- Área de captura interactiva del año -->
+            <rect
+              x="${padLeft + groupSlotW * idx + 4}"
+              y="${padTop - 44}"
+              width="${groupSlotW - 8}"
+              height="${plotH + 88}"
+              rx="14"
+              fill="transparent"
+              class="hover:fill-amber-50/40 transition-colors"
+            />
+
+            <!-- Barra 1: Presupuesto Asignado (Col H) - Color fijo Ámbar Cobre -->
+            ${
+              assignedH > 0
+                ? `<rect
+                    x="${assignedX}"
+                    y="${assignedY}"
+                    width="${barW}"
+                    height="${assignedH}"
+                    rx="7"
+                    fill="url(#budgetAssignedGrad)"
+                  />`
+                : `<rect
+                    x="${assignedX}"
+                    y="${baseY - 2}"
+                    width="${barW}"
+                    height="2"
+                    fill="#fde68a"
+                  />`
+            }
+
+            <!-- Barra 2: Presupuesto Ejecutado (Col N) - Color fijo Esmeralda -->
+            ${
+              executedH > 0
+                ? `<rect
+                    x="${executedX}"
+                    y="${executedY}"
+                    width="${barW}"
+                    height="${executedH}"
+                    rx="7"
+                    fill="url(#budgetExecutedGrad)"
+                  />`
+                : `<rect
+                    x="${executedX}"
+                    y="${baseY - 2}"
+                    width="${barW}"
+                    height="2"
+                    fill="#a7f3d0"
+                  />`
+            }
+
+            <!-- Indicador superior sobre cada par de barras -->
+            <rect
+              x="${pillX}"
+              y="${pillY}"
+              width="${pillW}"
+              height="${pillH}"
+              rx="9"
+              fill="#ffffff"
+              stroke="#cbd5e1"
+              stroke-width="1"
+            />
+            <text
+              x="${groupCenterX}"
+              y="${pillY + 15}"
+              text-anchor="middle"
+              fill="#047857"
+              font-size="9.5"
+              font-family="JetBrains Mono, monospace"
+              font-weight="800"
+            >
+              Ejec: ${escapeHtml(formatMillionsShort(yd.totalExecuted))}
+            </text>
+            <text
+              x="${groupCenterX}"
+              y="${pillY + 29}"
+              text-anchor="middle"
+              fill="#b45309"
+              font-size="9"
+              font-family="JetBrains Mono, monospace"
+              font-weight="700"
+            >
+              Asig: ${escapeHtml(formatMillionsShort(yd.totalAssigned))}
+            </text>
+
+            <!-- Etiqueta Eje X: Año (Col J) + % ejecutado -->
+            <text
+              x="${groupCenterX}"
+              y="${baseY + 22}"
+              text-anchor="middle"
+              fill="#0f172a"
+              font-size="12.5"
+              font-family="JetBrains Mono, monospace"
+              font-weight="800"
+            >
+              ${escapeHtml(yd.year)}
+            </text>
+            <text
+              x="${groupCenterX}"
+              y="${baseY + 37}"
+              text-anchor="middle"
+              fill="#047857"
+              font-size="9.5"
+              font-family="JetBrains Mono, monospace"
+              font-weight="700"
+            >
+              ${execPct.toFixed(1)}% ejec.
+            </text>
+          </g>
+        `;
+      });
+
+      canvasWrap.innerHTML = `
+        <svg viewBox="0 0 ${svgWidth} ${svgHeight}" class="w-full h-auto max-h-[380px] select-none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="budgetAssignedGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#f59e0b" />
+              <stop offset="100%" stop-color="#b45309" />
+            </linearGradient>
+            <linearGradient id="budgetExecutedGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#10b981" />
+              <stop offset="100%" stop-color="#047857" />
+            </linearGradient>
+          </defs>
+          <!-- Etiqueta del Eje Y -->
+          <text
+            x="16"
+            y="${padTop + plotH / 2}"
+            transform="rotate(-90, 16, ${padTop + plotH / 2})"
+            text-anchor="middle"
+            fill="#64748b"
+            font-size="10.5"
+            font-family="Plus Jakarta Sans, sans-serif"
+            font-weight="700"
+          >
+            Millones de Pesos (COP)
+          </text>
+          ${gridLinesSvg}
+          ${barsSvg}
+        </svg>
+      `;
+
+      // 5. Leyenda limpia con pareja fija de dos colores (sin texto redundante de Millones COP)
+      legendWrap.innerHTML = `
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 font-bold">
+            <span class="w-3.5 h-3.5 rounded-sm inline-block" style="background: linear-gradient(180deg, #f59e0b, #b45309)"></span>
+            <span>Presupuesto Asignado</span>
+          </div>
+          <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 font-bold">
+            <span class="w-3.5 h-3.5 rounded-sm inline-block" style="background: linear-gradient(180deg, #10b981, #047857)"></span>
+            <span>Presupuesto Ejecutado</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function setBudgetProjectFilter(projectKey) {
+      state.budgetProjectFilter = projectKey;
+      const silos = buildHierarchy();
+      renderBudgetChartSection(silos);
+      lucide.createIcons();
+    }
+
+    function showBudgetTooltip(event, yearIdx) {
+      const yd = cachedBudgetDataByYear[yearIdx];
+      const tooltip = document.getElementById('budgetChartTooltip');
+      if (!yd || !tooltip) return;
+
+      const execPct = yd.totalAssigned > 0 ? round1((yd.totalExecuted / yd.totalAssigned) * 100) : 0;
+      const balance = yd.totalAssigned - yd.totalExecuted;
+
+      tooltip.innerHTML = `
+        <div class="flex items-center justify-between gap-2 border-b border-slate-700 pb-2">
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-amber-400 block">Año ${escapeHtml(yd.year)}</span>
+            <span class="text-xs font-extrabold text-white leading-snug">${escapeHtml(truncate(yd.projectName, 44))}</span>
+          </div>
+          <span class="px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-300 font-mono font-bold text-[11px] shrink-0">
+            ${execPct.toFixed(1)}%
+          </span>
+        </div>
+
+        <div class="space-y-2 pt-0.5">
+          <div class="flex items-start justify-between gap-2">
+            <span class="text-amber-300 font-semibold">Asignado:</span>
+            <div class="text-right font-mono">
+              <div class="font-bold text-white">${escapeHtml(formatMillionsLong(yd.totalAssigned))}</div>
+              <div class="text-[10px] text-slate-400">${escapeHtml(formatExactCOP(yd.totalAssigned))}</div>
+            </div>
+          </div>
+          <div class="flex items-start justify-between gap-2">
+            <span class="text-emerald-300 font-semibold">Ejecutado:</span>
+            <div class="text-right font-mono">
+              <div class="font-bold text-emerald-300">${escapeHtml(formatMillionsLong(yd.totalExecuted))}</div>
+              <div class="text-[10px] text-slate-400">${escapeHtml(formatExactCOP(yd.totalExecuted))}</div>
+            </div>
+          </div>
+          <div class="flex items-center justify-between gap-2 border-t border-slate-700/80 pt-1.5 text-[11px]">
+            <span class="text-slate-300">Por ejecutar:</span>
+            <span class="font-mono font-bold ${balance < 0 ? 'text-rose-300' : 'text-slate-200'}">
+              ${escapeHtml(formatMillionsShort(balance))}
+            </span>
+          </div>
+        </div>
+      `;
+
+      tooltip.classList.remove('hidden');
+      requestAnimationFrame(() => {
+        tooltip.classList.remove('opacity-0');
+        tooltip.classList.add('opacity-100');
+      });
+      moveBudgetTooltip(event);
+    }
+
+    function moveBudgetTooltip(event) {
+      const tooltip = document.getElementById('budgetChartTooltip');
+      if (!tooltip || tooltip.classList.contains('hidden')) return;
+
+      const offset = 16;
+      const rect = tooltip.getBoundingClientRect();
+      let left = event.clientX + offset;
+      let top = event.clientY + offset;
+
+      if (left + rect.width > window.innerWidth - 16) {
+        left = Math.max(16, event.clientX - rect.width - offset);
+      }
+      if (top + rect.height > window.innerHeight - 16) {
+        top = Math.max(16, event.clientY - rect.height - offset);
+      }
+
+      tooltip.style.left = `${left}px`;
+      tooltip.style.top = `${top}px`;
+    }
+
+    function hideBudgetTooltip() {
+      const tooltip = document.getElementById('budgetChartTooltip');
+      if (!tooltip) return;
+      tooltip.classList.remove('opacity-100');
+      tooltip.classList.add('opacity-0');
+      tooltip.classList.add('hidden');
+    }
+
+    /*************************************************************************
+     * SECCIÓN DE SILOS (DETALLE PROYECTOS DE INVERSIÓN)
+     *************************************************************************/
+    function renderSilosSection(silos) {
+      const container = document.getElementById('silosHorizontalGrid');
+      const backBtnHeader = document.getElementById('backToAllSilosBtn');
+      const activeControls = document.getElementById('activeSiloControls');
+      const titleEl = document.getElementById('silosSectionTitle');
+      const subtitleEl = document.getElementById('silosSectionSubtitle');
+      const expandBtnText = document.getElementById('expandAllBtnText');
+
+      if (!silos.length) {
+        container.innerHTML = `
+          <div class="col-span-full bg-white rounded-2xl p-8 text-center border border-slate-200 text-xs text-slate-500">
+            No se encontraron proyectos de inversión en la hoja seleccionada.
+          </div>
+        `;
+        return;
+      }
+
+      if (state.selectedSiloKey && !silos.some((s) => s.key === state.selectedSiloKey)) {
+        state.selectedSiloKey = null;
+      }
+
+      if (state.selectedSiloKey) {
+        backBtnHeader.classList.remove('hidden');
+        backBtnHeader.classList.add('inline-flex');
+        activeControls.classList.remove('hidden');
+        activeControls.classList.add('flex');
+
+        titleEl.textContent = 'Detalle Proyectos de Inversión';
+        subtitleEl.textContent = 'Navega de izquierda a derecha haciendo clic en cada nivel para desplegar sus raíces, años y actividades';
+        expandBtnText.textContent = state.expandAllInSilo ? 'Modo paso a paso' : 'Desplegar todo el Silo';
+
+        container.className = 'hidden';
+        container.innerHTML = '';
+      } else {
+        backBtnHeader.classList.add('hidden');
+        backBtnHeader.classList.remove('inline-flex');
+        activeControls.classList.add('hidden');
+        activeControls.classList.remove('flex');
+
+        titleEl.textContent = 'Detalle Proyectos de Inversión';
+        subtitleEl.textContent = 'Haz clic en un proyecto para aislarlo y explorar en cascada su Objetivo General, Objetivos Específicos, Productos por Año y Actividades';
+
+        container.className = 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4';
+        container.innerHTML = silos.map((silo, idx) => renderSiloCard(silo, idx)).join('');
+      }
+    }
+
+    function renderSiloCard(silo, idx) {
+      const gap = round1(silo.avgComp - silo.avgExp);
+      const shortCode = formatShortCode(silo.code);
+
+      let statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">Al día</span>`;
+      if (silo.avgComp > 100) {
+        statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200">Sobrecumpl.</span>`;
+      } else if (gap < -15) {
+        statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-800 border border-rose-200">Atención</span>`;
+      } else if (gap < -2) {
+        statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">En curso</span>`;
+      }
+
+      return `
+        <div
+          onclick="selectSilo('${escapeQuotes(silo.key)}')"
+          title="Código completo: ${escapeHtml(silo.code)}"
+          class="silo-card cursor-pointer flex flex-col justify-between group animate-root"
+          style="animation-delay: ${idx * 35}ms"
+        >
+          <div>
+            <div class="silo-dome" style="background: linear-gradient(90deg, ${silo.theme.main}, ${silo.theme.accent})"></div>
+
+            <div class="p-4 space-y-3">
+              <div class="flex items-start justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <div
+                    class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border"
+                    style="background: ${silo.theme.lightBg}; border-color: ${silo.theme.border}; color: ${silo.theme.main}"
+                  >
+                    <i data-lucide="${silo.theme.icon}" class="w-5 h-5"></i>
+                  </div>
+                  <span
+                    class="px-2 py-0.5 rounded-lg text-[11px] font-mono font-extrabold bg-slate-900 text-amber-300"
+                    title="Código completo: ${escapeHtml(silo.code)}"
+                  >
+                    ${escapeHtml(shortCode)}
+                  </span>
+                </div>
+
+                <div class="flex flex-col items-end gap-1">
+                  ${statusBadge}
+                  <span class="text-[10px] font-mono font-semibold text-slate-500">${silo.count} act.</span>
+                </div>
+              </div>
+
+              <div>
+                <h3 class="text-sm font-extrabold text-slate-900 group-hover:text-amber-800 transition-colors leading-snug">
+                  ${escapeHtml(silo.name)}
+                </h3>
+                <p class="text-[11px] text-slate-500 mt-1">
+                  ${silo.totalProducts} ${silo.totalProducts === 1 ? 'producto' : 'productos'} • ${silo.objGenerals.length} obj. gral.
+                </p>
+              </div>
+
+              <!-- Medidores de avance del Silo -->
+              <div class="space-y-2 pt-1">
+                <div class="space-y-1">
+                  <div class="flex justify-between text-[11px]">
+                    <span class="font-medium text-slate-600">% Esperado</span>
+                    <span class="font-mono font-bold text-amber-700">${silo.avgExp.toFixed(1)}%</span>
+                  </div>
+                  <div class="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                    <div class="h-full bg-amber-500 rounded-full" style="width: ${clamp(silo.avgExp, 0, 100)}%"></div>
+                  </div>
+                </div>
+
+                <div class="space-y-1">
+                  <div class="flex justify-between text-[11px]">
+                    <span class="font-medium text-slate-600">% Completado</span>
+                    <span class="font-mono font-bold ${silo.avgComp > 100 ? 'text-teal-700' : 'text-emerald-700'}">${silo.avgComp.toFixed(1)}%</span>
+                  </div>
+                  <div class="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                    <div class="h-full ${silo.avgComp > 100 ? 'bg-teal-600' : 'bg-emerald-600'} rounded-full" style="width: ${clamp(silo.avgComp, 0, 100)}%"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="px-4 py-2.5 bg-slate-50/90 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-slate-700 group-hover:bg-amber-50/60 group-hover:text-amber-900 transition-colors">
+            <span class="flex items-center gap-1.5">
+              <i data-lucide="git-branch" class="w-3.5 h-3.5 text-amber-700"></i>
+              <span>Explorar raíces</span>
+            </span>
+            <i data-lucide="arrow-right" class="w-3.5 h-3.5 transition-transform group-hover:translate-x-1"></i>
+          </div>
+        </div>
+      `;
+    }
+
+    /*************************************************************************
+     * ESPACIO DE RAÍCES Y SANKEY DE 5 NIVELES CON SCROLL HORIZONTAL SUAVE
+     *************************************************************************/
+    function renderRootsWorkspace(silos) {
+      const workspace = document.getElementById('rootsWorkspace');
+      const flexContainer = document.getElementById('sankeyColumnsFlex');
+
+      if (!state.selectedSiloKey) {
+        workspace.classList.add('hidden');
+        clearSankeySvg();
+        return;
+      }
+
+      const currentSilo = silos.find((s) => s.key === state.selectedSiloKey);
+      if (!currentSilo) {
+        workspace.classList.add('hidden');
+        clearSankeySvg();
+        return;
+      }
+
+      workspace.classList.remove('hidden');
+      renderBreadcrumbs(currentSilo);
+
+      const theme = currentSilo.theme;
+      const shortCode = formatShortCode(currentSilo.code);
+
+      // Nivel 2: Objetivos Generales (Col C)
+      const allObjGens = currentSilo.objGenerals;
+      const visibleObjGens =
+        state.expandAllInSilo || !state.selectedObjGenKey
+          ? allObjGens
+          : allObjGens.filter((g) => g.key === state.selectedObjGenKey);
+
+      const activeObjGens = state.expandAllInSilo
+        ? allObjGens
+        : state.selectedObjGenKey
+        ? allObjGens.filter((g) => g.key === state.selectedObjGenKey)
+        : [];
+
+      // Nivel 3: Objetivos Específicos (Col D)
+      const allObjSpecsInScope = activeObjGens.flatMap((g) => g.objSpecifics);
+      const visibleObjSpecs =
+        state.expandAllInSilo || !state.selectedObjSpecKey
+          ? allObjSpecsInScope
+          : allObjSpecsInScope.filter((d) => d.key === state.selectedObjSpecKey);
+
+      const activeObjSpecs = state.expandAllInSilo
+        ? allObjSpecsInScope
+        : state.selectedObjSpecKey
+        ? allObjSpecsInScope.filter((d) => d.key === state.selectedObjSpecKey)
+        : [];
+
+      // Nivel 4: Productos Principales (Col E) — dentro despliegan sus Años (Col J)
+      const allProductsInScope = activeObjSpecs.flatMap((d) => d.products);
+      const visibleProducts =
+        state.expandAllInSilo || !state.selectedProductKey
+          ? allProductsInScope
+          : allProductsInScope.filter((p) => p.key === state.selectedProductKey);
+
+      const activeProducts = state.expandAllInSilo
+        ? allProductsInScope
+        : state.selectedProductKey
+        ? allProductsInScope.filter((p) => p.key === state.selectedProductKey)
+        : [];
+
+      // Nivel 5: Actividades (Col G) del Año (Col J) seleccionado en Nivel 4
+      const activeYears = state.expandAllInSilo
+        ? activeProducts.flatMap((p) => p.years)
+        : state.selectedYearKey
+        ? activeProducts.flatMap((p) => p.years).filter((y) => y.key === state.selectedYearKey)
+        : [];
+
+      const rawActivities = activeYears.flatMap((y) => y.rows);
+      const visibleActivities = sortActivitiesList(rawActivities, state.activitySort);
+
+      const colsHtml = [];
+
+      // COLUMNA 1: SILO (Col A + Código 4 dígitos B)
+      colsHtml.push(`
+        <div id="col-level-1" class="level-col w-[290px] space-y-3">
+          <div class="px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-between">
+            <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-700">
+              Nivel 1 • Silo
+            </span>
+            <i data-lucide="cylinder" class="w-3.5 h-3.5 text-amber-700"></i>
+          </div>
+
+          <div
+            id="sankey-root-silo"
+            data-node-id="root-silo"
+            class="root-node active-root rounded-2xl p-4 space-y-3"
+            style="--node-accent: ${theme.main}; border-top: 5px solid ${theme.main}"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <div
+                class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                style="background: ${theme.lightBg}; color: ${theme.main}"
+              >
+                <i data-lucide="${theme.icon}" class="w-4 h-4"></i>
+              </div>
+              <span
+                class="px-2.5 py-0.5 rounded-lg text-[11px] font-mono font-extrabold bg-slate-900 text-amber-300"
+                title="Código completo: ${escapeHtml(currentSilo.code)}"
+              >
+                ${escapeHtml(shortCode)}
+              </span>
+            </div>
+
+            <h3 class="text-sm font-extrabold text-slate-900 leading-snug">
+              ${escapeHtml(currentSilo.name)}
+            </h3>
+
+            <div class="space-y-1.5 text-xs bg-slate-50 rounded-xl p-3 border border-slate-200/80">
+              <div class="flex justify-between">
+                <span class="text-slate-500">Productos:</span>
+                <span class="font-mono font-bold text-slate-800">${currentSilo.totalProducts}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-500">Actividades:</span>
+                <span class="font-mono font-bold text-slate-800">${currentSilo.count}</span>
+              </div>
+              <div class="flex justify-between pt-1 border-t border-slate-200/70">
+                <span class="text-slate-500">% Esperado:</span>
+                <span class="font-mono font-bold text-amber-700">${currentSilo.avgExp.toFixed(1)}%</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-500">% Completado:</span>
+                <span class="font-mono font-bold ${currentSilo.avgComp > 100 ? 'text-teal-700' : 'text-emerald-700'}">${currentSilo.avgComp.toFixed(1)}%</span>
+              </div>
+            </div>
+
+            <button
+              onclick="resetToAllSilos()"
+              class="w-full py-2 px-3 rounded-xl text-[11px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center gap-1.5 transition-colors"
+            >
+              <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+              <span>Cambiar de Proyecto</span>
+            </button>
+          </div>
+        </div>
+      `);
+
+      // COLUMNA 2: OBJETIVO GENERAL (Col C)
+      colsHtml.push(`
+        <div id="col-level-2" class="level-col w-[320px] space-y-3">
+          <div class="px-3 py-1.5 rounded-xl bg-amber-50/90 border border-amber-200 flex items-center justify-between">
+            <span class="text-[11px] font-extrabold uppercase tracking-wider text-amber-900">
+              Nivel 2 • Objetivo General
+            </span>
+            ${
+              state.selectedObjGenKey && !state.expandAllInSilo && allObjGens.length > 1
+                ? `<button onclick="clearObjGenSelection()" class="text-[10px] font-bold text-amber-800 underline hover:text-amber-950">Ver todos (${allObjGens.length})</button>`
+                : `<span class="text-[10px] font-mono font-semibold text-amber-800">${visibleObjGens.length}</span>`
+            }
+          </div>
+
+          <div class="space-y-3">
+            ${visibleObjGens
+              .map((og, idx) => {
+                const isSelected = state.expandAllInSilo || state.selectedObjGenKey === og.key;
+                return `
+                  <div
+                    id="node-c-${idx}"
+                    data-node-type="c"
+                    data-node-key="${escapeHtml(og.key)}"
+                    data-parent-key="root-silo"
+                    data-weight="${og.count}"
+                    onclick="selectObjGen('${escapeQuotes(og.key)}')"
+                    class="root-node animate-root rounded-2xl p-4 cursor-pointer border-l-4 space-y-3 ${isSelected ? 'active-root' : ''}"
+                    style="--node-accent: ${theme.main}; border-left-color: ${isSelected ? theme.main : '#cbd5e1'}; animation-delay: ${idx * 30}ms"
+                  >
+                    <div class="flex items-start justify-between gap-2">
+                      <span class="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-amber-800">
+                        <i data-lucide="target" class="w-3.5 h-3.5"></i>
+                        <span>Obj. General</span>
+                      </span>
+                      <span class="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                        ${og.objSpecifics.length} obj. esp.
+                      </span>
+                    </div>
+
+                    <h4 class="text-xs sm:text-sm font-extrabold text-slate-900 leading-snug">
+                      ${escapeHtml(og.name)}
+                    </h4>
+
+                    ${renderMiniProgressBox(og.avgExp, og.avgComp)}
+
+                    <div class="flex items-center justify-end text-[10px] pt-0.5">
+                      <span class="font-bold ${isSelected ? 'text-amber-800' : 'text-slate-600'}">
+                        ${isSelected ? 'Objetivos Específicos desplegados →' : 'Ver Objetivos Específicos →'}
+                      </span>
+                    </div>
+                  </div>
+                `;
+              })
+              .join('')}
+          </div>
+        </div>
+      `);
+
+      // COLUMNA 3: OBJETIVOS ESPECÍFICOS (Col D)
+      if (activeObjGens.length > 0) {
+        colsHtml.push(`
+          <div id="col-level-3" class="level-col w-[330px] space-y-3">
+            <div class="px-3 py-1.5 rounded-xl bg-orange-50/90 border border-orange-200 flex items-center justify-between">
+              <span class="text-[11px] font-extrabold uppercase tracking-wider text-orange-900">
+                Nivel 3 • Objetivos Específicos
+              </span>
+              ${
+                state.selectedObjSpecKey && !state.expandAllInSilo && allObjSpecsInScope.length > 1
+                  ? `<button onclick="clearObjSpecSelection()" class="text-[10px] font-bold text-orange-800 underline hover:text-orange-950">Ver todos (${allObjSpecsInScope.length})</button>`
+                  : `<span class="text-[10px] font-mono font-semibold text-orange-800">${visibleObjSpecs.length}</span>`
+              }
+            </div>
+
+            <div class="space-y-3">
+              ${visibleObjSpecs
+                .map((os, idx) => {
+                  const isSelected = state.expandAllInSilo || state.selectedObjSpecKey === os.key;
+                  return `
+                    <div
+                      id="node-d-${idx}"
+                      data-node-type="d"
+                      data-node-key="${escapeHtml(os.key)}"
+                      data-parent-key="${escapeHtml(os.parentKey)}"
+                      data-weight="${os.count}"
+                      onclick="selectObjSpec('${escapeQuotes(os.key)}')"
+                      class="root-node animate-root rounded-2xl p-4 cursor-pointer border-l-4 space-y-3 ${isSelected ? 'active-root' : ''}"
+                      style="--node-accent: #ea580c; border-left-color: ${isSelected ? '#ea580c' : '#cbd5e1'}; animation-delay: ${idx * 30}ms"
+                    >
+                      <div class="flex items-start justify-between gap-2">
+                        <span class="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-orange-800">
+                          <i data-lucide="git-branch" class="w-3.5 h-3.5"></i>
+                          <span>Obj. Específico</span>
+                        </span>
+                        <span class="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                          ${os.products.length} ${os.products.length === 1 ? 'prod.' : 'prods.'}
+                        </span>
+                      </div>
+
+                      <h4 class="text-xs sm:text-sm font-extrabold text-slate-900 leading-snug">
+                        ${escapeHtml(os.name)}
+                      </h4>
+
+                      ${renderMiniProgressBox(os.avgExp, os.avgComp)}
+
+                      <div class="flex items-center justify-end text-[10px] pt-0.5">
+                        <span class="font-bold ${isSelected ? 'text-orange-800' : 'text-slate-600'}">
+                          ${isSelected ? 'Productos desplegados →' : 'Ver Productos Principales →'}
+                        </span>
+                      </div>
+                    </div>
+                  `;
+                })
+                .join('')}
+            </div>
+          </div>
+        `);
+      }
+
+      // COLUMNA 4: PRODUCTO PRINCIPAL (Col E) + DESPLIEGUE INTERNO DE AÑOS (Col J)
+      if (activeObjSpecs.length > 0) {
+        colsHtml.push(`
+          <div id="col-level-4" class="level-col w-[360px] space-y-3">
+            <div class="px-3 py-1.5 rounded-xl bg-emerald-50/90 border border-emerald-200 flex items-center justify-between">
+              <span class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-900">
+                Nivel 4 • Producto Principal
+              </span>
+              ${
+                state.selectedProductKey && !state.expandAllInSilo && allProductsInScope.length > 1
+                  ? `<button onclick="clearProductSelection()" class="text-[10px] font-bold text-emerald-800 underline hover:text-emerald-950">Ver todos (${allProductsInScope.length})</button>`
+                  : `<span class="text-[10px] font-mono font-semibold text-emerald-800">${visibleProducts.length}</span>`
+              }
+            </div>
+
+            <div class="space-y-3">
+              ${visibleProducts
+                .map((prod, idx) => {
+                  const isProdOpen = state.expandAllInSilo || state.selectedProductKey === prod.key;
+                  return `
+                    <div
+                      id="node-e-${idx}"
+                      data-node-type="e"
+                      data-node-key="${escapeHtml(prod.key)}"
+                      data-parent-key="${escapeHtml(prod.parentKey)}"
+                      data-weight="${prod.count}"
+                      onclick="selectProduct('${escapeQuotes(prod.key)}')"
+                      class="root-node animate-root rounded-2xl p-4 cursor-pointer border-l-4 space-y-3 ${isProdOpen ? 'active-root' : ''}"
+                      style="--node-accent: #047857; border-left-color: ${isProdOpen ? '#047857' : '#cbd5e1'}; animation-delay: ${idx * 30}ms"
+                    >
+                      <div class="flex items-start justify-between gap-2">
+                        <span class="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-800">
+                          <i data-lucide="package" class="w-3.5 h-3.5"></i>
+                          <span>Producto Principal</span>
+                        </span>
+                        <span class="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                          ${prod.years.length} ${prod.years.length === 1 ? 'año' : 'años'} • ${prod.count} act.
+                        </span>
+                      </div>
+
+                      <h4 class="text-xs sm:text-sm font-extrabold text-slate-900 leading-snug">
+                        ${escapeHtml(prod.name)}
+                      </h4>
+
+                      ${renderMiniProgressBox(prod.avgExp, prod.avgComp)}
+
+                      ${
+                        isProdOpen
+                          ? `
+                            <!-- Despliegue interno de Años (Col J) dentro de la tarjeta del Producto Principal -->
+                            <div class="pt-2.5 mt-2 border-t border-slate-200/80 space-y-2" onclick="event.stopPropagation()">
+                              <div class="flex items-center justify-between text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                                <span class="flex items-center gap-1">
+                                  <i data-lucide="calendar" class="w-3 h-3 text-emerald-700"></i>
+                                  <span>Selecciona un año para ver Actividades</span>
+                                </span>
+                              </div>
+                              <div class="space-y-2">
+                                ${prod.years
+                                  .map((yr, yIdx) => {
+                                    const isYrActive = state.expandAllInSilo || state.selectedYearKey === yr.key;
+                                    return `
+                                      <div
+                                        id="node-yr-${idx}-${yIdx}"
+                                        data-node-type="year"
+                                        data-node-key="${escapeHtml(yr.key)}"
+                                        data-parent-key="${escapeHtml(prod.key)}"
+                                        onclick="selectProductYear('${escapeQuotes(prod.key)}', '${escapeQuotes(yr.key)}')"
+                                        class="year-subnode rounded-xl p-3 cursor-pointer border ${
+                                          isYrActive
+                                            ? 'active-year bg-emerald-50/90 border-emerald-400'
+                                            : 'bg-slate-50 hover:bg-amber-50/70 border-slate-200'
+                                        }"
+                                      >
+                                        <div class="flex items-center justify-between gap-2 mb-1.5">
+                                          <div class="flex items-center gap-1.5">
+                                            <span class="px-2 py-0.5 rounded-md font-mono text-xs font-extrabold ${
+                                              isYrActive ? 'bg-emerald-700 text-white' : 'bg-slate-900 text-amber-300'
+                                            }">
+                                              ${escapeHtml(yr.yearLabel)}
+                                            </span>
+                                            <span class="text-[10px] font-mono text-slate-500 font-semibold">
+                                              ${yr.count} ${yr.count === 1 ? 'actividad' : 'actividades'}
+                                            </span>
+                                          </div>
+                                          <span class="text-[10px] font-bold ${isYrActive ? 'text-emerald-800' : 'text-slate-500'}">
+                                            ${isYrActive ? 'Abierto →' : 'Ver →'}
+                                          </span>
+                                        </div>
+
+                                        <div class="grid grid-cols-2 gap-2 text-[10px]">
+                                          <div class="bg-white/90 rounded-lg px-2 py-1 border border-amber-200/70 flex items-center justify-between">
+                                            <span class="text-slate-500 font-semibold">Esp:</span>
+                                            <span class="font-mono font-extrabold text-amber-700">${yr.avgExp.toFixed(1)}%</span>
+                                          </div>
+                                          <div class="bg-white/90 rounded-lg px-2 py-1 border border-emerald-200/70 flex items-center justify-between">
+                                            <span class="text-slate-500 font-semibold">Comp:</span>
+                                            <span class="font-mono font-extrabold ${yr.avgComp > 100 ? 'text-teal-700' : 'text-emerald-700'}">${yr.avgComp.toFixed(1)}%</span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    `;
+                                  })
+                                  .join('')}
+                              </div>
+                            </div>
+                          `
+                          : `
+                            <div class="flex items-center justify-end text-[10px] pt-0.5">
+                              <span class="font-bold text-slate-600">Desplegar años (${prod.years.length}) →</span>
+                            </div>
+                          `
+                      }
+                    </div>
+                  `;
+                })
+                .join('')}
+            </div>
+          </div>
+        `);
+      }
+
+      // COLUMNA 5: ACTIVIDADES (Col G) + ORDENADOR
+      if (activeYears.length > 0) {
+        colsHtml.push(`
+          <div id="col-level-5" class="level-col w-[400px] space-y-3">
+            <div class="px-3 py-2 rounded-xl bg-slate-900 text-white space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-extrabold uppercase tracking-wider">
+                  Nivel 5 • Actividades
+                </span>
+                <span class="text-[10px] font-mono text-amber-300 font-bold">
+                  ${visibleActivities.length} ${visibleActivities.length === 1 ? 'actividad' : 'actividades'}
+                </span>
+              </div>
+
+              <!-- Ordenador de Actividades: Original | Mayor cumplimiento | Mayor retraso/rezago -->
+              <div class="flex items-center gap-1 pt-1 border-t border-slate-700/80">
+                <button
+                  onclick="setActivitySort('default')"
+                  class="flex-1 py-1 px-2 rounded-lg text-[10px] font-bold transition-colors ${
+                    state.activitySort === 'default'
+                      ? 'bg-amber-500 text-slate-950'
+                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                  }"
+                >
+                  Original
+                </button>
+                <button
+                  onclick="setActivitySort('best')"
+                  class="flex-1 py-1 px-2 rounded-lg text-[10px] font-bold transition-colors ${
+                    state.activitySort === 'best'
+                      ? 'bg-emerald-500 text-slate-950'
+                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                  }"
+                >
+                  Mayor cumpl.
+                </button>
+                <button
+                  onclick="setActivitySort('delay')"
+                  class="flex-1 py-1 px-2 rounded-lg text-[10px] font-bold transition-colors ${
+                    state.activitySort === 'delay'
+                      ? 'bg-rose-500 text-white'
+                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                  }"
+                >
+                  Mayor rezago
+                </button>
+              </div>
+            </div>
+
+            <div class="space-y-3">
+              ${visibleActivities.map((act, idx) => renderActivityCard(act, idx)).join('')}
+            </div>
+          </div>
+        `);
+      }
+
+      flexContainer.innerHTML = colsHtml.join('');
+    }
+
+    function sortActivitiesList(list, sortMode) {
+      const copy = [...list];
+      if (sortMode === 'best') {
+        return copy.sort((a, b) => {
+          if (b.completedPct !== a.completedPct) return b.completedPct - a.completedPct;
+          return (b.completedPct - b.expectedPct) - (a.completedPct - a.expectedPct);
+        });
+      }
+      if (sortMode === 'delay') {
+        return copy.sort((a, b) => {
+          const gapA = a.completedPct - a.expectedPct;
+          const gapB = b.completedPct - b.expectedPct;
+          if (gapA !== gapB) return gapA - gapB;
+          return a.completedPct - b.completedPct;
+        });
+      }
+      return copy.sort((a, b) => a.rowIndex - b.rowIndex);
+    }
+
+    function renderMiniProgressBox(avgExp, avgComp) {
+      const isOver = avgComp > 100;
+      return `
+        <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1.5">
+          <div class="flex justify-between text-[10px]">
+            <span class="text-slate-600 font-semibold">% Esperado: <strong class="text-amber-700 font-mono">${avgExp.toFixed(1)}%</strong></span>
+            <span class="text-slate-600 font-semibold">% Completado: <strong class="${isOver ? 'text-teal-700' : 'text-emerald-700'} font-mono">${avgComp.toFixed(1)}%</strong></span>
+          </div>
+          <div class="w-full h-2 rounded-full bg-slate-200 overflow-hidden">
+            <div class="h-full ${isOver ? 'bg-teal-600' : 'bg-emerald-600'} rounded-full" style="width: ${clamp(avgComp, 0, 100)}%"></div>
+          </div>
+        </div>
+      `;
+    }
+
+    /**
+     * Tarjeta de Actividad (Nivel 5) simplificada:
+     * - Sin etiquetas redundantes de "Actividad" ni "Año".
+     * - Solo muestra "Peso en el Año" (sin duplicar "Aporte").
+     */
+    function renderActivityCard(act, idx) {
+      const gap = round1(act.completedPct - act.expectedPct);
+      const isOver100 = act.completedPct > 100;
+
+      let badgeClass = 'bg-emerald-50 text-emerald-800 border-emerald-200';
+      let statusLabel = 'Al Día';
+      let leftBorderColor = '#059669';
+
+      if (isOver100) {
+        badgeClass = 'bg-teal-50 text-teal-800 border-teal-200';
+        statusLabel = 'Sobrecumpl.';
+        leftBorderColor = '#0d9488';
+      } else if (act.completedPct >= 99.9) {
+        statusLabel = 'Completada';
+        leftBorderColor = '#047857';
+      } else if (gap < -15) {
+        badgeClass = 'bg-rose-50 text-rose-800 border-rose-200';
+        statusLabel = 'Con Rezago';
+        leftBorderColor = '#e11d48';
+      } else if (gap < -2) {
+        badgeClass = 'bg-amber-50 text-amber-800 border-amber-200';
+        statusLabel = 'En Seguimiento';
+        leftBorderColor = '#d97706';
+      }
+
+      return `
+        <div
+          id="node-g-${idx}"
+          data-node-type="g"
+          data-node-id="${escapeHtml(act.id)}"
+          data-parent-key="${escapeHtml(act.yearKey)}"
+          data-weight="${act.weightPct > 0 ? act.weightPct : 10}"
+          onclick="openDetailModal('${escapeQuotes(act.id)}')"
+          class="root-node animate-root rounded-2xl p-4 cursor-pointer border-l-4 space-y-3"
+          style="border-left-color: ${leftBorderColor}; animation-delay: ${idx * 25}ms"
+        >
+          <div class="flex items-start justify-between gap-2">
+            <h4 class="text-xs sm:text-sm font-extrabold text-slate-900 leading-relaxed">
+              ${escapeHtml(act.activityName)}
+            </h4>
+
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border shrink-0 ${badgeClass}">
+              ${statusLabel} (${gap >= 0 ? '+' : ''}${gap.toFixed(1)}%)
+            </span>
+          </div>
+
+          <!-- Peso de la Actividad en el Año (Columna I) -->
+          <div class="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/80">
+            <div class="flex items-center gap-1.5 text-[11px] font-bold text-amber-950">
+              <i data-lucide="scale" class="w-3.5 h-3.5 text-amber-700 shrink-0"></i>
+              <span>Peso en el Año:</span>
+            </div>
+            <span class="px-2 py-0.5 rounded-lg bg-white border border-amber-300 text-xs font-extrabold font-mono text-amber-900">
+              ${act.weightPct > 0 ? `${act.weightPct}%` : escapeHtml(act.fmtI)}
+            </span>
+          </div>
+
+          <!-- Indicadores de % Esperado (Cols O y P) y % Completado (L / K * 100) -->
+          <div class="grid grid-cols-2 gap-2.5">
+            <!-- % ESPERADO -->
+            <div class="p-3 rounded-xl bg-amber-50/60 border border-amber-200/80 space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-extrabold text-amber-900 uppercase">% Esperado</span>
+                <i data-lucide="calendar-clock" class="w-3 h-3 text-amber-700"></i>
+              </div>
+              <div class="text-lg font-extrabold font-mono text-amber-800">
+                ${act.expectedPct.toFixed(1)}%
+              </div>
+              <div class="w-full h-1.5 rounded-full bg-amber-100 overflow-hidden">
+                <div class="h-full bg-amber-600 rounded-full" style="width: ${clamp(act.expectedPct, 0, 100)}%"></div>
+              </div>
+              <div class="text-[10px] text-amber-900/75 font-mono truncate" title="${escapeHtml(act.fmtO)} → ${escapeHtml(act.fmtP)}">
+                ${formatDateShort(act.startDate)} → ${formatDateShort(act.endDate)}
+              </div>
+            </div>
+
+            <!-- % COMPLETADO (L / K * 100) -->
+            <div class="p-3 rounded-xl ${isOver100 ? 'bg-teal-50/70 border-teal-200' : 'bg-emerald-50/60 border-emerald-200/80'} border space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-extrabold ${isOver100 ? 'text-teal-900' : 'text-emerald-900'} uppercase">% Completado</span>
+                <i data-lucide="zap" class="w-3 h-3 ${isOver100 ? 'text-teal-700' : 'text-emerald-700'}"></i>
+              </div>
+              <div class="text-lg font-extrabold font-mono ${isOver100 ? 'text-teal-800' : 'text-emerald-800'}">
+                ${act.completedPct.toFixed(1)}%
+              </div>
+              <div class="w-full h-1.5 rounded-full ${isOver100 ? 'bg-teal-100' : 'bg-emerald-100'} overflow-hidden">
+                <div class="h-full ${isOver100 ? 'bg-teal-600' : 'bg-emerald-600'} rounded-full" style="width: ${clamp(act.completedPct, 0, 100)}%"></div>
+              </div>
+              <div class="text-[10px] ${isOver100 ? 'text-teal-900/75' : 'text-emerald-900/75'} font-mono truncate">
+                ${escapeHtml(act.fmtL)} / ${escapeHtml(act.fmtK)}
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-100">
+            <span>Ver ficha técnica de la actividad</span>
+            <span class="text-amber-800 font-bold">Detalle →</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderBreadcrumbs(currentSilo) {
+      const container = document.getElementById('breadcrumbTrail');
+      const parts = [];
+
+      parts.push(`
+        <button onclick="resetToAllSilos()" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition-colors">
+          <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-slate-600"></i>
+          <span>Todos los Silos</span>
+        </button>
+      `);
+
+      parts.push(`<i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-400"></i>`);
+      parts.push(`
+        <button onclick="focusColumnSmoothly('col-level-1')" title="Código completo: ${escapeHtml(currentSilo.code)}" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 font-bold">
+          <span class="font-mono text-[10px]">${escapeHtml(formatShortCode(currentSilo.code))}</span>
+          <span>${escapeHtml(truncate(currentSilo.name, 26))}</span>
+        </button>
+      `);
+
+      if (state.expandAllInSilo) {
+        parts.push(`<i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-400"></i>`);
+        parts.push(`
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold">
+            Árbol Completo Desplegado
+          </span>
+        `);
+      } else if (state.selectedObjGenKey) {
+        const og = currentSilo.objGenerals.find((g) => g.key === state.selectedObjGenKey);
+        if (og) {
+          parts.push(`<i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-400"></i>`);
+          parts.push(`
+            <button onclick="focusColumnSmoothly('col-level-2')" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-100/70 hover:bg-amber-100 text-amber-900 border border-amber-300 font-semibold">
+              <span>Obj. Gen: ${escapeHtml(truncate(og.name, 22))}</span>
+            </button>
+          `);
+
+          if (state.selectedObjSpecKey) {
+            const os = og.objSpecifics.find((d) => d.key === state.selectedObjSpecKey);
+            if (os) {
+              parts.push(`<i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-400"></i>`);
+              parts.push(`
+                <button onclick="focusColumnSmoothly('col-level-3')" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-900 border border-orange-200 font-semibold">
+                  <span>Obj. Esp: ${escapeHtml(truncate(os.name, 22))}</span>
+                </button>
+              `);
+
+              if (state.selectedProductKey) {
+                const pr = os.products.find((p) => p.key === state.selectedProductKey);
+                if (pr) {
+                  parts.push(`<i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-400"></i>`);
+                  parts.push(`
+                    <button onclick="focusColumnSmoothly('col-level-4')" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 font-semibold">
+                      <span>Prod: ${escapeHtml(truncate(pr.name, 22))}</span>
+                    </button>
+                  `);
+
+                  if (state.selectedYearKey) {
+                    const yr = pr.years.find((y) => y.key === state.selectedYearKey);
+                    if (yr) {
+                      parts.push(`<i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-400"></i>`);
+                      parts.push(`
+                        <button onclick="focusColumnSmoothly('col-level-5')" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-900 text-amber-300 font-mono font-bold">
+                          <span>Año ${escapeHtml(yr.yearLabel)}</span>
+                        </button>
+                      `);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      container.innerHTML = parts.join('');
+    }
+
+    /*************************************************************************
+     * CONEXIONES ORGÁNICAS TIPO RAÍCES Y SANKEY ENTRE LOS 5 NIVELES
+     *************************************************************************/
+    function clearSankeySvg() {
+      const svg = document.getElementById('sankeySvg');
+      if (svg) svg.innerHTML = '';
+    }
+
+    function drawRootConnections() {
+      const svg = document.getElementById('sankeySvg');
+      const stage = document.getElementById('sankeyStage');
+      if (!svg || !stage || !state.selectedSiloKey) return;
+
+      const stageRect = stage.getBoundingClientRect();
+      if (stageRect.width === 0 || stageRect.height === 0) return;
+
+      svg.setAttribute('width', stageRect.width);
+      svg.setAttribute('height', stageRect.height);
+      svg.setAttribute('viewBox', `0 0 ${stageRect.width} ${stageRect.height}`);
+
+      const defs = `
+        <defs>
+          <linearGradient id="vein-l1-l2" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#b45309" stop-opacity="0.80" />
+            <stop offset="100%" stop-color="#d97706" stop-opacity="0.72" />
+          </linearGradient>
+          <linearGradient id="vein-l2-l3" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#d97706" stop-opacity="0.78" />
+            <stop offset="100%" stop-color="#ea580c" stop-opacity="0.72" />
+          </linearGradient>
+          <linearGradient id="vein-l3-l4" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#ea580c" stop-opacity="0.75" />
+            <stop offset="100%" stop-color="#047857" stop-opacity="0.78" />
+          </linearGradient>
+          <linearGradient id="vein-l4-l5" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#047857" stop-opacity="0.82" />
+            <stop offset="100%" stop-color="#0f766e" stop-opacity="0.85" />
+          </linearGradient>
+        </defs>
+      `;
+
+      const elements = [];
+      const siloEl = document.getElementById('sankey-root-silo');
+      const cNodes = Array.from(stage.querySelectorAll('[data-node-type="c"]'));
+      const dNodes = Array.from(stage.querySelectorAll('[data-node-type="d"]'));
+      const eNodes = Array.from(stage.querySelectorAll('[data-node-type="e"]'));
+      const yearNodes = Array.from(stage.querySelectorAll('[data-node-type="year"]'));
+      const gNodes = Array.from(stage.querySelectorAll('[data-node-type="g"]'));
+
+      // 1. Nivel 1 (Silo) -> Nivel 2 (Objetivo General)
+      if (siloEl && cNodes.length) {
+        connectParentToChildren(
+          siloEl,
+          cNodes,
+          stageRect,
+          elements,
+          'url(#vein-l1-l2)',
+          '#b45309',
+          '#d97706',
+          (el) => state.expandAllInSilo || state.selectedObjGenKey === el.dataset.nodeKey
+        );
+      }
+
+      // 2. Nivel 2 (Obj. General) -> Nivel 3 (Obj. Específico)
+      if (cNodes.length && dNodes.length) {
+        cNodes.forEach((cEl) => {
+          const children = dNodes.filter((dEl) => dEl.dataset.parentKey === cEl.dataset.nodeKey);
+          if (children.length) {
+            connectParentToChildren(
+              cEl,
+              children,
+              stageRect,
+              elements,
+              'url(#vein-l2-l3)',
+              '#d97706',
+              '#ea580c',
+              (el) => state.expandAllInSilo || state.selectedObjSpecKey === el.dataset.nodeKey
+            );
+          }
+        });
+      }
+
+      // 3. Nivel 3 (Obj. Específico) -> Nivel 4 (Producto Principal)
+      if (dNodes.length && eNodes.length) {
+        dNodes.forEach((dEl) => {
+          const children = eNodes.filter((eEl) => eEl.dataset.parentKey === dEl.dataset.nodeKey);
+          if (children.length) {
+            connectParentToChildren(
+              dEl,
+              children,
+              stageRect,
+              elements,
+              'url(#vein-l3-l4)',
+              '#ea580c',
+              '#047857',
+              (el) => state.expandAllInSilo || state.selectedProductKey === el.dataset.nodeKey
+            );
+          }
+        });
+      }
+
+      // 4. Nivel 4 Sub-nodo Año (Col J) -> Nivel 5 (Actividades Col G, grosor proporcional al peso Col I)
+      if (yearNodes.length && gNodes.length) {
+        yearNodes.forEach((yrEl) => {
+          const children = gNodes.filter((gEl) => gEl.dataset.parentKey === yrEl.dataset.nodeKey);
+          if (children.length) {
+            connectParentToChildren(
+              yrEl,
+              children,
+              stageRect,
+              elements,
+              'url(#vein-l4-l5)',
+              '#047857',
+              '#0f766e',
+              () => true
+            );
+          }
+        });
+      }
+
+      svg.innerHTML = defs + elements.join('');
+    }
+
+    function connectParentToChildren(parentEl, childEls, stageRect, outArr, gradientStroke, startColor, endColor, isActiveFn) {
+      const totalWeight = childEls.reduce((acc, el) => acc + (parseFloat(el.dataset.weight) || 1), 0);
+
+      childEls.forEach((childEl, i) => {
+        const weight = parseFloat(childEl.dataset.weight) || 1;
+        const isActive = isActiveFn(childEl);
+        const strokeW = clamp((weight / Math.max(totalWeight, 1)) * 12 + 3.2, 3.2, 13.5);
+        const yOffsetRatio = childEls.length > 1 ? (i / (childEls.length - 1) - 0.5) * 0.42 : 0;
+
+        const { mainPath, subRootPath, startPt, endPt } = buildOrganicRootPaths(parentEl, childEl, stageRect, yOffsetRatio);
+
+        outArr.push(`
+          <path
+            d="${mainPath}"
+            class="root-vein-main"
+            stroke="${gradientStroke}"
+            stroke-width="${strokeW}"
+            stroke-opacity="${isActive ? '0.90' : '0.42'}"
+          />
+          <path
+            d="${subRootPath}"
+            class="root-vein-secondary"
+            stroke="${startColor}"
+            stroke-width="${Math.max(1.2, strokeW * 0.32)}"
+            stroke-opacity="${isActive ? '0.38' : '0.16'}"
+          />
+          <circle cx="${startPt.x}" cy="${startPt.y}" r="3.2" fill="${startColor}" />
+          <circle cx="${endPt.x}" cy="${endPt.y}" r="3.2" fill="${endColor}" />
+        `);
+
+        if (isActive) {
+          outArr.push(`<path d="${mainPath}" class="root-energy-pulse" stroke="#fef3c7" stroke-width="1.8" />`);
+        }
+      });
+    }
+
+    function buildOrganicRootPaths(sourceEl, targetEl, stageRect, sourceYRatio = 0) {
+      const sRect = sourceEl.getBoundingClientRect();
+      const tRect = targetEl.getBoundingClientRect();
+
+      const x1 = sRect.right - stageRect.left;
+      const y1 = sRect.top - stageRect.top + sRect.height * (0.5 + sourceYRatio);
+
+      const x2 = tRect.left - stageRect.left;
+      const y2 = tRect.top - stageRect.top + tRect.height * 0.5;
+
+      const dx = Math.max(Math.abs(x2 - x1) * 0.5, 22);
+      const midX = (x1 + x2) * 0.5;
+      const midY = (y1 + y2) * 0.5 + (y2 > y1 ? 7 : -7);
+
+      const mainPath = `M ${x1} ${y1} C ${x1 + dx * 0.65} ${y1}, ${midX - dx * 0.25} ${midY}, ${midX} ${midY} S ${x2 - dx * 0.55} ${y2}, ${x2} ${y2}`;
+      const subRootPath = `M ${x1} ${y1} C ${x1 + dx * 0.45} ${y1 + 10}, ${midX} ${midY - 9}, ${x2} ${y2}`;
+
+      return {
+        mainPath,
+        subRootPath,
+        startPt: { x: x1, y: y1 },
+        endPt: { x: x2, y: y2 }
+      };
+    }
+
+    /*************************************************************************
+     * NAVEGACIÓN POR CLIC Y SCROLL HORIZONTAL SUAVE
+     *************************************************************************/
+    function scrollStageBy(deltaX) {
+      const container = document.getElementById('sankeyScrollContainer');
+      if (!container) return;
+      container.scrollBy({ left: deltaX, behavior: 'smooth' });
+    }
+
+    function focusColumnSmoothly(colId) {
+      const container = document.getElementById('sankeyScrollContainer');
+      const targetCol = document.getElementById(colId);
+      if (!container || !targetCol) return;
+
+      const containerRect = container.getBoundingClientRect();
+      const colRect = targetCol.getBoundingClientRect();
+      const desiredOffset = container.scrollLeft + (colRect.left - containerRect.left) - 24;
+      container.scrollTo({ left: Math.max(0, desiredOffset), behavior: 'smooth' });
+    }
+
+    function selectSilo(siloKey) {
+      state.selectedSiloKey = siloKey;
+      state.budgetProjectFilter = siloKey; // Sincronizar gráfica presupuestal con el Silo elegido
+      state.selectedObjGenKey = null;
+      state.selectedObjSpecKey = null;
+      state.selectedProductKey = null;
+      state.selectedYearKey = null;
+      state.activitySort = 'default';
+      state.expandAllInSilo = false;
+      renderDashboard('col-level-1');
+    }
+
+    function resetToAllSilos() {
+      state.selectedSiloKey = null;
+      state.selectedObjGenKey = null;
+      state.selectedObjSpecKey = null;
+      state.selectedProductKey = null;
+      state.selectedYearKey = null;
+      state.activitySort = 'default';
+      state.expandAllInSilo = false;
+      renderDashboard();
+    }
+
+    function selectObjGen(objGenKey) {
+      state.expandAllInSilo = false;
+      if (state.selectedObjGenKey === objGenKey) {
+        state.selectedObjGenKey = null;
+        state.selectedObjSpecKey = null;
+        state.selectedProductKey = null;
+        state.selectedYearKey = null;
+        renderDashboard('col-level-2');
+      } else {
+        state.selectedObjGenKey = objGenKey;
+        state.selectedObjSpecKey = null;
+        state.selectedProductKey = null;
+        state.selectedYearKey = null;
+        renderDashboard('col-level-3');
+      }
+    }
+
+    function clearObjGenSelection() {
+      state.expandAllInSilo = false;
+      state.selectedObjGenKey = null;
+      state.selectedObjSpecKey = null;
+      state.selectedProductKey = null;
+      state.selectedYearKey = null;
+      renderDashboard('col-level-2');
+    }
+
+    function selectObjSpec(objSpecKey) {
+      state.expandAllInSilo = false;
+      if (state.selectedObjSpecKey === objSpecKey) {
+        state.selectedObjSpecKey = null;
+        state.selectedProductKey = null;
+        state.selectedYearKey = null;
+        renderDashboard('col-level-3');
+      } else {
+        state.selectedObjSpecKey = objSpecKey;
+        state.selectedProductKey = null;
+        state.selectedYearKey = null;
+        renderDashboard('col-level-4');
+      }
+    }
+
+    function clearObjSpecSelection() {
+      state.expandAllInSilo = false;
+      state.selectedObjSpecKey = null;
+      state.selectedProductKey = null;
+      state.selectedYearKey = null;
+      renderDashboard('col-level-3');
+    }
+
+    function selectProduct(productKey) {
+      state.expandAllInSilo = false;
+      if (state.selectedProductKey === productKey) {
+        state.selectedProductKey = null;
+        state.selectedYearKey = null;
+        renderDashboard('col-level-4');
+      } else {
+        state.selectedProductKey = productKey;
+        state.selectedYearKey = null;
+        renderDashboard('col-level-4');
+      }
+    }
+
+    function clearProductSelection() {
+      state.expandAllInSilo = false;
+      state.selectedProductKey = null;
+      state.selectedYearKey = null;
+      renderDashboard('col-level-4');
+    }
+
+    function selectProductYear(productKey, yearKey) {
+      state.expandAllInSilo = false;
+      state.selectedProductKey = productKey;
+      if (state.selectedYearKey === yearKey) {
+        state.selectedYearKey = null;
+        renderDashboard('col-level-4');
+      } else {
+        state.selectedYearKey = yearKey;
+        renderDashboard('col-level-5');
+      }
+    }
+
+    function setActivitySort(sortMode) {
+      state.activitySort = sortMode;
+      renderDashboard('col-level-5');
+    }
+
+    function toggleExpandAllInSilo() {
+      state.expandAllInSilo = !state.expandAllInSilo;
+      renderDashboard();
+    }
+
+    /*************************************************************************
+     * SECCIÓN DETALLE DE ACTIVIDADES (TABLA GLOBAL CON FILTROS EN ENCABEZADOS)
+     *************************************************************************/
+    function renderActivitiesTable() {
+      const projSelect = document.getElementById('tblFilterProject');
+      const prodSelect = document.getElementById('tblFilterProduct');
+      const yearSelect = document.getElementById('tblFilterYear');
+      const progSelect = document.getElementById('tblFilterProgress');
+      const expSelect = document.getElementById('tblFilterExpected');
+      const tbody = document.getElementById('activitiesTableBody');
+      const counterEl = document.getElementById('activitiesTableCounter');
+      const clearBtn = document.getElementById('clearTableFiltersBtn');
+
+      if (!tbody || !projSelect || !prodSelect || !yearSelect) return;
+
+      const f = state.tableFilters;
+
+      // 1. Opciones de Proyectos (todos los proyectos de inversión)
+      const projectMap = new Map();
+      allRows.forEach((r) => {
+        if (!projectMap.has(r.siloKey)) {
+          projectMap.set(r.siloKey, {
+            key: r.siloKey,
+            shortCode: formatShortCode(r.siloCode),
+            name: r.siloName
+          });
+        }
+      });
+      const projectOptions = Array.from(projectMap.values());
+      if (f.project !== 'ALL' && !projectMap.has(f.project)) {
+        f.project = 'ALL';
+      }
+      projSelect.innerHTML =
+        `<option value="ALL">Todos (${projectOptions.length})</option>` +
+        projectOptions
+          .map(
+            (p) =>
+              `<option value="${escapeHtml(p.key)}" ${f.project === p.key ? 'selected' : ''}>${escapeHtml(p.shortCode)} • ${escapeHtml(truncate(p.name, 42))}</option>`
+          )
+          .join('');
+
+      // 2. Opciones de Productos (en cascada según proyecto seleccionado)
+      const rowsForProducts = f.project === 'ALL' ? allRows : allRows.filter((r) => r.siloKey === f.project);
+      const productSet = new Set(rowsForProducts.map((r) => r.productName));
+      const productOptions = Array.from(productSet).sort((a, b) => a.localeCompare(b, 'es'));
+      if (f.product !== 'ALL' && !productSet.has(f.product)) {
+        f.product = 'ALL';
+      }
+      prodSelect.innerHTML =
+        `<option value="ALL">Todos (${productOptions.length})</option>` +
+        productOptions
+          .map(
+            (name) =>
+              `<option value="${escapeHtml(name)}" ${f.product === name ? 'selected' : ''}>${escapeHtml(truncate(name, 46))}</option>`
+          )
+          .join('');
+
+      // 3. Opciones de Años (en cascada según proyecto y producto seleccionados)
+      const rowsForYears = rowsForProducts.filter((r) => f.product === 'ALL' || r.productName === f.product);
+      const yearSet = new Set(rowsForYears.map((r) => r.yearLabel));
+      const yearOptions = Array.from(yearSet).sort(compareYearLabels);
+      if (f.year !== 'ALL' && !yearSet.has(f.year)) {
+        f.year = 'ALL';
+      }
+      yearSelect.innerHTML =
+        `<option value="ALL">Todos</option>` +
+        yearOptions
+          .map(
+            (yr) => `<option value="${escapeHtml(yr)}" ${f.year === yr ? 'selected' : ''}>${escapeHtml(yr)}</option>`
+          )
+          .join('');
+
+      // Sincronizar selects de métricas
+      if (progSelect) progSelect.value = f.progress;
+      if (expSelect) expSelect.value = f.expected;
+
+      // 4. Aplicar todos los filtros sobre todas las actividades
+      const activityQuery = f.activity.trim().toLowerCase();
+      let filtered = allRows.filter((r) => {
+        if (f.project !== 'ALL' && r.siloKey !== f.project) return false;
+        if (f.product !== 'ALL' && r.productName !== f.product) return false;
+        if (f.year !== 'ALL' && r.yearLabel !== f.year) return false;
+        if (activityQuery && !r.activityName.toLowerCase().includes(activityQuery)) return false;
+
+        if (f.progress === 'lag' && !(r.completedPct < r.expectedPct - 0.05)) return false;
+        if (f.progress === 'incomplete' && !(r.completedPct < 99.9)) return false;
+        if (f.progress === 'zero' && !(r.completedPct <= 0.01)) return false;
+        if (f.progress === 'ontrack' && !(r.completedPct >= r.expectedPct - 0.05)) return false;
+        if (f.progress === 'complete' && !(r.completedPct >= 99.9)) return false;
+        if (f.progress === 'over100' && !(r.completedPct > 100)) return false;
+
+        if (f.expected === 'gt0' && !(r.expectedPct > 0)) return false;
+        if (f.expected === 'eq100' && !(r.expectedPct >= 99.9)) return false;
+        if (f.expected === 'inprogress' && !(r.expectedPct > 0 && r.expectedPct < 99.9)) return false;
+        if (f.expected === 'eq0' && !(r.expectedPct <= 0.01)) return false;
+
+        return true;
+      });
+
+      // 5. Ordenar filas según columna seleccionada
+      const { key, dir } = state.tableSort;
+      const mult = dir === 'desc' ? -1 : 1;
+      if (key !== 'default') {
+        filtered = [...filtered].sort((a, b) => {
+          if (key === 'project') return a.siloName.localeCompare(b.siloName, 'es') * mult;
+          if (key === 'product') return a.productName.localeCompare(b.productName, 'es') * mult;
+          if (key === 'year') return compareYearLabels(a.yearLabel, b.yearLabel) * mult;
+          if (key === 'activity') return a.activityName.localeCompare(b.activityName, 'es') * mult;
+          if (key === 'completedPct') return (a.completedPct - b.completedPct) * mult;
+          if (key === 'expectedPct') return (a.expectedPct - b.expectedPct) * mult;
+          return (a.rowIndex - b.rowIndex) * mult;
+        });
+      }
+
+      // Actualizar indicadores visuales de ordenamiento en los encabezados
+      ['project', 'product', 'year', 'activity', 'completedPct', 'expectedPct'].forEach((colKey) => {
+        const ind = document.getElementById(`sort-ind-${colKey}`);
+        if (!ind) return;
+        if (state.tableSort.key === colKey) {
+          ind.textContent = state.tableSort.dir === 'asc' ? '↑' : '↓';
+          ind.className = 'font-mono text-[11px] font-extrabold text-amber-700';
+        } else {
+          ind.textContent = '⇅';
+          ind.className = 'font-mono text-[10px] text-slate-400';
+        }
+      });
+
+      // Contador y visibilidad del botón Limpiar Filtros
+      const hasActiveFilters =
+        f.project !== 'ALL' ||
+        f.product !== 'ALL' ||
+        f.year !== 'ALL' ||
+        activityQuery.length > 0 ||
+        f.progress !== 'all' ||
+        f.expected !== 'all' ||
+        state.tableSort.key !== 'default';
+
+      if (counterEl) {
+        counterEl.textContent =
+          filtered.length === allRows.length
+            ? `${allRows.length} actividades`
+            : `${filtered.length} de ${allRows.length} actividades`;
+      }
+      if (clearBtn) {
+        if (hasActiveFilters) {
+          clearBtn.classList.remove('hidden');
+          clearBtn.classList.add('inline-flex');
+        } else {
+          clearBtn.classList.add('hidden');
+          clearBtn.classList.remove('inline-flex');
+        }
+      }
+
+      // 6. Renderizar filas de la tabla
+      if (!filtered.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="px-6 py-10 text-center text-slate-500">
+              No se encontraron actividades que coincidan con los filtros aplicados.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filtered
+        .map((act) => {
+          const gap = round1(act.completedPct - act.expectedPct);
+          const isOver100 = act.completedPct > 100;
+          const shortCode = formatShortCode(act.siloCode);
+
+          let progressTextColor = 'text-emerald-700';
+          let progressBarColor = 'bg-emerald-600';
+          let gapBadgeClass = 'bg-emerald-50 text-emerald-800 border-emerald-200';
+
+          if (isOver100) {
+            progressTextColor = 'text-teal-700';
+            progressBarColor = 'bg-teal-600';
+            gapBadgeClass = 'bg-teal-50 text-teal-800 border-teal-200';
+          } else if (gap < -15) {
+            progressTextColor = 'text-rose-700';
+            progressBarColor = 'bg-rose-600';
+            gapBadgeClass = 'bg-rose-50 text-rose-800 border-rose-200';
+          } else if (gap < -2) {
+            progressTextColor = 'text-amber-700';
+            progressBarColor = 'bg-amber-600';
+            gapBadgeClass = 'bg-amber-50 text-amber-800 border-amber-200';
+          }
+
+          return `
+            <tr
+              onclick="openDetailModal('${escapeQuotes(act.id)}')"
+              class="hover:bg-amber-50/60 cursor-pointer transition-colors group"
+            >
+              <td class="px-3.5 py-3 align-top">
+                <div class="flex items-start gap-2">
+                  <span
+                    class="px-1.5 py-0.5 rounded-md text-[10px] font-mono font-extrabold bg-slate-900 text-amber-300 shrink-0 mt-0.5"
+                    title="Código completo: ${escapeHtml(act.siloCode)}"
+                  >
+                    ${escapeHtml(shortCode)}
+                  </span>
+                  <span class="font-bold text-slate-800 leading-snug">
+                    ${escapeHtml(act.siloName)}
+                  </span>
+                </div>
+              </td>
+              <td class="px-3.5 py-3 align-top text-slate-700 font-medium leading-snug">
+                ${escapeHtml(act.productName)}
+              </td>
+              <td class="px-3 py-3 align-top">
+                <span class="inline-block px-2 py-0.5 rounded-lg bg-slate-100 border border-slate-200 font-mono font-bold text-slate-800 text-[11px]">
+                  ${escapeHtml(act.yearLabel)}
+                </span>
+              </td>
+              <td class="px-3.5 py-3 align-top">
+                <div class="font-semibold text-slate-900 group-hover:text-amber-900 leading-snug transition-colors">
+                  ${escapeHtml(act.activityName)}
+                </div>
+                <div class="text-[10px] font-mono text-slate-400 mt-1">
+                  ${formatDateShort(act.startDate)} → ${formatDateShort(act.endDate)}
+                </div>
+              </td>
+              <td class="px-3 py-3 align-top">
+                <div class="space-y-1.5">
+                  <div class="flex items-center justify-between gap-1.5">
+                    <span class="font-mono font-extrabold text-sm ${progressTextColor}">
+                      ${act.completedPct.toFixed(1)}%
+                    </span>
+                    <span class="px-1.5 py-0.5 rounded-full text-[9px] font-mono font-bold border ${gapBadgeClass}">
+                      ${gap >= 0 ? '+' : ''}${gap.toFixed(1)}%
+                    </span>
+                  </div>
+                  <div class="w-full h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                    <div class="h-full ${progressBarColor} rounded-full" style="width: ${clamp(act.completedPct, 0, 100)}%"></div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-3 py-3 align-top">
+                <div class="space-y-1.5">
+                  <div class="font-mono font-extrabold text-sm text-amber-700">
+                    ${act.expectedPct.toFixed(1)}%
+                  </div>
+                  <div class="w-full h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                    <div class="h-full bg-amber-500 rounded-full" style="width: ${clamp(act.expectedPct, 0, 100)}%"></div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          `;
+        })
+        .join('');
+    }
+
+    function updateTableFilter(field, value) {
+      state.tableFilters[field] = value;
+      renderActivitiesTable();
+    }
+
+    function toggleTableSort(colKey) {
+      if (state.tableSort.key !== colKey) {
+        const defaultDir = colKey === 'completedPct' || colKey === 'expectedPct' ? 'desc' : 'asc';
+        state.tableSort = { key: colKey, dir: defaultDir };
+      } else if (state.tableSort.dir === 'desc' && (colKey === 'completedPct' || colKey === 'expectedPct')) {
+        state.tableSort.dir = 'asc';
+      } else if (state.tableSort.dir === 'asc' && colKey !== 'completedPct' && colKey !== 'expectedPct') {
+        state.tableSort.dir = 'desc';
+      } else {
+        state.tableSort = { key: 'default', dir: 'asc' };
+      }
+      renderActivitiesTable();
+    }
+
+    function resetTableFilters() {
+      state.tableFilters = {
+        project: 'ALL',
+        product: 'ALL',
+        year: 'ALL',
+        activity: '',
+        progress: 'all',
+        expected: 'all'
+      };
+      state.tableSort = { key: 'default', dir: 'asc' };
+      const actInput = document.getElementById('tblFilterActivity');
+      if (actInput) actInput.value = '';
+      renderActivitiesTable();
+    }
+
+    /*************************************************************************
+     * MODAL DE FICHA TÉCNICA DE LA ACTIVIDAD (MUESTRA CÓDIGO COMPLETO)
+     *************************************************************************/
+    function openDetailModal(rowId) {
+      const item = allRows.find((r) => r.id === rowId);
+      if (!item) return;
+
+      const modal = document.getElementById('detailModal');
+      const title = document.getElementById('detailModalTitle');
+      const content = document.getElementById('detailModalContent');
+
+      title.textContent = item.activityName;
+      const isOver100 = item.completedPct > 100;
+
+      content.innerHTML = `
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+            <span class="text-[10px] font-bold text-amber-800 uppercase">Proyecto de Inversión</span>
+            <p class="text-xs font-extrabold text-slate-900 mt-0.5">${escapeHtml(item.siloName)}</p>
+            <span class="inline-block mt-1.5 px-2 py-0.5 rounded-md bg-slate-900 text-amber-300 font-mono text-[10px] font-bold">
+              Código completo: ${escapeHtml(item.siloCode)}
+            </span>
+          </div>
+          <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+            <span class="text-[10px] font-bold text-amber-800 uppercase">Producto Principal y Año</span>
+            <p class="text-xs font-extrabold text-slate-900 mt-0.5">${escapeHtml(item.productName)}</p>
+            <span class="inline-block mt-1.5 px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-900 font-mono text-[10px] font-bold">
+              Año ${escapeHtml(item.yearLabel)} • Peso: ${item.weightPct > 0 ? `${item.weightPct}%` : escapeHtml(item.fmtI)}
+            </span>
+          </div>
+          <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+            <span class="text-[10px] font-bold text-slate-500 uppercase">Objetivo General</span>
+            <p class="text-xs font-semibold text-slate-800 mt-0.5">${escapeHtml(item.objGeneralName)}</p>
+          </div>
+          <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+            <span class="text-[10px] font-bold text-slate-500 uppercase">Objetivo Específico</span>
+            <p class="text-xs font-semibold text-slate-800 mt-0.5">${escapeHtml(item.objSpecificName)}</p>
+          </div>
+        </div>
+
+        <!-- Indicadores de avance y presupuesto -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 space-y-1">
+            <div class="flex justify-between text-xs">
+              <span class="font-extrabold text-amber-900">% Esperado</span>
+              <span class="font-mono font-extrabold text-amber-800">${item.expectedPct.toFixed(1)}%</span>
+            </div>
+            <p class="text-[11px] text-amber-900/80 font-mono">
+              Inicio: <strong>${formatDateShort(item.startDate)}</strong><br/>
+              Fin: <strong>${formatDateShort(item.endDate)}</strong>
+            </p>
+          </div>
+
+          <div class="p-4 rounded-2xl ${isOver100 ? 'bg-teal-50/80 border-teal-200' : 'bg-emerald-50/80 border-emerald-200'} border space-y-1">
+            <div class="flex justify-between text-xs">
+              <span class="font-extrabold ${isOver100 ? 'text-teal-900' : 'text-emerald-900'}">% Completado</span>
+              <span class="font-mono font-extrabold ${isOver100 ? 'text-teal-800' : 'text-emerald-800'}">${item.completedPct.toFixed(1)}%</span>
+            </div>
+            <p class="text-[11px] ${isOver100 ? 'text-teal-900/80' : 'text-emerald-900/80'} font-mono">
+              Ejecutado / Programado: <strong>${escapeHtml(item.fmtL)} / ${escapeHtml(item.fmtK)}</strong><br/>
+              Peso en el Año: <strong>${item.weightPct > 0 ? `${item.weightPct}%` : escapeHtml(item.fmtI)}</strong>
+            </p>
+          </div>
+        </div>
+
+        <!-- Resumen presupuestal de la actividad -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="p-3.5 rounded-2xl bg-amber-50/50 border border-amber-200/80">
+            <span class="text-[10px] font-bold text-amber-900 uppercase">Presupuesto Asignado</span>
+            <p class="text-sm font-extrabold font-mono text-amber-950 mt-0.5">${escapeHtml(formatMillionsLong(item.budgetAssigned))}</p>
+            <p class="text-[10px] font-mono text-slate-500">${escapeHtml(formatExactCOP(item.budgetAssigned))}</p>
+          </div>
+          <div class="p-3.5 rounded-2xl bg-emerald-50/50 border border-emerald-200/80">
+            <span class="text-[10px] font-bold text-emerald-900 uppercase">Presupuesto Ejecutado</span>
+            <p class="text-sm font-extrabold font-mono text-emerald-800 mt-0.5">${escapeHtml(formatMillionsLong(item.budgetExecuted))}</p>
+            <p class="text-[10px] font-mono text-slate-500">${escapeHtml(formatExactCOP(item.budgetExecuted))}</p>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <h4 class="text-xs font-extrabold text-slate-700 uppercase tracking-wider">Datos Completos del Registro</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            ${(item.extraFields || [])
+              .map(
+                (field) => `
+                  <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+                    <span class="text-[10px] font-bold text-slate-500 uppercase">${escapeHtml(field.header)}</span>
+                    <div class="text-xs text-slate-900 font-semibold mt-0.5 break-words">${escapeHtml(field.value)}</div>
+                  </div>
+                `
+              )
+              .join('')}
+          </div>
+        </div>
+      `;
+
+      modal.classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeDetailModal() {
+      document.getElementById('detailModal').classList.add('hidden');
+    }
+
+    /*************************************************************************
+     * UTILIDADES DE PARSEO, FORMATO MONETARIO (COP) Y FECHAS
+     *************************************************************************/
+    function getCoherentSiloIcon(name, fallbackIcon = 'landmark') {
+      if (!name) return fallbackIcon;
+      const text = name
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+
+      const rules = [
+        { keywords: ['mineria', 'minero', 'minerales', 'extraccion', 'formalizacion', 'titulo'], icon: 'pickaxe' },
+        { keywords: ['energia', 'energetica', 'energetico', 'electrica', 'renovable', 'transicion'], icon: 'zap' },
+        { keywords: ['hidrocarburos', 'gas', 'petroleo', 'combustible'], icon: 'flame' },
+        { keywords: ['ambiente', 'ambiental', 'sostenible', 'sostenibilidad', 'agua', 'clima'], icon: 'leaf' },
+        { keywords: ['comunidad', 'social', 'territorio', 'territorial', 'regional'], icon: 'map-pin' },
+        { keywords: ['tecnologia', 'digital', 'datos', 'informacion', 'sistema', 'innovacion'], icon: 'cpu' },
+        { keywords: ['infraestructura', 'obra', 'construccion', 'vial', 'red'], icon: 'network' },
+        { keywords: ['seguridad', 'control', 'fiscalizacion', 'vigilancia', 'riesgo'], icon: 'shield-check' },
+        { keywords: ['inversion', 'financiero', 'regalias', 'presupuesto', 'economico'], icon: 'trending-up' }
+      ];
+
+      for (const r of rules) {
+        if (r.keywords.some((kw) => text.includes(kw))) return r.icon;
+      }
+      return fallbackIcon;
+    }
+
+    /**
+     * Extrae los últimos 4 dígitos del código del proyecto (Col B).
+     */
+    function formatShortCode(code) {
+      if (!code) return 'S/C';
+      const cleaned = String(code).trim();
+      const digitsOnly = cleaned.replace(/\D/g, '');
+      if (digitsOnly.length >= 4) {
+        return digitsOnly.slice(-4);
+      }
+      return cleaned.length > 4 ? cleaned.slice(-4) : cleaned;
+    }
+
+    /**
+     * Interpreta valores monetarios en Pesos Colombianos:
+     * puntos para miles (.) y coma para centavos (,) cuando viene como texto.
+     */
+    function parseCOPAmount(rawVal, fmtStr) {
+      if (typeof rawVal === 'number' && !isNaN(rawVal)) {
+        return rawVal;
+      }
+      const str = String(fmtStr || rawVal || '').trim();
+      if (!str || str === '-') return 0;
+
+      let cleaned = str.replace(/[^0-9.,\-]/g, '');
+      if (!cleaned) return 0;
+
+      const hasComma = cleaned.includes(',');
+      const hasDot = cleaned.includes('.');
+
+      if (hasComma && hasDot) {
+        // Formato colombiano clásico: 1.234.567,89
+        if (cleaned.lastIndexOf(',') > cleaned.lastIndexOf('.')) {
+          cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+        } else {
+          // Formato inglés: 1,234,567.89
+          cleaned = cleaned.replace(/,/g, '');
+        }
+      } else if (hasComma) {
+        const parts = cleaned.split(',');
+        if (parts.length === 2 && parts[1].length <= 2) {
+          cleaned = cleaned.replace(',', '.');
+        } else {
+          cleaned = cleaned.replace(/,/g, '');
+        }
+      } else if (hasDot) {
+        const parts = cleaned.split('.');
+        // Si tiene varios puntos o termina en 3 dígitos exactos, son separadores de miles
+        if (parts.length > 2 || (parts.length === 2 && parts[1].length === 3)) {
+          cleaned = cleaned.replace(/\./g, '');
+        }
+      }
+
+      const num = parseFloat(cleaned);
+      return isNaN(num) ? 0 : num;
+    }
+
+    /**
+     * Interpreta números generales (K, L, I) tolerando coma decimal o punto de miles.
+     */
+    function parseSmartNumber(rawVal, fmtStr) {
+      if (typeof rawVal === 'number' && !isNaN(rawVal)) {
+        return rawVal;
+      }
+      const str = String(fmtStr || rawVal || '').trim();
+      if (!str || str === '-') return NaN;
+
+      let cleaned = str.replace(/%/g, '').replace(/[^0-9.,\-]/g, '');
+      if (!cleaned) return NaN;
+
+      if (cleaned.includes(',') && cleaned.includes('.')) {
+        if (cleaned.lastIndexOf(',') > cleaned.lastIndexOf('.')) {
+          cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+        } else {
+          cleaned = cleaned.replace(/,/g, '');
+        }
+      } else if (cleaned.includes(',')) {
+        const parts = cleaned.split(',');
+        if (parts.length === 2 && parts[1].length === 3 && parts[0].length >= 1) {
+          // Podría ser miles o decimal con 3 cifras; en contexto de porcentajes/cantidades suele ser decimal
+          cleaned = cleaned.replace(',', '.');
+        } else if (parts.length > 2) {
+          cleaned = cleaned.replace(/,/g, '');
+        } else {
+          cleaned = cleaned.replace(',', '.');
+        }
+      } else if (cleaned.includes('.')) {
+        const parts = cleaned.split('.');
+        if (parts.length > 2) {
+          cleaned = cleaned.replace(/\./g, '');
+        }
+      }
+
+      const num = parseFloat(cleaned);
+      return isNaN(num) ? NaN : num;
+    }
+
+    function parsePercentageRaw(rawVal, fmtStr, assumeDecimal) {
+      if (fmtStr && String(fmtStr).includes('%')) {
+        const num = parseSmartNumber(undefined, fmtStr);
+        return isNaN(num) ? 0 : num;
+      }
+      if (typeof rawVal === 'number' && !isNaN(rawVal)) {
+        return assumeDecimal && rawVal >= 0 && rawVal <= 1.0001 ? rawVal * 100 : rawVal;
+      }
+      const num = parseSmartNumber(rawVal, fmtStr);
+      if (isNaN(num)) return 0;
+      return assumeDecimal && num >= 0 && num <= 1.0001 ? num * 100 : num;
+    }
+
+    function parseDateFlexible(rawVal, fmtStr) {
+      if (!rawVal && !fmtStr) return null;
+      if (rawVal instanceof Date && !isNaN(rawVal.getTime())) {
+        return rawVal;
+      }
+      if (typeof rawVal === 'number' && rawVal > 25000 && rawVal < 70000) {
+        const utcDays = Math.floor(rawVal - 25569);
+        return new Date(utcDays * 86400 * 1000 + 12 * 3600 * 1000);
+      }
+      const str = String(fmtStr || rawVal).trim();
+      if (!str || str === '-') return null;
+
+      // Formato DD/MM/YYYY o DD-MM-YYYY
+      const dmy = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+      if (dmy) {
+        let day = parseInt(dmy[1], 10);
+        let month = parseInt(dmy[2], 10) - 1;
+        let year = parseInt(dmy[3], 10);
+        if (year < 100) year += 2000;
+        if (month > 11 && day <= 12) {
+          const tmp = day;
+          day = month + 1;
+          month = tmp - 1;
+        }
+        const d = new Date(year, month, day, 12, 0, 0);
+        if (!isNaN(d.getTime())) return d;
+      }
+
+      // Formato YYYY-MM-DD
+      const ymd = str.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+      if (ymd) {
+        const d = new Date(parseInt(ymd[1], 10), parseInt(ymd[2], 10) - 1, parseInt(ymd[3], 10), 12, 0, 0);
+        if (!isNaN(d.getTime())) return d;
+      }
+
+      const parsed = new Date(str);
+      if (!isNaN(parsed.getTime()) && parsed.getFullYear() >= 1990 && parsed.getFullYear() <= 2100) {
+        return parsed;
+      }
+      return null;
+    }
+
+    function formatDateShort(dateObj) {
+      if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) return '-';
+      const d = String(dateObj.getDate()).padStart(2, '0');
+      const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const y = dateObj.getFullYear();
+      return `${d}/${m}/${y}`;
+    }
+
+    function formatMillionsShort(copValue) {
+      const millions = (Number(copValue) || 0) / 1e6;
+      const formatted = new Intl.NumberFormat('es-CO', {
+        minimumFractionDigits: Math.abs(millions) < 10 && millions !== 0 ? 1 : 0,
+        maximumFractionDigits: 1
+      }).format(millions);
+      return `$ ${formatted} M`;
+    }
+
+    function formatMillionsLong(copValue) {
+      const millions = (Number(copValue) || 0) / 1e6;
+      const formatted = new Intl.NumberFormat('es-CO', {
+        minimumFractionDigits: Math.abs(millions) < 10 && millions !== 0 ? 2 : 1,
+        maximumFractionDigits: 2
+      }).format(millions);
+      return `$ ${formatted} Millones`;
+    }
+
+    function formatAxisMillions(copValue) {
+      const millions = (Number(copValue) || 0) / 1e6;
+      const formatted = new Intl.NumberFormat('es-CO', {
+        maximumFractionDigits: millions < 10 && millions > 0 ? 1 : 0
+      }).format(millions);
+      return `$ ${formatted}`;
+    }
+
+    function formatExactCOP(copValue) {
+      const val = Number(copValue) || 0;
+      const formatted = new Intl.NumberFormat('es-CO', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(val);
+      return `$ ${formatted} COP`;
+    }
+
+    function computeNiceAxisMax(maxValue) {
+      if (!maxValue || maxValue <= 0) return 1e6;
+      const exponent = Math.floor(Math.log10(maxValue));
+      const fraction = maxValue / Math.pow(10, exponent);
+      let niceFraction = 10;
+      if (fraction <= 1.2) niceFraction = 1.2;
+      else if (fraction <= 1.5) niceFraction = 1.5;
+      else if (fraction <= 2) niceFraction = 2;
+      else if (fraction <= 2.5) niceFraction = 2.5;
+      else if (fraction <= 3) niceFraction = 3;
+      else if (fraction <= 4) niceFraction = 4;
+      else if (fraction <= 5) niceFraction = 5;
+      else if (fraction <= 6) niceFraction = 6;
+      else if (fraction <= 8) niceFraction = 8;
+      return niceFraction * Math.pow(10, exponent);
+    }
+
+    function cleanYearLabel(rawVal, fmtStr) {
+      if (typeof rawVal === 'number' && rawVal >= 1990 && rawVal <= 2100) {
+        return String(Math.round(rawVal));
+      }
+      const str = cleanText(fmtStr || rawVal);
+      if (!str) return '';
+      const match = str.match(/\b(19\d{2}|20\d{2}|21\d{2})\b/);
+      return match ? match[1] : str;
+    }
+
+    function compareYearLabels(a, b) {
+      const numA = parseInt(a, 10);
+      const numB = parseInt(b, 10);
+      if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+      if (!isNaN(numA)) return -1;
+      if (!isNaN(numB)) return 1;
+      return String(a).localeCompare(String(b), 'es');
+    }
+
+    function cleanHeader(val, fallback) {
+      const t = cleanText(val);
+      return t || fallback;
+    }
+
+    function cleanText(val) {
+      if (val === undefined || val === null) return '';
+      return String(val).replace(/\s+/g, ' ').trim();
+    }
+
+    function clamp(val, min, max) {
+      return Math.min(Math.max(val, min), max);
+    }
+
+    function round1(num) {
+      return Math.round(((Number(num) || 0) + Number.EPSILON) * 10) / 10;
+    }
+
+    function round2(num) {
+      return Math.round(((Number(num) || 0) + Number.EPSILON) * 100) / 100;
+    }
+
+    function average(arr) {
+      if (!arr || !arr.length) return 0;
+      return arr.reduce((a, b) => a + (Number(b) || 0), 0) / arr.length;
+    }
+
+    function truncate(str, maxLen = 40) {
+      if (!str) return '';
+      return str.length > maxLen ? str.slice(0, maxLen - 1) + '…' : str;
+    }
+
+    function escapeHtml(str) {
+      if (str === undefined || str === null) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function escapeQuotes(str) {
+      if (str === undefined || str === null) return '';
+      return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    }
+  </script>
+</body>
+</html>
