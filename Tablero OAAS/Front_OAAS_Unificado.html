@@ -45,6 +45,7 @@
 </head>
 <body class="bg-brand-bg text-gray-800 font-sans h-screen overflow-hidden flex flex-col selection:bg-brand-light selection:text-white">
 
+    <!-- Encabezado y Barra de Navegación Principal -->
     <header class="w-full bg-brand-dark text-white flex flex-col z-30 shadow-md shrink-0">
         <div class="px-4 py-3 flex items-center justify-between gap-4 border-b border-brand-primary/50">
             <div class="flex items-center gap-3">
@@ -107,6 +108,12 @@
                 <i class="fa-solid fa-map-location-dot text-brand-earth/80 w-5 text-center"></i>
                 <span class="font-medium whitespace-nowrap">Gerencia Guajira</span>
             </a>
+
+            <!-- Nuevo botón: Proyectos de Inversión -->
+            <button onclick="loadContent('Proyectos_inversion.html')" class="shrink-0 flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-brand-primary transition-colors text-left text-white">
+                <i class="fa-solid fa-hand-holding-dollar text-brand-earth/80 w-5 text-center"></i>
+                <span class="font-medium whitespace-nowrap">Proyectos de Inversión</span>
+            </button>
         </nav>
     </header>
 
@@ -114,7 +121,7 @@
         
         <div id="dashboard-container" class="content-layer flex-1 bg-transparent p-0 m-0 w-full h-full fade-in flex flex-col">
             
-            <!-- VISTA PRINCIPAL: RESUMEN EJECUTIVO DE LOS 7 TABLEROS -->
+            <!-- VISTA PRINCIPAL: RESUMEN EJECUTIVO DE LOS 8 TABLEROS -->
             <div id="welcome-message" class="w-full h-full overflow-y-auto p-4 md:p-6 lg:p-8">
                 <div class="max-w-7xl mx-auto space-y-6">
                     
@@ -143,7 +150,7 @@
                         </div>
                     </div>
 
-                    <!-- Cuadrícula de Tarjetas de los 7 Botones -->
+                    <!-- Cuadrícula de Tarjetas de los 8 Botones -->
                     <div id="summary-cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                         <!-- Renderizado dinámicamente por JS -->
                     </div>
@@ -161,7 +168,7 @@
 
     <script>
         // ============================================================================
-        // CONFIGURACIÓN DE LOS 7 TABLEROS Y SUS FUENTES DE DATOS EN VIVO
+        // CONFIGURACIÓN DE LOS 8 TABLEROS Y SUS FUENTES DE DATOS EN VIVO
         // ============================================================================
         const DASHBOARDS_CONFIG = [
             {
@@ -233,6 +240,16 @@
                 fileUrl: 'https://jesusvillamizarroman-gif.github.io/tablero-gerencial/OAAS.html',
                 isExternal: true,
                 dataUrl: 'https://docs.google.com/spreadsheets/d/1CWZlW4Ij8KhhYqPJdMKozk_bAHXmRQlq/gviz/tq?tqx=out:json'
+            },
+            {
+                id: 'proyectos-inversion',
+                name: 'Proyectos de Inversión',
+                category: 'Inversión y Recursos',
+                icon: 'fa-hand-holding-dollar',
+                accent: '#15803d',
+                fileUrl: 'Proyectos_inversion.html',
+                isExternal: false,
+                dataUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR2znQ6Z706-bQmpoHkFEdRJtqPhZYCbM7gQbRG8q_rb2xNfKTuS32JAIW7Xi90fQ/pub?output=xlsx'
             }
         ];
 
@@ -359,9 +376,10 @@
         }
 
         async function fetchWorkbookWithFallback(xlsxUrl) {
+            const cacheBuster = `&_t=${Date.now()}`;
             const urls = [
-                xlsxUrl,
-                xlsxUrl.replace('output=xlsx', 'output=csv'),
+                `${xlsxUrl}${cacheBuster}`,
+                `${xlsxUrl.replace('output=xlsx', 'output=csv')}${cacheBuster}`,
                 `https://corsproxy.io/?${encodeURIComponent(xlsxUrl)}`,
                 `https://api.allorigins.win/raw?url=${encodeURIComponent(xlsxUrl)}`
             ];
@@ -378,7 +396,7 @@
         }
 
         // ============================================================================
-        // CÁLCULO EXACTO DE CADA UNO DE LOS 7 TABLEROS
+        // CÁLCULO EXACTO DE CADA UNO DE LOS TABLEROS CONECTADOS
         // ============================================================================
 
         // 1. GESTIÓN DE DESASTRES
@@ -635,7 +653,7 @@
 
             let lastA = '', lastB = '', lastRawC = undefined, lastFmtC = '';
             const rows = [];
-            let maxRawH = 0, maxRawC = 0, maxRawI = 0, maxRawJ = 0;
+            let maxRawH = 0, maxRawC = 0;
             let minDate = null, maxDate = null;
 
             for (let r = headerIdx + 1; r < rawMatrix.length; r++) {
@@ -924,6 +942,241 @@
             };
         }
 
+        // 8. PROYECTOS DE INVERSIÓN (Proyectos_inversion.html)
+        async function computeProyectosInversion(cfg) {
+            const wb = await fetchWorkbookWithFallback(cfg.dataUrl);
+
+            // Seleccionar la mejor hoja (igual que pickBestSheet en Proyectos_inversion.html)
+            let sheetName = wb.SheetNames[0];
+            for (const name of wb.SheetNames) {
+                const candidate = wb.Sheets[name];
+                if (!candidate || !candidate['!ref']) continue;
+                const rng = XLSX.utils.decode_range(candidate['!ref']);
+                if (rng.e.r >= 1 && rng.e.c >= 6) {
+                    sheetName = name;
+                    break;
+                }
+            }
+
+            const ws = Object.assign({}, wb.Sheets[sheetName]);
+            if (ws['!merges']) {
+                const fillColumns = new Set([0, 1, 2, 3, 4, 5, 9]);
+                ws['!merges'].forEach(merge => {
+                    const srcAddr = XLSX.utils.encode_cell({ r: merge.s.r, c: merge.s.c });
+                    const srcCell = ws[srcAddr];
+                    if (!srcCell) return;
+                    for (let r = merge.s.r; r <= merge.e.r; r++) {
+                        for (let c = merge.s.c; c <= merge.e.c; c++) {
+                            if (!fillColumns.has(c)) continue;
+                            const addr = XLSX.utils.encode_cell({ r, c });
+                            if (!ws[addr] || ws[addr].v === undefined || ws[addr].v === '') {
+                                ws[addr] = { ...srcCell };
+                            }
+                        }
+                    }
+                });
+            }
+
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            const maxCol = Math.max(range.e.c, 16);
+            const rawMatrix = [], fmtMatrix = [];
+
+            for (let r = range.s.r; r <= range.e.r; r++) {
+                const rV = [], rF = [];
+                for (let c = 0; c <= maxCol; c++) {
+                    const cell = ws[XLSX.utils.encode_cell({ r, c })];
+                    rV.push(cell ? cell.v : undefined);
+                    rF.push(cell ? String(cell.w ?? cell.v ?? '').replace(/\s+/g, ' ').trim() : '');
+                }
+                rawMatrix.push(rV);
+                fmtMatrix.push(rF);
+            }
+
+            let headerIdx = 0, bestScore = -1;
+            for (let r = 0; r < Math.min(10, rawMatrix.length); r++) {
+                const cnt = fmtMatrix[r].filter((v, idx) => idx <= 15 && v.length > 0).length;
+                if (cnt > bestScore) { bestScore = cnt; headerIdx = r; }
+            }
+
+            const parseSmartNum = (rawVal, fmtStr) => {
+                if (typeof rawVal === 'number' && !isNaN(rawVal)) return rawVal;
+                const str = String(fmtStr || rawVal || '').trim();
+                if (!str || str === '-') return NaN;
+                let cleaned = str.replace(/%/g, '').replace(/[^0-9.,\-]/g, '');
+                if (!cleaned) return NaN;
+                if (cleaned.includes(',') && cleaned.includes('.')) {
+                    cleaned = cleaned.lastIndexOf(',') > cleaned.lastIndexOf('.')
+                        ? cleaned.replace(/\./g, '').replace(',', '.')
+                        : cleaned.replace(/,/g, '');
+                } else if (cleaned.includes(',')) {
+                    const parts = cleaned.split(',');
+                    cleaned = parts.length > 2 ? cleaned.replace(/,/g, '') : cleaned.replace(',', '.');
+                } else if (cleaned.includes('.')) {
+                    const parts = cleaned.split('.');
+                    if (parts.length > 2) cleaned = cleaned.replace(/\./g, '');
+                }
+                const num = parseFloat(cleaned);
+                return isNaN(num) ? NaN : num;
+            };
+
+            const cleanYear = (rawVal, fmtStr) => {
+                if (typeof rawVal === 'number' && rawVal >= 1990 && rawVal <= 2100) return String(Math.round(rawVal));
+                const str = String(fmtStr || rawVal || '').trim();
+                if (!str) return '';
+                const m = str.match(/\b(19\d{2}|20\d{2}|21\d{2})\b/);
+                return m ? m[1] : str;
+            };
+
+            let lastA = '', lastB = '', lastC = '', lastD = '', lastE = '', lastYear = '';
+            const rows = [];
+            let maxRawI = 0;
+            let minStart = null, maxEnd = null;
+
+            for (let r = headerIdx + 1; r < rawMatrix.length; r++) {
+                const raw = rawMatrix[r], fmt = fmtMatrix[r];
+                if (!fmt.some(v => v !== '')) continue;
+
+                let valA = fmt[0], valB = fmt[1], valC = fmt[2], valD = fmt[3], valE = fmt[4], valG = fmt[6];
+                let valJ = cleanYear(raw[9], fmt[9]);
+
+                if (/^total\b/i.test(valA) && !valG) continue;
+
+                if (valA) {
+                    if (valA !== lastA) { lastA = valA; lastB = valB || ''; lastC = ''; lastD = ''; lastE = ''; lastYear = ''; }
+                } else if (lastA && (valB || valC || valD || valE || valG)) {
+                    valA = lastA;
+                }
+
+                if (valB) lastB = valB; else if (lastB && valA === lastA) valB = lastB;
+
+                if (valC) {
+                    if (valC !== lastC) { lastC = valC; lastD = ''; lastE = ''; }
+                } else if (lastC && (valD || valE || valG)) {
+                    valC = lastC;
+                }
+
+                if (valD) {
+                    if (valD !== lastD) { lastD = valD; lastE = ''; }
+                } else if (lastD && (valE || valG)) {
+                    valD = lastD;
+                }
+
+                if (valE) lastE = valE; else if (lastE && valG) valE = lastE;
+                if (valJ) lastYear = valJ; else if (lastYear && valG) valJ = lastYear;
+
+                if (!valA || (!valG && !valE)) continue;
+
+                const parsedI = parseSmartNum(raw[8], fmt[8]);
+                if (!isNaN(parsedI) && parsedI > maxRawI) maxRawI = parsedI;
+
+                const startDate = parseFlexibleDate(raw[14] !== undefined && raw[14] !== '' ? raw[14] : fmt[14]);
+                const endDate = parseFlexibleDate(raw[15] !== undefined && raw[15] !== '' ? raw[15] : fmt[15]);
+                if (startDate && (!minStart || startDate < minStart)) minStart = startDate;
+                if (endDate && (!maxEnd || endDate > maxEnd)) maxEnd = endDate;
+
+                const siloKey = `${valB || 'S/C'}|||${valA}`;
+                const objGeneralKey = `${siloKey}|||OG:${valC || 'Objetivo General'}`;
+                const objSpecificKey = `${objGeneralKey}|||OE:${valD || 'Objetivo Específico'}`;
+                const productKey = `${objSpecificKey}|||PR:${valE || 'Producto Principal'}`;
+                const yearKey = `${productKey}|||YR:${valJ || 'Sin año'}`;
+
+                rows.push({
+                    siloKey,
+                    objGeneralKey,
+                    objSpecificKey,
+                    productKey,
+                    yearKey,
+                    rawWeightI: raw[8],
+                    fmtI: fmt[8],
+                    numK: parseSmartNum(raw[10], fmt[10]),
+                    numL: parseSmartNum(raw[11], fmt[11]),
+                    startDate,
+                    endDate
+                });
+            }
+
+            const weightsAreDecimal = maxRawI > 0 && maxRawI <= 1.0001;
+            const nowTime = Date.now();
+
+            rows.forEach(row => {
+                // Peso % (Col I)
+                let w = 0;
+                if (row.fmtI && row.fmtI.includes('%')) {
+                    const n = parseSmartNum(undefined, row.fmtI);
+                    w = isNaN(n) ? 0 : n;
+                } else {
+                    const n = parseSmartNum(row.rawWeightI, row.fmtI);
+                    if (!isNaN(n)) w = weightsAreDecimal && n >= 0 && n <= 1.0001 ? n * 100 : n;
+                }
+                row.weightPct = Math.max(0, w);
+
+                // % Completado = (L / K) * 100 sin tope superior
+                row.completedPct = (!isNaN(row.numK) && row.numK > 0 && !isNaN(row.numL))
+                    ? round1(Math.max(0, (row.numL / row.numK) * 100))
+                    : 0;
+
+                // % Esperado a partir de Col O y Col P
+                if (row.startDate && row.endDate) {
+                    const tStart = Math.min(row.startDate.getTime(), row.endDate.getTime());
+                    const tEnd = Math.max(row.startDate.getTime(), row.endDate.getTime());
+                    if (nowTime <= tStart) row.expectedPct = 0;
+                    else if (nowTime >= tEnd || tEnd === tStart) row.expectedPct = 100;
+                    else row.expectedPct = round1(clamp(((nowTime - tStart) / (tEnd - tStart)) * 100, 0, 100));
+                } else {
+                    row.expectedPct = 0;
+                }
+            });
+
+            // Rollup jerárquico exacto: Año (ponderado Col I) -> Producto -> Obj. Específico -> Obj. General -> Silo
+            const siloMap = new Map();
+            rows.forEach(row => {
+                if (!siloMap.has(row.siloKey)) siloMap.set(row.siloKey, new Map());
+                const ogMap = siloMap.get(row.siloKey);
+                if (!ogMap.has(row.objGeneralKey)) ogMap.set(row.objGeneralKey, new Map());
+                const osMap = ogMap.get(row.objGeneralKey);
+                if (!osMap.has(row.objSpecificKey)) osMap.set(row.objSpecificKey, new Map());
+                const prodMap = osMap.get(row.objSpecificKey);
+                if (!prodMap.has(row.productKey)) prodMap.set(row.productKey, new Map());
+                const yrMap = prodMap.get(row.productKey);
+                if (!yrMap.has(row.yearKey)) yrMap.set(row.yearKey, []);
+                yrMap.get(row.yearKey).push(row);
+            });
+
+            const siloComps = [];
+            for (const ogMap of siloMap.values()) {
+                const ogComps = [];
+                for (const osMap of ogMap.values()) {
+                    const osComps = [];
+                    for (const prodMap of osMap.values()) {
+                        const prodComps = [];
+                        for (const yrMap of prodMap.values()) {
+                            const yrComps = [];
+                            for (const yrRows of yrMap.values()) {
+                                const totalW = yrRows.reduce((s, r) => s + (r.weightPct > 0 ? r.weightPct : 0), 0);
+                                if (totalW > 0) {
+                                    const wSum = yrRows.reduce((s, r) => s + r.completedPct * (r.weightPct > 0 ? r.weightPct : 0), 0);
+                                    yrComps.push(round1(wSum / totalW));
+                                } else {
+                                    yrComps.push(round1(average(yrRows.map(r => r.completedPct))));
+                                }
+                            }
+                            prodComps.push(round1(average(yrComps)));
+                        }
+                        osComps.push(round1(average(prodComps)));
+                    }
+                    ogComps.push(round1(average(osComps)));
+                }
+                siloComps.push(round1(average(ogComps)));
+            }
+
+            return {
+                completed: round1(average(siloComps)),
+                expected: round1(average(rows.map(r => r.expectedPct))),
+                startDate: formatDateShort(minStart),
+                endDate: formatDateShort(maxEnd)
+            };
+        }
+
         // ============================================================================
         // RENDERIZADO DE LAS TARJETAS EN EL FRONT - OAAS
         // ============================================================================
@@ -933,15 +1186,18 @@
 
             grid.innerHTML = DASHBOARDS_CONFIG.map(cfg => {
                 const data = summaryState[cfg.id];
+                const isStandalone = data && data.standalone;
                 const isLoading = !data || data.loading;
                 const hasError = data && data.error;
 
-                const comp = data && !isLoading && !hasError ? data.completed : 0;
-                const exp = data && !isLoading && !hasError ? data.expected : 0;
+                const comp = data && !isLoading && !hasError && !isStandalone ? data.completed : 0;
+                const exp = data && !isLoading && !hasError && !isStandalone ? data.expected : 0;
                 const diff = round1(comp - exp);
 
                 let statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-600">Sincronizando...</span>`;
-                if (!isLoading && !hasError) {
+                if (isStandalone) {
+                    statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Disponible</span>`;
+                } else if (!isLoading && !hasError) {
                     if (diff >= -2) {
                         statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Al Día (${diff >= 0 ? '+' : ''}${diff}%)</span>`;
                     } else if (diff >= -15) {
@@ -952,6 +1208,59 @@
                 } else if (hasError) {
                     statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700">Ver Tablero</span>`;
                 }
+
+                // Cuerpo central diferente si es un módulo sin conexión de resumen en vivo configurada aún
+                const metricsBody = isStandalone
+                    ? `
+                        <div class="bg-brand-bg/50 rounded-xl p-4 border border-brand-primary/15 mb-2 flex flex-col justify-center min-h-[144px]">
+                            <div class="flex items-center gap-2 text-brand-primary font-bold text-xs mb-1.5">
+                                <i class="fa-solid fa-folder-open"></i>
+                                <span>Tablero Integrado</span>
+                            </div>
+                            <p class="text-xs text-gray-600 leading-relaxed">
+                                Consulta el detalle completo de los proyectos de inversión, recursos asignados y seguimiento en el tablero interactivo.
+                            </p>
+                        </div>
+                    `
+                    : `
+                        <!-- Fechas de Inicio y Fin -->
+                        <div class="bg-gray-50 rounded-xl p-2.5 border border-gray-200/70 mb-4 flex items-center justify-between text-xs">
+                            <div>
+                                <span class="text-[10px] uppercase font-bold text-gray-400 block">Inicio</span>
+                                <span class="font-bold text-gray-700">${isLoading ? '...' : (data.startDate || 'Por definir')}</span>
+                            </div>
+                            <i class="fa-solid fa-arrow-right text-gray-300 text-[10px]"></i>
+                            <div class="text-right">
+                                <span class="text-[10px] uppercase font-bold text-gray-400 block">Fin</span>
+                                <span class="font-bold text-gray-700">${isLoading ? '...' : (data.endDate || 'Por definir')}</span>
+                            </div>
+                        </div>
+
+                        <!-- Indicadores % Completado y % Esperado -->
+                        <div class="space-y-3">
+                            <!-- % Completado -->
+                            <div>
+                                <div class="flex justify-between items-baseline text-xs mb-1">
+                                    <span class="font-semibold text-gray-600">% Completado</span>
+                                    <span class="text-base font-extrabold text-emerald-700">${isLoading ? '--%' : comp + '%'}</span>
+                                </div>
+                                <div class="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden border border-gray-200/60">
+                                    <div class="h-full bg-emerald-600 rounded-full transition-all duration-700" style="width: ${clamp(comp, 0, 100)}%"></div>
+                                </div>
+                            </div>
+
+                            <!-- % Esperado -->
+                            <div>
+                                <div class="flex justify-between items-baseline text-xs mb-1">
+                                    <span class="font-semibold text-gray-600">% Esperado</span>
+                                    <span class="text-sm font-bold text-amber-700">${isLoading ? '--%' : exp + '%'}</span>
+                                </div>
+                                <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden border border-gray-200/60">
+                                    <div class="h-full bg-amber-500 rounded-full transition-all duration-700" style="width: ${clamp(exp, 0, 100)}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
 
                 return `
                     <div onclick="handleCardClick(${cfg.isExternal}, '${cfg.fileUrl}')" 
@@ -984,43 +1293,7 @@
                                 </div>
                             </div>
 
-                            <!-- Fechas de Inicio y Fin -->
-                            <div class="bg-gray-50 rounded-xl p-2.5 border border-gray-200/70 mb-4 flex items-center justify-between text-xs">
-                                <div>
-                                    <span class="text-[10px] uppercase font-bold text-gray-400 block">Inicio</span>
-                                    <span class="font-bold text-gray-700">${isLoading ? '...' : (data.startDate || 'Por definir')}</span>
-                                </div>
-                                <i class="fa-solid fa-arrow-right text-gray-300 text-[10px]"></i>
-                                <div class="text-right">
-                                    <span class="text-[10px] uppercase font-bold text-gray-400 block">Fin</span>
-                                    <span class="font-bold text-gray-700">${isLoading ? '...' : (data.endDate || 'Por definir')}</span>
-                                </div>
-                            </div>
-
-                            <!-- Indicadores % Completado y % Esperado -->
-                            <div class="space-y-3">
-                                <!-- % Completado -->
-                                <div>
-                                    <div class="flex justify-between items-baseline text-xs mb-1">
-                                        <span class="font-semibold text-gray-600">% Completado</span>
-                                        <span class="text-base font-extrabold text-emerald-700">${isLoading ? '--%' : comp + '%'}</span>
-                                    </div>
-                                    <div class="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden border border-gray-200/60">
-                                        <div class="h-full bg-emerald-600 rounded-full transition-all duration-700" style="width: ${clamp(comp, 0, 100)}%"></div>
-                                    </div>
-                                </div>
-
-                                <!-- % Esperado -->
-                                <div>
-                                    <div class="flex justify-between items-baseline text-xs mb-1">
-                                        <span class="font-semibold text-gray-600">% Esperado</span>
-                                        <span class="text-sm font-bold text-amber-700">${isLoading ? '--%' : exp + '%'}</span>
-                                    </div>
-                                    <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden border border-gray-200/60">
-                                        <div class="h-full bg-amber-500 rounded-full transition-all duration-700" style="width: ${clamp(exp, 0, 100)}%"></div>
-                                    </div>
-                                </div>
-                            </div>
+                            ${metricsBody}
                         </div>
 
                         <!-- Pie de Tarjeta -->
@@ -1036,7 +1309,7 @@
         }
 
         function updateGlobalRollup() {
-            const validItems = Object.values(summaryState).filter(d => d && !d.loading && !d.error);
+            const validItems = Object.values(summaryState).filter(d => d && !d.loading && !d.error && !d.standalone);
             const compEl = document.getElementById('global-oaas-comp');
             const expEl = document.getElementById('global-oaas-exp');
 
@@ -1063,28 +1336,35 @@
 
         async function loadAllSummaries() {
             DASHBOARDS_CONFIG.forEach(cfg => {
-                summaryState[cfg.id] = { loading: true };
+                if (cfg.hasLiveSummary === false) {
+                    summaryState[cfg.id] = { loading: false, error: false, standalone: true };
+                } else {
+                    summaryState[cfg.id] = { loading: true };
+                }
             });
             renderSummaryCards();
 
-            const tasks = DASHBOARDS_CONFIG.map(async cfg => {
-                try {
-                    let result = null;
-                    if (cfg.id === 'gestion-desastres') result = await computeGestionDesastres(cfg);
-                    else if (cfg.id === 'pol-relacionamiento') result = await computePolRelacionamiento(cfg);
-                    else if (cfg.id === 'cambio-climatico') result = await computeCambioClimatico(cfg);
-                    else if (cfg.id === 'conpes') result = await computeConpes(cfg);
-                    else if (cfg.id === 'plan-estrategico') result = await computePlanEstrategico(cfg);
-                    else if (cfg.id === 'planes-accion') result = await computePlanesAccion(cfg);
-                    else if (cfg.id === 'gerencia-guajira') result = await computeGerenciaGuajira(cfg);
+            const tasks = DASHBOARDS_CONFIG
+                .filter(cfg => cfg.hasLiveSummary !== false)
+                .map(async cfg => {
+                    try {
+                        let result = null;
+                        if (cfg.id === 'gestion-desastres') result = await computeGestionDesastres(cfg);
+                        else if (cfg.id === 'pol-relacionamiento') result = await computePolRelacionamiento(cfg);
+                        else if (cfg.id === 'cambio-climatico') result = await computeCambioClimatico(cfg);
+                        else if (cfg.id === 'conpes') result = await computeConpes(cfg);
+                        else if (cfg.id === 'plan-estrategico') result = await computePlanEstrategico(cfg);
+                        else if (cfg.id === 'planes-accion') result = await computePlanesAccion(cfg);
+                        else if (cfg.id === 'gerencia-guajira') result = await computeGerenciaGuajira(cfg);
+                        else if (cfg.id === 'proyectos-inversion') result = await computeProyectosInversion(cfg);
 
-                    summaryState[cfg.id] = { ...result, loading: false, error: false };
-                } catch (err) {
-                    console.warn(`Error cargando resumen de ${cfg.name}:`, err);
-                    summaryState[cfg.id] = { completed: 0, expected: 0, startDate: 'Ver tablero', endDate: 'Ver tablero', loading: false, error: true };
-                }
-                renderSummaryCards();
-            });
+                        summaryState[cfg.id] = { ...result, loading: false, error: false };
+                    } catch (err) {
+                        console.warn(`Error cargando resumen de ${cfg.name}:`, err);
+                        summaryState[cfg.id] = { completed: 0, expected: 0, startDate: 'Ver tablero', endDate: 'Ver tablero', loading: false, error: true };
+                    }
+                    renderSummaryCards();
+                });
 
             await Promise.allSettled(tasks);
         }
