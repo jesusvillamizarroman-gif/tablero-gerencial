@@ -174,7 +174,7 @@
       animation: rootAppear 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
-    /* Globos / Texto flotante para Columna K */
+    /* Globo / Texto flotante para Columna K */
     #floatingTooltipK {
       pointer-events: none;
       transition: opacity 0.18s ease, transform 0.18s ease;
@@ -217,7 +217,7 @@
       <!-- Silueta de cordillera minera al fondo -->
       <path d="M0,780 L220,650 L410,720 L690,560 L960,700 L1250,580 L1540,690 L1760,600 L1920,670 L1920,1080 L0,1080 Z" fill="url(#mineMountainGrad1)" />
 
-      <!-- Terrazas escalonadas de mina a cielo abierto (Open-Pit Mine) -->
+      <!-- Terrazas escalonadas de mina a cielo abierto -->
       <path d="M0,850 L280,850 L330,815 L620,815 L670,780 L980,780 L1030,815 L1360,815 L1410,850 L1920,850 L1920,1080 L0,1080 Z" fill="url(#mineMountainGrad2)" />
       <path d="M120,900 L360,900 L400,870 L720,870 L760,840 L1120,840 L1160,870 L1490,870 L1530,900 L1920,900" fill="none" stroke="#9a3412" stroke-opacity="0.18" stroke-width="2" />
       <path d="M60,945 L420,945 L460,918 L810,918 L850,895 L1220,895 L1260,918 L1610,918 L1650,945 L1920,945" fill="none" stroke="#b45309" stroke-opacity="0.16" stroke-width="1.8" />
@@ -274,7 +274,7 @@
             Gestión Estratégica Minero-Energética
           </span>
           <h1 class="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 uppercase">
-            PLAN ESTRATÉGICO INTERINSTITUCIONAL
+            PLAN ESTRATÉGICO INSTITUCIONAL
           </h1>
         </div>
       </div>
@@ -330,7 +330,7 @@
         <i data-lucide="pickaxe" class="w-6 h-6"></i>
       </div>
       <div class="space-y-1">
-        <h2 class="text-sm font-extrabold text-slate-900">Cargando Plan Estratégico Interinstitucional...</h2>
+        <h2 class="text-sm font-extrabold text-slate-900">Cargando Plan Estratégico Institucional...</h2>
         <p class="text-xs text-slate-500">Conectando y procesando silos, raíces, pesos y actividades tácticas</p>
       </div>
     </div>
@@ -407,7 +407,7 @@
           </div>
           <div>
             <h2 id="silosSectionTitle" class="text-sm sm:text-base font-extrabold text-slate-900">
-              Silos del Plan Estratégico Interinstitucional
+              Silos del Plan Estratégico Institucional
             </h2>
             <p id="silosSectionSubtitle" class="text-xs text-slate-500">
               Selecciona un silo para aislar su estructura y desplegar sus raíces y actividades tácticas
@@ -423,7 +423,7 @@
             class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-300 transition-all"
           >
             <i data-lucide="git-fork" class="w-3.5 h-3.5 text-emerald-700"></i>
-            <span id="expandAllBtnText">Desplegar todas las raíces del Silo</span>
+            <span id="expandAllBtnText">Desplegar todas las raíces</span>
           </button>
           <button
             onclick="resetToAllSilos()"
@@ -482,7 +482,7 @@
   </main>
 
   <!-- MODAL DE FICHA DETALLADA DE LA ACTIVIDAD TÁCTICA -->
-  <div id="detailModal" class="fixed inset-0 z-50 hidden bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+  <div id="detailModal" onclick="if (event.target === this) closeDetailModal()" class="fixed inset-0 z-50 hidden bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-2xl w-full p-6 border border-slate-200 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
       <div class="flex items-start justify-between gap-3 border-b border-slate-200 pb-3.5">
         <div>
@@ -516,15 +516,15 @@
 
     // Etiquetas semánticas limpias (sin letras de columna)
     let semanticHeaders = {
-      level1: 'Silo Estratégico',            // Columna A (0)
-      level2: 'Objetivo / Raíz Estratégica', // Columna B (1)
-      weightBForA: 'Peso en Silo',           // Columna C (2) - Peso de B para A
-      level3: 'Actividad Táctica',           // Columna F (5)
-      responsible: 'Responsable Táctico',    // Columna G (6)
-      completed: '% Completado',             // Columna H (7)
-      paramStart: 'Parámetro Inicial',       // Columna I (8)
-      paramEnd: 'Meta / Plazo',              // Columna J (9)
-      floatingInfo: 'Información Adicional', // Columna K (10)
+      level1: 'Silo Estratégico',            // Columna A (índice 0)
+      level2: 'Raíz Estratégica',            // Columna B (índice 1)
+      weightBForA: 'Peso en Silo',           // Columna C (índice 2) - Peso de B para A
+      level3: 'Actividad Táctica',           // Columna F (índice 5)
+      responsible: 'Responsable Táctico',    // Columna G (índice 6)
+      completed: '% Completado',             // Columna H (índice 7)
+      paramStart: 'Inicio / Parámetro Base', // Columna I (índice 8)
+      paramEnd: 'Meta / Plazo',              // Columna J (índice 9)
+      floatingInfo: 'Información Adicional', // Columna K (índice 10)
       all: []
     };
 
@@ -611,6 +611,13 @@
         requestAnimationFrame(drawRootConnections);
       });
 
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          closeDetailModal();
+          hideFloatingTooltipK();
+        }
+      });
+
       const ro = new ResizeObserver(() => {
         requestAnimationFrame(drawRootConnections);
       });
@@ -619,6 +626,45 @@
 
       loadSpreadsheetData();
     });
+
+    /*************************************************************************
+     * ASIGNACIÓN SEMÁNTICA DE ÍCONOS COHERENTES CON EL TEMA DE CADA SILO
+     *************************************************************************/
+    function normalizeForMatch(str) {
+      return String(str || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+    }
+
+    function getCoherentSiloIcon(siloName, fallbackIcon = 'compass') {
+      const text = normalizeForMatch(siloName);
+
+      const iconRules = [
+        { keywords: ['mineria', 'minero', 'mina', 'mineral', 'extraccion', 'titulacion', 'fomento minero', 'formalizacion'], icon: 'pickaxe' },
+        { keywords: ['energia', 'energetica', 'energetico', 'electrica', 'electrico', 'transicion', 'renovable', 'solar', 'eolica'], icon: 'zap' },
+        { keywords: ['hidrocarburo', 'petroleo', 'gas', 'combustible', 'refinacion', 'pozo'], icon: 'flame' },
+        { keywords: ['ambiental', 'ambiente', 'sostenib', 'ecolog', 'clima', 'climatico', 'verde', 'agua', 'hidrico', 'biodiversidad'], icon: 'leaf' },
+        { keywords: ['comunidad', 'social', 'ciudadan', 'dialogo', 'participacion', 'etnic', 'bienestar', 'derechos', 'inclusion', 'cultura'], icon: 'users' },
+        { keywords: ['territorio', 'territorial', 'region', 'regional', 'ordenamiento', 'geologia', 'geologico', 'campo', 'mapa'], icon: 'map-pin' },
+        { keywords: ['gobernanza', 'institucional', 'articulacion', 'fortalecimiento', 'estado', 'entidades', 'publico', 'estrategic'], icon: 'landmark' },
+        { keywords: ['normativa', 'regulacion', 'regulatorio', 'juridico', 'legal', 'ley', 'justicia', 'cumplimiento', 'politica'], icon: 'scale' },
+        { keywords: ['tecnologia', 'digital', 'datos', 'informacion', 'sistema', 'innovacion', 'transformacion', 'inteligencia', 'ti', 'tic'], icon: 'cpu' },
+        { keywords: ['fiscalizacion', 'seguridad', 'control', 'vigilancia', 'riesgo', 'salvamento', 'inspeccion', 'auditoria', 'proteccion'], icon: 'shield-check' },
+        { keywords: ['infraestructura', 'obra', 'construccion', 'transmision', 'red', 'logistica', 'planta', 'industria'], icon: 'building-2' },
+        { keywords: ['financier', 'presupuesto', 'economi', 'inversion', 'recurso', 'regalias', 'recaudo', 'mercado', 'competitividad'], icon: 'coins' },
+        { keywords: ['talento', 'humano', 'capacitacion', 'formacion', 'educacion', 'conocimiento', 'investigacion', 'ciencia'], icon: 'graduation-cap' },
+        { keywords: ['comunicacion', 'transparencia', 'rendicion', 'servicio', 'atencion', 'calidad', 'gestion', 'operacion', 'eficiencia'], icon: 'clipboard-check' }
+      ];
+
+      for (const rule of iconRules) {
+        if (rule.keywords.some((kw) => text.includes(kw))) {
+          return rule.icon;
+        }
+      }
+
+      return fallbackIcon;
+    }
 
     /*************************************************************************
      * CARGA Y PROCESAMIENTO DE DATOS
@@ -739,16 +785,16 @@
     }
 
     /**
-     * Mapeo exacto solicitado para Plan Estratégico Interinstitucional:
-     * - Columna A (índice 0): Nivel 1 - Silo Principal
-     * - Columna B (índice 1): Nivel 2 - Raíz Estratégica
-     * - Columna C (índice 2): Peso de ponderación de la Columna B para la Columna A
-     * - Columna D (índice 3): Ignorada como responsable táctico (se usa Columna G)
-     * - Columna F (índice 5): Nivel 3 - Actividad Táctica
-     * - Columna G (índice 6): Responsable de la Actividad Táctica
-     * - Columna H (índice 7): % Completado
-     * - Columnas I y J (índices 8 y 9): Parámetros del % Esperado
-     * - Columna K (índice 10): Texto flotante (Tooltip / Nota flotante)
+     * Mapeo exacto para Plan Estratégico Institucional:
+     * - Columna A (0): Nivel 1 - Silo Estratégico
+     * - Columna B (1): Nivel 2 - Raíz Estratégica
+     * - Columna C (2): Peso de ponderación de B para A
+     * - Columna D (3): Omitida (responsable de nivel superior no requerido)
+     * - Columna F (5): Nivel 3 - Actividad Táctica
+     * - Columna G (6): Responsable de la Actividad Táctica
+     * - Columna H (7): % Completado
+     * - Columnas I y J (8 y 9): Parámetros para % Esperado
+     * - Columna K (10): Texto flotante interactivo
      */
     function parseSheetData(workbook, sheetName) {
       const wsOriginal = workbook.Sheets[sheetName];
@@ -758,13 +804,14 @@
       unmergeWorksheet(ws);
 
       const range = XLSX.utils.decode_range(ws['!ref']);
+      const maxCol = Math.max(range.e.c, 12);
       const rawMatrix = [];
       const formattedMatrix = [];
 
       for (let r = range.s.r; r <= range.e.r; r++) {
         const rowVals = [];
         const rowFmts = [];
-        for (let c = 0; c <= Math.max(range.e.c, 12); c++) {
+        for (let c = 0; c <= maxCol; c++) {
           const addr = XLSX.utils.encode_cell({ r, c });
           const cell = ws[addr];
           rowVals.push(cell ? cell.v : undefined);
@@ -774,11 +821,11 @@
         formattedMatrix.push(rowFmts);
       }
 
-      // Detectar la fila de encabezado en las primeras 10 filas
+      // Detectar fila de encabezados con mayor cantidad de celdas no vacías en las primeras 10 filas
       let headerRowIdx = 0;
       let bestScore = -1;
       for (let r = 0; r < Math.min(10, rawMatrix.length); r++) {
-        const nonEmptyCount = formattedMatrix[r].filter((val, idx) => idx <= 11 && val && val.length > 0).length;
+        const nonEmptyCount = formattedMatrix[r].filter((val, idx) => idx <= 12 && val && val.length > 0).length;
         if (nonEmptyCount > bestScore) {
           bestScore = nonEmptyCount;
           headerRowIdx = r;
@@ -788,22 +835,22 @@
       const hRow = formattedMatrix[headerRowIdx] || [];
       semanticHeaders = {
         level1: stripColumnReferences(cleanText(hRow[0]), 'Silo Estratégico'),
-        level2: stripColumnReferences(cleanText(hRow[1]), 'Objetivo / Raíz'),
+        level2: stripColumnReferences(cleanText(hRow[1]), 'Raíz Estratégica'),
         weightBForA: stripColumnReferences(cleanText(hRow[2]), 'Peso en Silo'),
         level3: stripColumnReferences(cleanText(hRow[5]), 'Actividad Táctica'),
-        responsible: stripColumnReferences(cleanText(hRow[6]), 'Responsable'),
+        responsible: stripColumnReferences(cleanText(hRow[6]), 'Responsable Actividad Táctica'),
         completed: stripColumnReferences(cleanText(hRow[7]), '% Completado'),
-        paramStart: stripColumnReferences(cleanText(hRow[8]), 'Inicio / Programado'),
+        paramStart: stripColumnReferences(cleanText(hRow[8]), 'Inicio / Base'),
         paramEnd: stripColumnReferences(cleanText(hRow[9]), 'Meta / Plazo'),
-        floatingInfo: stripColumnReferences(cleanText(hRow[10]), 'Observaciones / Detalle'),
+        floatingInfo: stripColumnReferences(cleanText(hRow[10]), 'Observaciones / Nota'),
         all: hRow.map((h) => stripColumnReferences(cleanText(h), 'Atributo'))
       };
 
       const parsed = [];
       let lastA = '';
       let lastB = '';
-      let lastRawC = undefined;
-      let lastFmtC = '';
+      let lastC_raw = undefined;
+      let lastC_fmt = '';
 
       for (let r = headerRowIdx + 1; r < rawMatrix.length; r++) {
         const raw = rawMatrix[r];
@@ -816,68 +863,62 @@
         let valB = cleanText(fmt[1]);
         let rawC = raw[2];
         let fmtC = cleanText(fmt[2]);
-        let valF = cleanText(fmt[5]);
+        const valF = cleanText(fmt[5]); // Actividad Táctica
+        const valG = cleanText(fmt[6]); // Responsable Actividad Táctica
+        const rawH = raw[7];
+        const fmtH = cleanText(fmt[7]); // % Completado
+        const rawI = raw[8];
+        const fmtI = cleanText(fmt[8]); // % Esperado inicio/base
+        const rawJ = raw[9];
+        const fmtJ = cleanText(fmt[9]); // % Esperado fin/meta
+        const valK = cleanText(fmt[10]); // Texto flotante
 
-        // Propagar Silo (Columna A)
+        // Heredar valores de celdas combinadas o vacías hacia abajo para A, B y C
         if (valA) {
           if (valA !== lastA) {
             lastA = valA;
             lastB = '';
-            lastRawC = undefined;
-            lastFmtC = '';
+            lastC_raw = undefined;
+            lastC_fmt = '';
           }
-        } else if (lastA && (valB || valF)) {
+        } else if (lastA && (valB || valF || valG || fmtH)) {
           valA = lastA;
         }
 
-        // Propagar Raíz (Columna B) y su peso hacia A (Columna C)
         if (valB) {
           if (valB !== lastB) {
             lastB = valB;
-            lastRawC = rawC;
-            lastFmtC = fmtC;
-          } else {
-            if (fmtC) {
-              lastRawC = rawC;
-              lastFmtC = fmtC;
-            } else {
-              rawC = lastRawC;
-              fmtC = lastFmtC;
-            }
+            lastC_raw = rawC;
+            lastC_fmt = fmtC;
+          } else if (!fmtC && lastC_fmt) {
+            rawC = lastC_raw;
+            fmtC = lastC_fmt;
           }
-        } else if (lastB && valF) {
+        } else if (lastB && (valF || valG || fmtH)) {
           valB = lastB;
-          if (!fmtC) {
-            rawC = lastRawC;
-            fmtC = lastFmtC;
+          if (!fmtC && lastC_fmt) {
+            rawC = lastC_raw;
+            fmtC = lastC_fmt;
           }
         }
 
+        if (fmtC) {
+          lastC_raw = rawC;
+          lastC_fmt = fmtC;
+        }
+
+        // Ignorar filas totalmente vacías en los campos clave
         if (!valA && !valB && !valF) continue;
+        // Si es una fila resumen o sin actividad táctica ni raíz, omitir
+        if (!valF && !valG && !fmtH) continue;
 
-        // Responsable de la Actividad Táctica en Columna G (índice 6)
-        const fmtG = cleanText(fmt[6]);
-
-        // % Completado en Columna H (índice 7)
-        const rawH = raw[7];
-        const fmtH = cleanText(fmt[7]);
-
-        // % Esperado en Columnas I (índice 8) y J (índice 9)
-        const rawI = raw[8];
-        const rawJ = raw[9];
-        const fmtI = cleanText(fmt[8]);
-        const fmtJ = cleanText(fmt[9]);
-
-        // Texto flotante en Columna K (índice 10)
-        const fmtK = cleanText(fmt[10]);
-
-        // Campos adicionales para la ficha modal (excluyendo el responsable de Columna D por solicitud)
+        // Recolectar atributos adicionales excluyendo la Columna D (índice 3)
         const extraFields = [];
         for (let c = 0; c < semanticHeaders.all.length; c++) {
-          if (c === 3) continue; // No considerar el responsable de la columna D
+          if (c === 3) continue; // Omitir Columna D según solicitud
           if (fmt[c] !== undefined && fmt[c] !== '') {
             extraFields.push({
-              header: semanticHeaders.all[c] || `Campo ${c + 1}`,
+              header: semanticHeaders.all[c],
               value: fmt[c]
             });
           }
@@ -885,20 +926,20 @@
 
         parsed.push({
           id: `item-${r}`,
-          siloName: valA || 'Silo General',
+          siloName: valA || 'General',
           rootName: valB || 'Objetivo General',
           rawC,
           fmtC: fmtC || '-',
-          rootWeightPct: 0, // Peso de la Columna B para la Columna A
+          rootWeightPct: 0, // Calculado en recalculateAllPercentages
           tacticalActivity: valF || valB || 'Actividad Táctica',
-          responsible: fmtG || 'Sin asignar',
+          responsible: valG || 'Sin asignar',
           rawH,
           fmtH: fmtH || '0%',
           rawI,
-          rawJ,
           fmtI: fmtI || '-',
+          rawJ,
           fmtJ: fmtJ || '-',
-          floatingTextK: fmtK || '',
+          floatingTextK: valK || '',
           expectedPct: 0,
           completedPct: 0,
           extraFields
@@ -908,6 +949,7 @@
       allRows = parsed;
       recalculateAllPercentages();
 
+      // Estado inicial: mostrar todos los Silos
       state.selectedSilo = null;
       state.selectedRootKey = null;
       state.expandAllInSilo = false;
@@ -919,7 +961,7 @@
     }
 
     /*************************************************************************
-     * CÁLCULO DE % ESPERADO (COLS I y J), % COMPLETADO (COL H) Y PESO (COL C)
+     * CÁLCULO AUTOMÁTICO DE % ESPERADO (COLS I y J), % COMPLETADO (COL H) Y PESOS (COL C)
      *************************************************************************/
     function parseDateFlexible(rawVal, fmtStr) {
       if (!rawVal && !fmtStr) return null;
@@ -963,7 +1005,7 @@
 
     function parseNumericValue(rawVal, fmtStr) {
       if (typeof rawVal === 'number' && !isNaN(rawVal)) {
-        if (fmtStr && fmtStr.includes('%') && Math.abs(rawVal) <= 1) {
+        if (fmtStr && String(fmtStr).includes('%') && Math.abs(rawVal) <= 1.0001) {
           return rawVal * 100;
         }
         return rawVal;
@@ -1004,20 +1046,16 @@
       let maxRawH = 0;
       let maxRawC = 0;
       allRows.forEach((r) => {
-        if (typeof r.rawH === 'number' && r.rawH > maxRawH) {
-          maxRawH = r.rawH;
-        }
-        if (typeof r.rawC === 'number' && r.rawC > maxRawC) {
-          maxRawC = r.rawC;
-        }
+        if (typeof r.rawH === 'number' && r.rawH > maxRawH) maxRawH = r.rawH;
+        if (typeof r.rawC === 'number' && r.rawC > maxRawC) maxRawC = r.rawC;
       });
 
+      // Determinar el modo de cálculo para las Columnas I y J (% Esperado)
       let dateCount = 0;
       let numCount = 0;
       let iLessEqualJ = 0;
       let jLessEqualI = 0;
       let maxRawI = 0;
-      let maxRawJ = 0;
 
       allRows.forEach((r) => {
         const dI = parseDateFlexible(r.rawI, r.fmtI);
@@ -1032,11 +1070,6 @@
             if (nI <= nJ) iLessEqualJ++;
             if (nJ <= nI) jLessEqualI++;
             if (Math.abs(nI) > maxRawI) maxRawI = Math.abs(nI);
-            if (Math.abs(nJ) > maxRawJ) maxRawJ = Math.abs(nJ);
-          } else if (!isNaN(nI)) {
-            if (Math.abs(nI) > maxRawI) maxRawI = Math.abs(nI);
-          } else if (!isNaN(nJ)) {
-            if (Math.abs(nJ) > maxRawJ) maxRawJ = Math.abs(nJ);
           }
         }
       });
@@ -1059,14 +1092,14 @@
       const cutoffTime = state.cutoffDate.getTime();
 
       allRows.forEach((row) => {
-        // % Completado desde la Columna H
+        // % Completado desde Columna H
         row.completedPct = round1(parsePercentageValue(row.rawH, row.fmtH, maxRawH));
 
-        // Peso de la Columna B para la Columna A (desde Columna C)
-        const parsedWeightC = parsePercentageValue(row.rawC, row.fmtC, maxRawC);
-        row.rootWeightPct = round1(parsedWeightC > 0 ? parsedWeightC : 0);
+        // Peso de la Raíz B dentro del Silo A desde Columna C
+        const parsedWeight = parsePercentageValue(row.rawC, row.fmtC, maxRawC);
+        row.rootWeightPct = round1(parsedWeight > 0 ? parsedWeight : 0);
 
-        // % Esperado desde las Columnas I y J
+        // % Esperado desde Columnas I y J
         let exp = 0;
         if (effectiveMode === 'dates') {
           const dI = parseDateFlexible(row.rawI, row.fmtI);
@@ -1082,40 +1115,27 @@
               exp = ((cutoffTime - start) / (end - start)) * 100;
             }
           } else {
-            const nI = parseNumericValue(row.rawI, rFmtOrEmpty(row.fmtI));
-            const nJ = parseNumericValue(row.rawJ, rFmtOrEmpty(row.fmtJ));
+            const nI = parseNumericValue(row.rawI, row.fmtI);
+            const nJ = parseNumericValue(row.rawJ, row.fmtJ);
             if (!isNaN(nI) && !isNaN(nJ) && nJ !== 0) {
-              const ratio = nI / nJ;
-              exp = ratio <= 1.0001 ? ratio * 100 : ratio;
-            } else if (!isNaN(nI)) {
-              exp = parsePercentageValue(row.rawI, row.fmtI, maxRawI);
-            } else if (!isNaN(nJ)) {
-              exp = parsePercentageValue(row.rawJ, row.fmtJ, maxRawJ);
+              exp = (nI / nJ) * 100;
             }
           }
         } else if (effectiveMode === 'i_div_j') {
-          const nI = parseNumericValue(row.rawI, rFmtOrEmpty(row.fmtI));
-          const nJ = parseNumericValue(row.rawJ, rFmtOrEmpty(row.fmtJ));
-          if (String(row.fmtI).includes('%') && (isNaN(nJ) || String(row.fmtJ).includes('%'))) {
-            exp = parsePercentageValue(row.rawI, row.fmtI, maxRawI);
-          } else if (!isNaN(nI) && !isNaN(nJ) && nJ !== 0) {
+          const nI = parseNumericValue(row.rawI, row.fmtI);
+          const nJ = parseNumericValue(row.rawJ, row.fmtJ);
+          if (!isNaN(nI) && !isNaN(nJ) && nJ !== 0) {
             const ratio = nI / nJ;
             exp = ratio <= 1.0001 ? ratio * 100 : ratio;
           } else if (!isNaN(nI) && isNaN(nJ)) {
-            exp = parsePercentageValue(row.rawI, row.fmtI, maxRawI);
-          } else if (isNaN(nI) && !isNaN(nJ)) {
-            exp = parsePercentageValue(row.rawJ, row.fmtJ, maxRawJ);
+            exp = maxRawI <= 1.01 ? nI * 100 : nI;
           }
         } else if (effectiveMode === 'j_div_i') {
-          const nI = parseNumericValue(row.rawI, rFmtOrEmpty(row.fmtI));
-          const nJ = parseNumericValue(row.rawJ, rFmtOrEmpty(row.fmtJ));
+          const nI = parseNumericValue(row.rawI, row.fmtI);
+          const nJ = parseNumericValue(row.rawJ, row.fmtJ);
           if (!isNaN(nI) && !isNaN(nJ) && nI !== 0) {
             const ratio = nJ / nI;
             exp = ratio <= 1.0001 ? ratio * 100 : ratio;
-          } else if (!isNaN(nI)) {
-            exp = parsePercentageValue(row.rawI, row.fmtI, maxRawI);
-          } else if (!isNaN(nJ)) {
-            exp = parsePercentageValue(row.rawJ, row.fmtJ, maxRawJ);
           }
         }
 
@@ -1123,93 +1143,54 @@
       });
     }
 
-    function rFmtOrEmpty(str) {
-      return str === '-' ? '' : str;
-    }
-
     /**
-     * Pondera las Raíces (Columna B) hacia el Silo (Columna A) usando el Peso de la Columna C.
-     * - Dentro de cada Raíz (Columna B): promedia sus Actividades Tácticas (Columna F).
-     * - Dentro de cada Silo (Columna A): pondera cada Raíz B por su peso en la Columna C.
+     * Calcula % Completado y % Esperado ponderando cada Raíz (Columna B)
+     * dentro de su Silo (Columna A) según el peso de la Columna C.
+     * Dentro de cada Raíz B se promedian sus Actividades Tácticas (Columna F).
      */
-    function calculateSiloWeightedMetric(rows, fieldName) {
+    function calculateWeightedMetricsBySilo(rows, field) {
       if (!rows || !rows.length) return 0;
 
-      // Agrupar primero por Silo (Col A)
+      // Agrupar primero por Silo (Columna A)
       const siloMap = new Map();
       rows.forEach((r) => {
-        if (!siloMap.has(r.siloName)) {
-          siloMap.set(r.siloName, new Map());
-        }
-        const rootMap = siloMap.get(r.siloName);
-        if (!rootMap.has(r.rootName)) {
-          rootMap.set(r.rootName, {
-            weight: r.rootWeightPct > 0 ? r.rootWeightPct : 0,
-            values: []
-          });
-        }
-        const rootEntry = rootMap.get(r.rootName);
-        if (r.rootWeightPct > 0 && rootEntry.weight === 0) {
-          rootEntry.weight = r.rootWeightPct;
-        }
-        rootEntry.values.push(Number(r[fieldName]) || 0);
+        if (!siloMap.has(r.siloName)) siloMap.set(r.siloName, []);
+        siloMap.get(r.siloName).push(r);
       });
 
       const siloScores = [];
-      for (const rootMap of siloMap.values()) {
-        const roots = Array.from(rootMap.values());
-        const totalWeight = roots.reduce((sum, item) => sum + (item.weight > 0 ? item.weight : 0), 0);
+      for (const siloRows of siloMap.values()) {
+        // Agrupar por Raíz (Columna B) dentro del Silo
+        const rootMap = new Map();
+        siloRows.forEach((r) => {
+          if (!rootMap.has(r.rootName)) {
+            rootMap.set(r.rootName, { weight: r.rootWeightPct, rows: [] });
+          }
+          const entry = rootMap.get(r.rootName);
+          if (r.rootWeightPct > 0 && entry.weight === 0) {
+            entry.weight = r.rootWeightPct;
+          }
+          entry.rows.push(r);
+        });
 
+        const rootEntries = Array.from(rootMap.values()).map((entry) => ({
+          weight: entry.weight,
+          avgVal: average(entry.rows.map((item) => item[field]))
+        }));
+
+        const totalWeight = rootEntries.reduce((sum, e) => sum + (e.weight > 0 ? e.weight : 0), 0);
         if (totalWeight > 0) {
-          const weightedSum = roots.reduce((sum, item) => {
-            const rootAvg = average(item.values);
-            return sum + rootAvg * (item.weight > 0 ? item.weight : 0);
-          }, 0);
+          const weightedSum = rootEntries.reduce(
+            (sum, e) => sum + e.avgVal * (e.weight > 0 ? e.weight : 0),
+            0
+          );
           siloScores.push(clamp(weightedSum / totalWeight, 0, 100));
         } else {
-          const rootAvgs = roots.map((item) => average(item.values));
-          siloScores.push(clamp(average(rootAvgs), 0, 100));
+          siloScores.push(average(rootEntries.map((e) => e.avgVal)));
         }
       }
 
       return round1(average(siloScores));
-    }
-
-    /**
-     * Asigna un ícono de Lucide coherente con el contenido semántico del nombre del Silo.
-     */
-    function getCoherentSiloIcon(siloName, fallbackIcon = 'compass') {
-      if (!siloName) return fallbackIcon;
-      const text = siloName
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '');
-
-      const iconRules = [
-        { keywords: ['mineria', 'minero', 'minerales', 'extraccion', 'formalizacion', 'fomento', 'titulo'], icon: 'pickaxe' },
-        { keywords: ['transicion', 'energia', 'energetica', 'energetico', 'electrica', 'electrico', 'renovable', 'generacion', 'potencia'], icon: 'zap' },
-        { keywords: ['hidrocarburos', 'gas', 'petroleo', 'combustible', 'refinacion', 'abastecimiento'], icon: 'flame' },
-        { keywords: ['ambiental', 'ambiente', 'sostenibilidad', 'sostenible', 'clima', 'climatico', 'biodiversidad', 'ecologico', 'agua', 'forestal'], icon: 'leaf' },
-        { keywords: ['comunidad', 'social', 'participacion', 'dialogo', 'ciudadania', 'ciudadano', 'equidad', 'genero', 'paz', 'derechos', 'diferencial'], icon: 'users' },
-        { keywords: ['territorio', 'territorial', 'region', 'regional', 'ordenamiento', 'geologia', 'geologico', 'campo'], icon: 'map-pin' },
-        { keywords: ['gobernanza', 'institucional', 'interinstitucional', 'articulacion', 'fortalecimiento', 'estado', 'entidades', 'publico'], icon: 'landmark' },
-        { keywords: ['normativa', 'regulacion', 'regulatorio', 'juridico', 'legal', 'ley', 'justicia', 'cumplimiento'], icon: 'scale' },
-        { keywords: ['tecnologia', 'digital', 'datos', 'informacion', 'sistemas', 'innovacion', 'ciencia', 'conocimiento', 'investigacion', 'tic'], icon: 'cpu' },
-        { keywords: ['seguridad', 'fiscalizacion', 'control', 'vigilancia', 'monitoreo', 'seguimiento', 'riesgo', 'auditoria', 'defensa'], icon: 'shield-check' },
-        { keywords: ['infraestructura', 'proyecto', 'obras', 'conectividad', 'transporte', 'logistica', 'redes', 'transmision'], icon: 'network' },
-        { keywords: ['financiero', 'presupuesto', 'recursos', 'economico', 'inversion', 'regalias', 'competitividad', 'mercado', 'productividad'], icon: 'trending-up' },
-        { keywords: ['talento', 'humano', 'capacitacion', 'educacion', 'formacion', 'cultura', 'bienestar', 'laboral'], icon: 'graduation-cap' },
-        { keywords: ['comunicacion', 'divulgacion', 'transparencia', 'visibilidad', 'prensa'], icon: 'megaphone' },
-        { keywords: ['internacional', 'cooperacion', 'alianza', 'global', 'tratado'], icon: 'globe' },
-        { keywords: ['planeacion', 'estrategia', 'estrategico', 'direccionamiento', 'meta', 'objetivo', 'plan'], icon: 'compass' }
-      ];
-
-      for (const rule of iconRules) {
-        if (rule.keywords.some((kw) => text.includes(kw))) {
-          return rule.icon;
-        }
-      }
-      return fallbackIcon;
     }
 
     /*************************************************************************
@@ -1242,14 +1223,14 @@
       const result = [];
       for (const [name, rows] of map.entries()) {
         const baseTheme = MINING_ENERGY_PALETTE[idx % MINING_ENERGY_PALETTE.length];
-        const coherentIcon = getCoherentSiloIcon(name, baseTheme.icon);
         const theme = {
           ...baseTheme,
-          icon: coherentIcon
+          icon: getCoherentSiloIcon(name, baseTheme.icon)
         };
-        const avgExp = calculateSiloWeightedMetric(rows, 'expectedPct');
-        const avgComp = calculateSiloWeightedMetric(rows, 'completedPct');
+        const avgExp = calculateWeightedMetricsBySilo(rows, 'expectedPct');
+        const avgComp = calculateWeightedMetricsBySilo(rows, 'completedPct');
         const uniqueRoots = new Set(rows.map((r) => r.rootName)).size;
+
         result.push({
           name,
           rows,
@@ -1296,8 +1277,8 @@
       const activeRows = getCurrentlyScopedRows();
       const allSilos = getUniqueSilos();
 
-      const avgExp = calculateSiloWeightedMetric(activeRows, 'expectedPct');
-      const avgComp = calculateSiloWeightedMetric(activeRows, 'completedPct');
+      const avgExp = calculateWeightedMetricsBySilo(activeRows, 'expectedPct');
+      const avgComp = calculateWeightedMetricsBySilo(activeRows, 'completedPct');
       const gap = round1(avgComp - avgExp);
       const completed100 = activeRows.filter((r) => r.completedPct >= 99.9).length;
 
@@ -1308,8 +1289,8 @@
 
       let filterLabel = 'Consolidado de todos los silos';
       if (state.selectedSilo) {
-        filterLabel = state.selectedRootKey
-          ? `${state.selectedSilo} • ${state.selectedRootKey}`
+        filterLabel = state.selectedRootKey && !state.expandAllInSilo
+          ? `Raíz: ${state.selectedRootKey}`
           : `Silo: ${state.selectedSilo}`;
       }
       document.getElementById('kpiActiveFilterText').textContent = filterLabel;
@@ -1345,9 +1326,9 @@
     }
 
     /**
-     * Renderiza los SILOS (Columna A).
-     * - Si NO hay un silo seleccionado, aparecen todos los silos horizontalmente.
-     * - Si el usuario elige un silo, los demás se ocultan para enfocar sus Raíces (Col B) y Actividades Tácticas (Col F).
+     * Renderiza la sección de SILOS.
+     * - Sin silo seleccionado: muestra todos los silos en cuadrícula horizontal.
+     * - Con silo seleccionado: oculta el grid de silos para evitar duplicar el nombre del silo.
      */
     function renderSilosSection() {
       const container = document.getElementById('silosHorizontalGrid');
@@ -1360,9 +1341,11 @@
       const silos = getUniqueSilos();
 
       if (!silos.length) {
+        container.classList.remove('hidden');
+        container.className = 'grid grid-cols-1';
         container.innerHTML = `
           <div class="col-span-full bg-white rounded-2xl p-8 text-center border border-slate-200 text-xs text-slate-500">
-            No se encontraron registros que coincidan con la búsqueda.
+            No se encontraron silos o actividades tácticas que coincidan con la búsqueda.
           </div>
         `;
         return;
@@ -1373,27 +1356,29 @@
       }
 
       if (state.selectedSilo) {
+        // MODO SILO AISLADO: Se ocultan los demás silos y no se duplica el nombre del silo en un banner adicional
         backBtnHeader.classList.remove('hidden');
         backBtnHeader.classList.add('inline-flex');
         activeControls.classList.remove('hidden');
         activeControls.classList.add('flex');
 
-        titleEl.textContent = 'Exploración del Silo Seleccionado';
+        titleEl.textContent = 'Vista Detallada del Silo';
         subtitleEl.textContent = 'Los demás silos se han ocultado para enfocar el árbol de raíces y actividades tácticas';
         expandBtnText.textContent = state.expandAllInSilo ? 'Modo paso a paso' : 'Desplegar todas las raíces';
 
-        // Ocultamos el banner duplicado superior para que el nombre del Silo aparezca únicamente en su tarjeta de tronco
-        container.className = 'hidden';
+        container.classList.add('hidden');
         container.innerHTML = '';
       } else {
+        // MODO TODOS LOS SILOS HORIZONTALES
         backBtnHeader.classList.add('hidden');
         backBtnHeader.classList.remove('inline-flex');
         activeControls.classList.add('hidden');
         activeControls.classList.remove('flex');
 
-        titleEl.textContent = 'Silos del Plan Estratégico Interinstitucional';
+        titleEl.textContent = 'Silos del Plan Estratégico Institucional';
         subtitleEl.textContent = 'Haz clic en cualquier silo para aislarlo y desplegar sus raíces y actividades tácticas';
 
+        container.classList.remove('hidden');
         container.className = 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4';
         container.innerHTML = silos.map((silo, idx) => renderSiloCard(silo, idx)).join('');
       }
@@ -1471,54 +1456,6 @@
               <span>Explorar raíces del silo</span>
             </span>
             <i data-lucide="arrow-right" class="w-3.5 h-3.5 transition-transform group-hover:translate-x-1"></i>
-          </div>
-        </div>
-      `;
-    }
-
-    function renderSingleIsolatedSiloBanner(silo) {
-      return `
-        <div
-          class="bg-white rounded-2xl p-4 sm:p-5 border-2 shadow-sm flex flex-wrap items-center justify-between gap-4 animate-root"
-          style="border-color: ${silo.theme.main}"
-        >
-          <div class="flex items-center gap-3.5">
-            <div
-              class="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border"
-              style="background: ${silo.theme.lightBg}; border-color: ${silo.theme.border}; color: ${silo.theme.main}"
-            >
-              <i data-lucide="${silo.theme.icon}" class="w-6 h-6"></i>
-            </div>
-            <div>
-              <div class="flex items-center gap-2">
-                <span
-                  class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full"
-                  style="background: ${silo.theme.badgeBg}; color: ${silo.theme.badgeText}"
-                >
-                  Silo en Revisión (Demás silos ocultos)
-                </span>
-                <span class="text-xs font-mono font-semibold text-slate-500">
-                  • ${silo.uniqueRoots} ${silo.uniqueRoots === 1 ? 'raíz' : 'raíces'} • ${silo.count} actividades tácticas
-                </span>
-              </div>
-              <h3 class="text-base sm:text-lg font-extrabold text-slate-900 mt-1">
-                ${escapeHtml(silo.name)}
-              </h3>
-            </div>
-          </div>
-
-          <div class="flex flex-wrap items-center gap-5">
-            <div class="flex items-center gap-4 bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-200">
-              <div>
-                <div class="text-[10px] font-bold uppercase text-slate-500">% Esperado</div>
-                <div class="text-base font-extrabold font-mono text-amber-700">${silo.avgExp}%</div>
-              </div>
-              <div class="h-7 w-px bg-slate-200"></div>
-              <div>
-                <div class="text-[10px] font-bold uppercase text-slate-500">% Completado Pond.</div>
-                <div class="text-base font-extrabold font-mono text-emerald-700">${silo.avgComp}%</div>
-              </div>
-            </div>
           </div>
         </div>
       `;
@@ -1772,7 +1709,7 @@
                   <div class="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center mx-auto text-amber-700">
                     <i data-lucide="sprout" class="w-4 h-4"></i>
                   </div>
-                  <p class="text-xs font-bold text-slate-700">Selecciona una Raíz Principal (Nivel 2)</p>
+                  <p class="text-xs font-bold text-slate-700">Selecciona una Raíz Principal</p>
                   <p class="text-[11px] text-slate-500">Haz clic en una raíz a la izquierda para desplegar sus Actividades Tácticas, responsables y avances.</p>
                 </div>
               `
@@ -2204,13 +2141,12 @@
     }
 
     /*************************************************************************
-     * MODAL DE FICHA DETALLADA DE LA ACTIVIDAD TÁCTICA
+     * MODAL DE DETALLE DE LA ACTIVIDAD TÁCTICA
      *************************************************************************/
     function openDetailModal(rowId) {
+      hideFloatingTooltipK();
       const item = allRows.find((r) => r.id === rowId);
       if (!item) return;
-
-      hideFloatingTooltipK();
 
       const modal = document.getElementById('detailModal');
       const title = document.getElementById('detailModalTitle');
@@ -2233,7 +2169,7 @@
             <p class="text-xs text-slate-900 font-extrabold mt-0.5">${escapeHtml(item.responsible)}</p>
           </div>
           <div class="p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-200">
-            <span class="text-[10px] font-bold text-emerald-900 uppercase">${escapeHtml(semanticHeaders.weightBForA)}</span>
+            <span class="text-[10px] font-bold text-emerald-900 uppercase">${escapeHtml(semanticHeaders.weightBForA)} (en Silo)</span>
             <p class="text-xs text-slate-900 font-mono font-extrabold mt-0.5">${item.rootWeightPct > 0 ? `${item.rootWeightPct}%` : escapeHtml(item.fmtC)}</p>
           </div>
         </div>
