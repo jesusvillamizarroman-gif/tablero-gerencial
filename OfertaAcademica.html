@@ -144,20 +144,21 @@
                 </li>
             </ul>
         </nav>
+
+        <!-- Nuevo Logo Institucional ubicado en la parte inferior del Sidebar -->
+        <div class="px-6 py-6 mt-auto relative z-10 flex items-center justify-center">
+            <img 
+                src="./logo%20ministerio%20internacional_Mesa%20de%20trabajo%201.png" 
+                alt="Logo Ministerio de Minas y Energía" 
+                title="Ministerio de Minas y Energía"
+                class="w-44 max-w-full h-auto object-contain drop-shadow-md transition-transform duration-300 hover:scale-105"
+                onerror="this.onerror=null; this.src='https://raw.githubusercontent.com/jesusvillamizarroman-gif/tablero-gerencial/main/logo%20ministerio%20internacional_Mesa%20de%20trabajo%201.png';"
+            >
+        </div>
     </aside>
 
-    <!-- Contenedor Derecho (Header + Area Dinamica) -->
+    <!-- Contenedor Derecho (Área Dinámica sin Header superior) -->
     <div class="flex-1 flex flex-col h-full overflow-hidden w-full bg-brand-bg relative z-10">
-        
-        <!-- Header Superior Horizontal -->
-        <header class="bg-brand-primary border-b border-black/10 px-6 py-3 flex items-center justify-between flex-shrink-0 shadow-sm z-20">
-            <h2 class="text-lg font-bold text-white flex items-center gap-2 tracking-wide">Ministerio de Minas y Energía</h2>
-            
-            <!-- Logo Institucional -->
-            <div class="h-10 md:h-12 bg-white rounded-lg px-3 py-1.5 flex items-center justify-center shadow-sm" title="Ministerio de Minas y Energía">
-                <img src="https://lh3.googleusercontent.com/d/151_aHFZNXVSdOd8uRb4xSFPleQT-CZNK" alt="Logo Ministerio de Minas y Energía" class="h-full w-auto object-contain" onerror="this.onerror=null; this.src='https://drive.google.com/thumbnail?id=151_aHFZNXVSdOd8uRb4xSFPleQT-CZNK&sz=w400';">
-            </div>
-        </header>
 
         <!-- AREA DINÁMICA RELATIVA: Contiene el Scroll Principal y el Cajón -->
         <div class="flex-1 relative overflow-hidden w-full h-full">
@@ -282,7 +283,7 @@
                             </div>
                         </div> 
                         
-                        <!-- Mapa Principal ESRI -->
+                        <!-- Mapa Principal (sin etiqueta "Mapa ESRI") -->
                         <div class="xl:col-span-5 flex flex-col h-[400px] xl:h-auto min-h-[300px]">
                             <div class="bg-brand-card rounded-2xl shadow-card border border-brand-primary/5 flex flex-col h-full overflow-hidden relative">
                                 <div class="p-3.5 border-b border-brand-primary/5 flex justify-between items-center bg-brand-card z-10 relative">
@@ -290,7 +291,6 @@
                                         <div class="w-6 h-6 rounded-full bg-brand-light text-brand-primary flex items-center justify-center shrink-0"><i class="fa-solid fa-map text-[10px]"></i></div>
                                         <span>Cobertura en La Guajira</span>
                                     </h3>
-                                    <span class="text-[9px] font-bold text-brand-text/50 uppercase tracking-widest bg-brand-bg px-2 py-1 rounded border border-brand-primary/10">Mapa ESRI</span>
                                 </div>
                                 <div id="guajira-map" class="flex-1 w-full bg-[#f8f9fa] z-0"></div>
                                 
@@ -319,7 +319,7 @@
                             </div>
                             <h3 class="text-lg md:text-xl font-extrabold text-brand-primary mb-2">Sin coincidencias</h3>
                             <p class="text-brand-text/60 max-w-md mx-auto text-xs md:text-sm font-medium mb-6">No hay ofertas que crucen con esta combinación de filtros.</p>
-                            <button onclick="document.getElementById('btn-clear-filters').click()" class="bg-brand-primary text-white font-bold px-6 py-2.5 rounded-xl shadow-md hover:bg-brand-sidebar transition-colors inline-flex items-center gap-2">
+                            <button onclick="document.getElementById('btn-clear-filters').click()" class="bg-brand-primary text-white font-bold px-6 py-2.5 rounded-xl shadow-md hover:opacity-90 transition-colors inline-flex items-center gap-2">
                                 <i class="fa-solid fa-rotate-left"></i> Limpiar todos los filtros
                             </button>
                         </div>
@@ -356,7 +356,7 @@
                         <!-- Contenedor dinámico del Grid -->
                         <div id="drawer-fields" class="w-full"></div>
                         
-                        <!-- MAPA INTERNO ESRI (Agregado al final de la info) -->
+                        <!-- MAPA INTERNO (Agregado al final de la info) -->
                         <div class="mt-8 border border-brand-primary/10 rounded-2xl overflow-hidden shadow-sm">
                             <div class="bg-brand-bg px-4 py-3 border-b border-brand-primary/10 flex items-center gap-2">
                                 <i class="fa-solid fa-map-location-dot text-brand-primary"></i>
@@ -402,7 +402,7 @@
         let globalStatus = 'all'; 
         let globalChip = ''; 
 
-        // Ojo al mapeo de fechas de ejecución con colH y colI dinámicos
+        // Mapeo de columnas dinámicas (incluyendo fechas en colH y colI)
         const colKeys = { 
             entidad: null, 
             nombreOferta: null, 
@@ -438,6 +438,9 @@
             'buenavista': 'distraccion', 'chorreras': 'distraccion'
         };
 
+        /**
+         * Da formato de capitalización limpia preservando siglas en mayúscula.
+         */
         function capitalizeFormat(str) {
             if (!str) return '';
             const s = String(str).trim();
@@ -448,7 +451,9 @@
             }).join(' ');
         }
 
-        // POBLACIÓN SEPARADA: Jóvenes vs NNA
+        /**
+         * Normaliza los grupos poblacionales separando Jóvenes de Menores de edad.
+         */
         function sanitizePoblacional(val) {
             if (!val) return '';
             const norm = String(val).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -465,34 +470,40 @@
         window.addEventListener('DOMContentLoaded', () => {
             initMap();
             
-            Papa.parse(CSV_URL, {
-                download: true,
-                header: true,
-                skipEmptyLines: true,
-                complete: function(results) {
-                    const headers = results.meta.fields;
-                    identifyColumns(headers);
-                    rawData = results.data;
-                    
-                    document.getElementById('loading-skeletons').classList.add('hidden');
-                    const mainContent = document.getElementById('main-content');
-                    mainContent.classList.remove('hidden');
-                    
-                    // Asegurar re-render de mapa después de la transición
-                    setTimeout(() => {
-                        mainContent.classList.remove('opacity-0');
-                        if (map) { map.invalidateSize(); }
-                    }, 100);
+            try {
+                Papa.parse(CSV_URL, {
+                    download: true,
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        const headers = results.meta.fields || [];
+                        identifyColumns(headers);
+                        rawData = results.data || [];
+                        
+                        document.getElementById('loading-skeletons').classList.add('hidden');
+                        const mainContent = document.getElementById('main-content');
+                        mainContent.classList.remove('hidden');
+                        
+                        // Asegurar re-render de mapa después de la transición
+                        setTimeout(() => {
+                            mainContent.classList.remove('opacity-0');
+                            if (map) { map.invalidateSize(); }
+                        }, 100);
 
-                    triggerFilters();
-                    setStatusFilter('all');
-                },
-                error: function(err) {
-                    document.getElementById('loading-skeletons').classList.add('hidden');
-                    document.getElementById('error-state').classList.remove('hidden');
-                    document.getElementById('error-message').textContent = "Fallo en la comunicación con Google Sheets: " + err.message;
-                }
-            });
+                        triggerFilters();
+                        setStatusFilter('all');
+                    },
+                    error: function(err) {
+                        document.getElementById('loading-skeletons').classList.add('hidden');
+                        document.getElementById('error-state').classList.remove('hidden');
+                        document.getElementById('error-message').textContent = "Fallo en la comunicación con Google Sheets: " + err.message;
+                    }
+                });
+            } catch (error) {
+                document.getElementById('loading-skeletons').classList.add('hidden');
+                document.getElementById('error-state').classList.remove('hidden');
+                document.getElementById('error-message').textContent = "Error inesperado al cargar los datos: " + error.message;
+            }
 
             document.getElementById('filter-sector').addEventListener('change', triggerFilters);
             document.getElementById('filter-municipio').addEventListener('change', triggerFilters);
@@ -513,11 +524,14 @@
             });
         });
 
+        /**
+         * Mapea los encabezados del CSV a claves internas del tablero.
+         */
         function identifyColumns(headers) {
             const norm = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             colKeys.municipioCols = [];
 
-            // ASIGNACIONES ESTRICTAS:
+            // ASIGNACIONES ESTRICTAS POR POSICIÓN:
             if(headers.length > 0) colKeys.entidad = headers[0]; // Col A
             if(headers.length > 3) colKeys.colD = headers[3];    // Col D (Enfoque puro)
             if(headers.length > 6) colKeys.colG = headers[6];    // Col G (Chips)
@@ -526,7 +540,7 @@
             if(headers.length > 7) colKeys.colH = headers[7];
             if(headers.length > 8) colKeys.colI = headers[8];
 
-            headers.forEach((header, index) => {
+            headers.forEach((header) => {
                 const n = norm(header);
                 if (/\bpoblacional\b/.test(n) || n.includes('enfoque poblacional') || n.includes('dirigido')) colKeys.poblacional = header;
                 if (/\bestado\b/.test(n)) colKeys.estado = header;
@@ -766,7 +780,7 @@
             fill(document.getElementById('filter-municipio'), munOptions, 'Municipio / comunidad');
         }
 
-        // Íconos Dinámicos
+        // Íconos Dinámicos por temática de la oferta
         function getOfferIcon(title) {
             const str = title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             if(str.includes('solar') || str.includes('energ') || str.includes('panel')) return 'fa-solar-panel text-brand-accent bg-brand-accentLight';
@@ -866,7 +880,7 @@
             
             const applyBtn = document.getElementById('drawer-apply-btn');
             
-            // Lógica Botón
+            // Lógica Botón de postulación
             if (statusType === 'cerradas') {
                 applyBtn.removeAttribute('href');
                 applyBtn.className = "w-full sm:w-auto min-w-[250px] flex justify-center items-center gap-2 py-3.5 px-6 bg-brand-text/60 text-white font-bold rounded-xl opacity-80 pointer-events-none text-sm text-center";
@@ -888,7 +902,7 @@
 
                 if (foundLink) {
                     applyBtn.href = foundLink;
-                    applyBtn.className = "w-full sm:w-auto min-w-[250px] flex justify-center items-center gap-2 py-3.5 px-6 bg-brand-primary text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 hover:bg-brand-sidebar transition-all text-sm text-center";
+                    applyBtn.className = "w-full sm:w-auto min-w-[250px] flex justify-center items-center gap-2 py-3.5 px-6 bg-brand-primary text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 hover:opacity-95 transition-all text-sm text-center";
                     applyBtn.innerHTML = `Postularme / Ir a la convocatoria <i class="fa-solid ${foundLink.startsWith('mailto:') ? 'fa-envelope' : 'fa-arrow-up-right-from-square'} shrink-0"></i>`;
                 } else {
                     applyBtn.removeAttribute('href');
@@ -1003,7 +1017,7 @@
             map = L.map('guajira-map', { scrollWheelZoom: false, zoomControl: false }).setView([11.4, -72.5], 8);
             L.control.zoom({ position: 'topleft' }).addTo(map);
             
-            // MAPA ESRI LIGHT GRAY BASE
+            // MAPA BASE LIGHT GRAY
             L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', { 
                 attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
                 maxZoom: 16
@@ -1094,7 +1108,6 @@
             setTimeout(() => {
                 if (!drawerMap) {
                     drawerMap = L.map('drawer-map', { scrollWheelZoom: false }).setView([11.4, -72.5], 8);
-                    // MAPA ESRI LIGHT GRAY BASE
                     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', { 
                         attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
                         maxZoom: 16
