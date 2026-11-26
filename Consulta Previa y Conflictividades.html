@@ -1,0 +1,1751 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Consulta Previa y Conflictividades · Tablero Integral</title>
+
+  <!-- Tipografía Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS & Paleta Oficial (Proyectos y Conflictividades) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'] },
+          colors: {
+            petrol: {
+              50: '#EFF7FA', 100: '#D8ECF2', 200: '#B5DAE6',
+              500: '#136F8A', 600: '#0E7490', 700: '#0B556F',
+              800: '#0C4A6E', 900: '#083344'
+            },
+            sand: { 50: '#FAF9F6', 100: '#F4F2EC', 200: '#EAE6DD', 300: '#DDD6C9' },
+            ochre: { 400: '#C49246', 500: '#A87932', 600: '#8F6324' },
+            forest: { 600: '#2B7A56', 700: '#1E6243' }
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Librerías Unificadas: Leaflet, SheetJS, Chart.js + DataLabels -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+
+  <style>
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: #F5F7F8; color: #1E293B; }
+
+    /* Scrollbars estilizados en tono ocre/bronce */
+    .scroll-ochre::-webkit-scrollbar { width: 6px; height: 6px; }
+    .scroll-ochre::-webkit-scrollbar-track { background: #ECEAE4; border-radius: 9999px; }
+    .scroll-ochre::-webkit-scrollbar-thumb { background: #A87932; border-radius: 9999px; }
+    .scroll-ochre::-webkit-scrollbar-thumb:hover { background: #8F6324; }
+    .scroll-ochre { scrollbar-width: thin; scrollbar-color: #A87932 #ECEAE4; }
+
+    /* Estética Leaflet */
+    .leaflet-container { font-family: 'Inter', system-ui, sans-serif !important; background: #E9F1F5; }
+    .leaflet-popup-content-wrapper {
+      border-radius: 16px !important;
+      box-shadow: 0 12px 28px -6px rgba(11, 85, 111, 0.22), 0 4px 10px -2px rgba(0, 0, 0, 0.08) !important;
+      border: 1px solid #DCE3E8; padding: 0 !important; overflow: hidden;
+    }
+    .leaflet-popup-content { margin: 0 !important; min-width: 260px; max-width: 320px; }
+    .leaflet-popup-tip { box-shadow: none !important; }
+    .leaflet-control-zoom { border: 1px solid #DCE3E8 !important; border-radius: 12px !important; overflow: hidden; box-shadow: 0 4px 14px rgba(11, 85, 111, 0.12) !important; }
+    .leaflet-control-zoom a { color: #0B556F !important; font-weight: 700 !important; }
+    .leaflet-control-attribution { font-size: 10px !important; background: rgba(255, 255, 255, 0.78) !important; backdrop-filter: blur(4px); border-top-left-radius: 8px; }
+
+    @keyframes pulseRing {
+      0% { transform: scale(0.95); opacity: 0.85; }
+      70%, 100% { transform: scale(1.65); opacity: 0; }
+    }
+    .marker-pulse-ring { animation: pulseRing 1.8s cubic-bezier(0.215, 0.61, 0.355, 1) infinite; }
+
+    .filter-pill { transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1); }
+    .filter-pill:active { transform: scale(0.97); }
+
+    @media print {
+      .no-print { display: none !important; }
+      body { background: #FFFFFF !important; height: auto !important; overflow: visible !important; }
+      .print-break { break-inside: avoid; }
+    }
+  </style>
+</head>
+
+<body id="appBody" class="min-h-screen flex flex-col bg-[#F5F7F8] text-slate-800 antialiased selection:bg-petrol-100 selection:text-petrol-900">
+
+  <!-- ===================================================================== -->
+  <!-- BARRA DE NAVEGACIÓN SUPERIOR UNIFICADA                                -->
+  <!-- ===================================================================== -->
+  <header class="sticky top-0 bg-white border-b border-[#DCE3E8] px-4 py-2.5 z-40 shadow-[0_1px_4px_rgba(11,85,111,0.05)] no-print">
+    <div class="max-w-[1600px] mx-auto flex flex-wrap items-center justify-between gap-3">
+      <!-- Identidad Principal -->
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-petrol-700 to-petrol-600 text-white flex items-center justify-center shadow-sm shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+        </div>
+        <div class="min-w-0">
+          <h1 class="text-sm sm:text-base font-extrabold tracking-tight text-petrol-800 truncate">
+            CONSULTA PREVIA Y CONFLICTIVIDADES
+          </h1>
+          <p class="text-[11px] text-slate-500 truncate">
+            Seguimiento analítico y georreferenciado de comunidades, proyectos y tipologías
+          </p>
+        </div>
+      </div>
+
+      <!-- Selector de Secciones (Front vs Mapa Territorial) -->
+      <nav aria-label="Navegación de secciones" class="flex items-center bg-sand-100 p-1 rounded-full border border-sand-300">
+        <button id="tab-consulta" type="button" onclick="switchView('consulta')"
+          class="px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer flex items-center gap-1.5 bg-petrol-700 text-white shadow-sm">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          <span>Consulta Previa</span>
+        </button>
+        <button id="tab-mapa" type="button" onclick="switchView('mapa')"
+          class="px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer flex items-center gap-1.5 text-petrol-800 hover:bg-white/80">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+          </svg>
+          <span>Proyectos y Conflictividades</span>
+        </button>
+      </nav>
+
+      <!-- Acciones Globales -->
+      <div class="flex items-center gap-2">
+        <button id="btn-reload" type="button" onclick="loadLiveData(true)"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-petrol-800 bg-white border border-[#D4DDE4] hover:bg-petrol-50 hover:border-petrol-500 transition cursor-pointer"
+          title="Sincronizar información en vivo">
+          <svg id="reload-icon" class="w-3.5 h-3.5 text-petrol-600" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span class="hidden sm:inline">Actualizar</span>
+        </button>
+        <input id="localFileInput" type="file" accept=".xlsx,.xls,.csv" class="hidden" />
+      </div>
+    </div>
+  </header>
+
+  <!-- Banner global de estado / respaldo (solo visible si ocurre error de red o modo demostración) -->
+  <div id="alertBanner" class="hidden max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 no-print">
+    <div id="alertBannerBox" class="rounded-2xl border p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div class="flex items-start gap-3">
+        <div id="alertIcon" class="mt-0.5 shrink-0"></div>
+        <div>
+          <h3 id="alertTitle" class="text-sm font-bold"></h3>
+          <p id="alertMessage" class="text-xs mt-0.5 leading-relaxed"></p>
+        </div>
+      </div>
+      <div id="alertActions" class="flex flex-wrap items-center gap-2 shrink-0"></div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- VISTA 1 (FRONT PRINCIPAL): CONSULTA PREVIA Y CONFLICTIVIDADES         -->
+  <!-- ===================================================================== -->
+  <div id="view-consulta" class="flex-1 flex flex-col">
+    <!-- Hero Institucional con Paleta Petrol & Ochre -->
+    <div class="bg-gradient-to-r from-petrol-900 via-petrol-800 to-petrol-700 text-white border-b-4 border-ochre-500 relative overflow-hidden">
+      <div class="absolute inset-0 opacity-10 pointer-events-none">
+        <svg class="w-full h-full" preserveAspectRatio="none" viewBox="0 0 1440 200" fill="none">
+          <path d="M0 160L120 138C240 117 480 75 720 85C960 96 1200 160 1320 181L1440 200V0H0V160Z" fill="#C49246"/>
+        </svg>
+      </div>
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-white/10 text-ochre-400 border border-ochre-500/40 mb-1.5">
+            Panel Ejecutivo Principal
+          </span>
+          <h2 class="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-white">
+            CONSULTA PREVIA Y CONFLICTIVIDADES
+          </h2>
+          <p class="text-xs sm:text-sm text-petrol-100 mt-1 max-w-2xl">
+            Seguimiento analítico de proyectos asociados, comunidades con conflictos y distribución numérica de tipologías por año.
+          </p>
+        </div>
+        <button type="button" onclick="switchView('mapa')"
+          class="self-start sm:self-center inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold bg-ochre-500 hover:bg-ochre-600 text-white shadow-md transition cursor-pointer no-print shrink-0">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+          </svg>
+          <span>Explorar Mapa Territorial</span>
+        </button>
+      </div>
+    </div>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <!-- Estado de Carga Inicial -->
+      <div id="loadingOverlay" class="bg-white rounded-2xl border border-[#DCE3E8] shadow-sm p-10 text-center">
+        <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-petrol-50 mb-4">
+          <div class="w-8 h-8 rounded-full border-4 border-petrol-100 border-t-petrol-700 animate-spin"></div>
+        </div>
+        <h2 class="text-lg font-bold text-petrol-800">Cargando datos en tiempo real...</h2>
+        <p id="loadingStepText" class="text-sm text-slate-500 mt-1">
+          Descargando información y procesando los registros del tablero.
+        </p>
+      </div>
+
+      <!-- Contenido del Front Principal -->
+      <div id="dashboardContent" class="hidden space-y-8">
+        <!-- Barra de Filtros por Año -->
+        <section class="bg-white rounded-2xl border border-[#DCE3E8] shadow-sm p-4 sm:p-5 no-print">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-sand-100 text-ochre-600 border border-sand-300 flex items-center justify-center">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-petrol-800">Filtro de Vigencia por Año</h3>
+                <p class="text-xs text-slate-500">Seleccione uno o varios años para focalizar la información del tablero.</p>
+              </div>
+            </div>
+            <button id="btnResetFilters" type="button"
+              class="self-start md:self-auto px-3.5 py-1.5 rounded-full text-xs font-semibold bg-sand-100 hover:bg-sand-200 text-petrol-800 border border-sand-300 transition cursor-pointer">
+              Mostrar todos los años
+            </button>
+          </div>
+          <div id="yearFilterPills" class="flex flex-wrap gap-2 mt-4"></div>
+        </section>
+
+        <!-- 5 Tarjetas KPI Resumen Ejecutivo -->
+        <section aria-label="Indicadores Clave" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div class="bg-white rounded-2xl border border-[#DCE3E8] shadow-sm p-5 border-l-4 border-l-petrol-700 flex flex-col justify-between">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Proyectos Únicos</p>
+                <p id="kpiTotalProjects" class="text-3xl font-extrabold text-petrol-800 mt-1.5">0</p>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-petrol-50 text-petrol-700 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+              </div>
+            </div>
+            <p class="text-xs text-slate-500 mt-3 pt-2.5 border-t border-slate-100">Proyectos distintos registrados</p>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-[#DCE3E8] shadow-sm p-5 border-l-4 border-l-ochre-500 flex flex-col justify-between">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Comunidades Únicas</p>
+                <p id="kpiTotalCommunities" class="text-3xl font-extrabold text-petrol-900 mt-1.5">0</p>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-sand-100 text-ochre-600 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </div>
+            </div>
+            <p class="text-xs text-slate-500 mt-3 pt-2.5 border-t border-slate-100">Comunidades registradas en el periodo</p>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-[#DCE3E8] shadow-sm p-5 border-l-4 border-l-forest-600 flex flex-col justify-between">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Tipologías Diferentes</p>
+                <p id="kpiTotalTypologies" class="text-3xl font-extrabold text-forest-700 mt-1.5">0</p>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-emerald-50 text-forest-600 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+              </div>
+            </div>
+            <p class="text-xs text-slate-500 mt-3 pt-2.5 border-t border-slate-100">Tipos de conflicto identificados</p>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-[#DCE3E8] shadow-sm p-5 border-l-4 border-l-[#BE123C] flex flex-col justify-between">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Conflictos Registrados</p>
+                <p id="kpiTotalConflicts" class="text-3xl font-extrabold text-[#9F1239] mt-1.5">0</p>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-rose-50 text-[#BE123C] flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              </div>
+            </div>
+            <p class="text-xs text-slate-500 mt-3 pt-2.5 border-t border-slate-100">Total de eventos registrados</p>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-[#DCE3E8] shadow-sm p-5 border-l-4 border-l-petrol-500 flex flex-col justify-between">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Vigencias Analizadas</p>
+                <p id="kpiYearRange" class="text-2xl sm:text-3xl font-extrabold text-petrol-800 mt-1.5">-</p>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-petrol-50 text-petrol-600 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              </div>
+            </div>
+            <p id="kpiYearSub" class="text-xs text-slate-500 mt-3 pt-2.5 border-t border-slate-100">Años con registros</p>
+          </div>
+        </section>
+
+        <!-- Sección 1: Comunidades con Conflictos -->
+        <section id="sec-comunidades" class="bg-white rounded-2xl border border-[#DCE3E8] shadow-sm overflow-hidden print-break">
+          <div class="bg-gradient-to-r from-petrol-900 to-petrol-700 px-5 sm:px-6 py-4 flex items-center justify-between gap-3 border-b-2 border-ochre-500">
+            <div class="flex items-center gap-3">
+              <span class="w-8 h-8 rounded-lg bg-ochre-500 text-white font-extrabold text-sm flex items-center justify-center shadow">1</span>
+              <h2 class="text-lg sm:text-xl font-bold text-white">Comunidades con Conflictos</h2>
+            </div>
+            <span class="hidden sm:inline-flex text-[11px] font-semibold text-petrol-100 bg-white/10 px-3 py-1 rounded-full">
+              Haga clic en una barra para ver el listado
+            </span>
+          </div>
+          <div class="p-5 sm:p-6">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-sm font-bold text-petrol-800">Comunidades únicas presentes por año</h3>
+              <span class="text-[11px] font-semibold text-ochre-600 bg-sand-100 border border-sand-300 px-2.5 py-1 rounded-full">Conteo único por vigencia</span>
+            </div>
+            <div class="relative w-full h-[340px] sm:h-[380px] bg-sand-50 rounded-xl p-3 border border-[#E5E2DA]">
+              <canvas id="communitiesChart"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <!-- Sección 2: Conflictos Asociados (Matriz Detallada) -->
+        <section id="sec-conflictos" class="bg-white rounded-2xl border border-[#DCE3E8] shadow-sm overflow-hidden print-break">
+          <div class="bg-gradient-to-r from-petrol-900 via-petrol-800 to-petrol-600 px-5 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-4 border-ochre-500">
+            <div class="flex items-center gap-3">
+              <span class="w-8 h-8 rounded-lg bg-ochre-500 text-white font-extrabold text-sm flex items-center justify-center shadow">2</span>
+              <div>
+                <h2 class="text-lg sm:text-xl font-bold text-white">Conflictos Asociados</h2>
+                <p class="text-xs text-petrol-100">Distribución de tipologías de conflictos por año expresada estrictamente en cantidades numéricas</p>
+              </div>
+            </div>
+            <div class="bg-white/15 border border-white/20 rounded-xl px-3.5 py-1.5 text-right self-start sm:self-auto">
+              <span class="block text-[10px] uppercase tracking-wider text-ochre-400 font-bold">Total Eventos</span>
+              <span id="sec3TotalBadge" class="text-lg font-extrabold text-white">0</span>
+            </div>
+          </div>
+
+          <div class="p-5 sm:p-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+              <div>
+                <div class="flex flex-wrap items-center gap-2.5">
+                  <h3 class="text-sm font-bold text-petrol-800">Matriz Detallada: Tipología de Conflicto por Año</h3>
+                  <span id="matrixTypologyBadge" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-forest-700 border border-emerald-200">
+                    0 Tipologías Diferentes
+                  </span>
+                </div>
+                <p class="text-xs text-slate-500 mt-0.5">Conteo exacto de registros por cada tipología y vigencia. Sin porcentajes.</p>
+              </div>
+              <span class="text-[11px] font-medium text-slate-500">Intensidad de color indica mayor concentración numérica</span>
+            </div>
+
+            <div class="overflow-x-auto scroll-ochre rounded-xl border border-[#DCE3E8]">
+              <table class="min-w-full divide-y divide-slate-200 text-sm">
+                <thead id="conflictsMatrixHead" class="bg-petrol-800 text-white"></thead>
+                <tbody id="conflictsMatrixBody" class="divide-y divide-slate-100 bg-white"></tbody>
+                <tfoot id="conflictsMatrixFoot" class="bg-sand-100 border-t-2 border-ochre-500 font-extrabold text-petrol-900"></tfoot>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- Pie de página del Front -->
+    <footer class="bg-petrol-900 text-petrol-100 mt-10 border-t-4 border-ochre-500">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-ochre-500"></span>
+          <span class="font-semibold text-white">Ministerio de Minas y Energía</span>
+          <span class="opacity-75">&middot; Tablero de Consulta Previa y Conflictividades</span>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- VISTA 2 (SECCIÓN TERRITORIAL): PROYECTOS Y CONFLICTIVIDADES · MAPA    -->
+  <!-- ===================================================================== -->
+  <div id="view-mapa" class="hidden flex-1 flex flex-col min-h-0 overflow-visible lg:overflow-hidden">
+    <!-- Sub-barra ejecutiva territorial + Limpiar filtros -->
+    <div class="bg-sand-50 border-b border-[#DCE3E8] px-4 py-2 flex flex-wrap items-center justify-between gap-2.5 shrink-0">
+      <div class="flex items-center gap-2.5 flex-wrap">
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sand-100 text-ochre-600 border border-sand-300">
+          La Guajira · Mapa
+        </span>
+        <div class="flex items-center gap-2 sm:gap-2.5 flex-wrap bg-white border border-[#E2DDD3] rounded-2xl px-3 py-1 text-xs">
+          <div class="flex items-center gap-1.5">
+            <span class="text-slate-500 font-medium">Ubicadas:</span>
+            <span id="map-stat-geolocated" class="font-extrabold text-petrol-700">0</span>
+          </div>
+          <span class="h-3.5 w-px bg-[#D5CEC1]"></span>
+          <div class="flex items-center gap-1.5">
+            <span class="text-slate-500 font-medium">Eventos:</span>
+            <span id="map-stat-events" class="font-extrabold text-ochre-600">0</span>
+          </div>
+          <span class="hidden md:inline-block h-3.5 w-px bg-[#D5CEC1]"></span>
+          <div class="hidden md:flex items-center gap-1.5">
+            <span class="text-slate-500 font-medium">Proyectos:</span>
+            <span id="kpi-proyectos" class="font-bold text-petrol-700">0</span>
+          </div>
+          <span class="hidden md:inline-block h-3.5 w-px bg-[#D5CEC1]"></span>
+          <div class="hidden md:flex items-center gap-1.5">
+            <span class="text-slate-500 font-medium">Comunidades:</span>
+            <span id="kpi-comunidades" class="font-bold text-petrol-600">0</span>
+          </div>
+
+          <!-- Comunidades sin coordenadas válidas en Colombia + Descarga Excel -->
+          <div id="map-missing-coords" class="hidden items-center gap-2 pl-2 border-l border-[#D5CEC1]">
+            <span class="text-[11px] text-amber-800 font-medium whitespace-nowrap">
+              Sin coordenadas: <strong id="map-missing-count" class="font-extrabold text-amber-900">0</strong>
+            </span>
+            <button type="button" onclick="downloadMissingCoordsExcel()"
+              class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-ochre-500 hover:bg-ochre-600 text-white shadow-sm transition cursor-pointer whitespace-nowrap"
+              title="Descargar Excel con comunidades sin coordenadas válidas en Colombia">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V3" />
+              </svg>
+              <span>Descargar</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <button id="btn-clear-all" type="button" onclick="clearAllMapFilters()"
+        class="hidden items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-ochre-600 border border-amber-300 hover:bg-amber-100 transition cursor-pointer">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+        <span>Limpiar filtros (<span id="active-filter-count">0</span>)</span>
+      </button>
+    </div>
+
+    <!-- Barra Superior Horizontal: Empresas Ejecutoras -->
+    <section aria-label="Filtro de Empresas Ejecutoras" class="bg-white border-b border-[#DCE3E8] px-4 py-2 z-20 shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 shrink-0 pr-2 border-r border-[#E4E9EE]">
+          <svg class="w-4 h-4 text-petrol-700 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+          <span class="text-xs sm:text-sm font-bold text-petrol-800 whitespace-nowrap">Empresas:</span>
+          <span id="badge-empresas" class="inline-flex items-center justify-center min-w-[24px] h-5 px-1.5 rounded-full text-[11px] font-bold bg-petrol-600 text-white">0</span>
+          <button id="clear-empresas" type="button" onclick="clearMapDimension('empresas')" class="hidden text-[11px] font-semibold text-ochre-600 hover:underline ml-1 cursor-pointer">Todos</button>
+        </div>
+        <div id="bar-empresas" class="flex items-center gap-2 overflow-x-auto scroll-ochre pb-1 pt-0.5 flex-1"></div>
+      </div>
+    </section>
+
+    <!-- Cuerpo Matricial Central: Proyectos | Mapa | Comunidades -->
+    <div class="flex-1 flex flex-col lg:flex-row min-h-0 overflow-visible lg:overflow-hidden">
+      <!-- Barra Lateral Izquierda: Proyectos -->
+      <aside aria-label="Filtro de Proyectos" class="order-2 lg:order-1 w-full lg:w-72 xl:w-80 bg-[#F7F7F5] border-t lg:border-t-0 lg:border-r border-[#DCE3E8] flex flex-col min-h-0 max-h-72 lg:max-h-none shrink-0">
+        <div class="px-3.5 pt-3 pb-2.5 border-b border-[#E5E2DA] shrink-0">
+          <div class="flex items-center justify-between gap-2 mb-2">
+            <div class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-petrol-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+              <h2 class="text-sm font-bold text-petrol-800">Proyectos</h2>
+              <span id="badge-proyectos" class="inline-flex items-center justify-center min-w-[26px] h-5 px-2 rounded-full text-[11px] font-bold bg-petrol-600 text-white">0</span>
+            </div>
+            <button id="clear-proyectos" type="button" onclick="clearMapDimension('proyectos')" class="hidden text-[11px] font-semibold text-ochre-600 hover:underline cursor-pointer">Ver todos</button>
+          </div>
+          <div class="relative">
+            <svg class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" /></svg>
+            <input id="search-proyectos" type="text" placeholder="Buscar proyecto..." oninput="renderMapSidebars()"
+              class="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-[#D8E0E6] rounded-full focus:outline-none focus:border-petrol-600 focus:ring-2 focus:ring-petrol-100 placeholder:text-slate-400" />
+          </div>
+        </div>
+        <div id="list-proyectos" class="flex-1 overflow-y-auto scroll-ochre p-3 space-y-2"></div>
+      </aside>
+
+      <!-- Zona Central: Mapa Leaflet + Filtro Flotante de Años -->
+      <section aria-label="Mapa interactivo de La Guajira" class="order-1 lg:order-2 flex-1 relative min-h-[450px] sm:min-h-[520px] lg:min-h-0 flex flex-col bg-[#E8F0F4]">
+        <div id="guajira-map" class="w-full flex-1 z-0"></div>
+
+        <!-- Filtro Flotante Superior: Años -->
+        <div class="absolute top-3 left-1/2 -translate-x-1/2 z-[450] max-w-[94%] sm:max-w-[88%]">
+          <div class="bg-white/95 backdrop-blur-md border border-[#D4DDE4] rounded-full shadow-[0_6px_20px_rgba(11,85,111,0.14)] px-3 py-1.5 flex items-center gap-2">
+            <div class="flex items-center gap-1.5 shrink-0 pl-1 pr-2 border-r border-[#E2E8F0]">
+              <svg class="w-3.5 h-3.5 text-petrol-700" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+              <span class="text-[11px] sm:text-xs font-bold text-petrol-800 whitespace-nowrap">Año:</span>
+            </div>
+            <div id="bar-anios" class="flex items-center gap-1.5 overflow-x-auto scroll-ochre py-0.5 max-w-[65vw] lg:max-w-[38vw]"></div>
+          </div>
+        </div>
+
+        <!-- Controles Flotantes del Mapa -->
+        <div class="absolute top-16 sm:top-3 right-3 z-[450] flex flex-col items-end gap-1.5">
+          <button type="button" onclick="fitMapToMarkers()"
+            class="bg-white/95 hover:bg-petrol-50 text-petrol-800 border border-[#D4DDE4] rounded-xl p-2 shadow-md transition cursor-pointer flex items-center justify-center"
+            title="Centrar mapa en comunidades visibles">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
+          </button>
+          <button type="button" onclick="cycleBasemap()"
+            class="bg-white/95 hover:bg-petrol-50 text-petrol-800 border border-[#D4DDE4] rounded-xl px-2.5 py-1.5 shadow-md transition cursor-pointer flex items-center gap-1.5 text-[11px] font-bold"
+            title="Cambiar estilo de mapa (Relieve / Calles / Satélite)">
+            <svg class="w-4 h-4 text-petrol-700 shrink-0" fill="none" stroke="currentColor" stroke-width="2.1" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <span id="map-layer-label">Relieve</span>
+          </button>
+        </div>
+
+        <!-- Overlay de Carga del Mapa -->
+        <div id="map-loading-overlay" class="hidden absolute inset-0 z-[600] bg-white/85 backdrop-blur-sm flex flex-col items-center justify-center gap-3 p-6 text-center">
+          <div class="w-11 h-11 rounded-full border-4 border-petrol-100 border-t-petrol-700 animate-spin"></div>
+          <p class="text-sm font-bold text-petrol-800">Sincronizando información territorial...</p>
+        </div>
+      </section>
+
+      <!-- Barra Lateral Derecha: Comunidades -->
+      <aside aria-label="Filtro de Comunidades" class="order-3 w-full lg:w-72 xl:w-80 bg-[#F7F7F5] border-t lg:border-t-0 lg:border-l border-[#DCE3E8] flex flex-col min-h-0 max-h-72 lg:max-h-none shrink-0">
+        <div class="px-3.5 pt-3 pb-2.5 border-b border-[#E5E2DA] shrink-0">
+          <div class="flex items-center justify-between gap-2 mb-2">
+            <div class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-petrol-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              <h2 class="text-sm font-bold text-petrol-800">Comunidades</h2>
+              <span id="badge-comunidades" class="inline-flex items-center justify-center min-w-[26px] h-5 px-2 rounded-full text-[11px] font-bold bg-petrol-600 text-white">0</span>
+            </div>
+            <button id="clear-comunidades" type="button" onclick="clearMapDimension('comunidades')" class="hidden text-[11px] font-semibold text-ochre-600 hover:underline cursor-pointer">Ver todas</button>
+          </div>
+          <div class="relative">
+            <svg class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" /></svg>
+            <input id="search-comunidades" type="text" placeholder="Buscar comunidad..." oninput="renderMapSidebars()"
+              class="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-[#D8E0E6] rounded-full focus:outline-none focus:border-petrol-600 focus:ring-2 focus:ring-petrol-100 placeholder:text-slate-400" />
+          </div>
+        </div>
+        <div id="list-comunidades" class="flex-1 overflow-y-auto scroll-ochre p-3 space-y-2"></div>
+      </aside>
+    </div>
+
+    <!-- Barra Inferior Doble: Tipología y Estado del Conflicto -->
+    <div aria-label="Filtros de Tipología y Estado del Conflicto" class="bg-[#F3F0EA] border-t border-[#DCD6CA] px-4 py-2 z-20 flex flex-col gap-2 shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 shrink-0 pr-2 border-r border-[#D5CEC1] sm:min-w-[215px]">
+          <svg class="w-4 h-4 text-ochre-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+          <span class="text-xs sm:text-sm font-bold text-petrol-800 whitespace-nowrap">Tipología del Conflicto:</span>
+          <span id="badge-tipologias" class="inline-flex items-center justify-center min-w-[24px] h-5 px-1.5 rounded-full text-[11px] font-bold bg-petrol-600 text-white">0</span>
+          <button id="clear-tipologias" type="button" onclick="clearMapDimension('tipologias')" class="hidden text-[11px] font-semibold text-ochre-600 hover:underline ml-1 cursor-pointer">Todas</button>
+        </div>
+        <div id="bar-tipologias" class="flex items-center gap-2 overflow-x-auto scroll-ochre pb-1 pt-0.5 flex-1"></div>
+      </div>
+
+      <div class="flex items-center gap-3 pt-2 border-t border-[#E2DCD0]">
+        <div class="flex items-center gap-2 shrink-0 pr-2 border-r border-[#D5CEC1] sm:min-w-[215px]">
+          <svg class="w-4 h-4 text-petrol-700 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <span class="text-xs sm:text-sm font-bold text-petrol-800 whitespace-nowrap">Estado del Conflicto:</span>
+          <span id="badge-estados" class="inline-flex items-center justify-center min-w-[24px] h-5 px-1.5 rounded-full text-[11px] font-bold bg-petrol-600 text-white">0</span>
+          <button id="clear-estados" type="button" onclick="clearMapDimension('estados')" class="hidden text-[11px] font-semibold text-ochre-600 hover:underline ml-1 cursor-pointer">Todos</button>
+        </div>
+        <div id="bar-estados" class="flex items-center gap-2 overflow-x-auto scroll-ochre pb-1 pt-0.5 flex-1"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL DE DETALLE (COMUNIDADES POR AÑO) & TOASTS                       -->
+  <!-- ===================================================================== -->
+  <div id="detailModal" class="fixed inset-0 z-[800] hidden items-center justify-center bg-petrol-900/60 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden border border-[#DCE3E8]">
+      <div class="bg-petrol-800 text-white px-5 py-4 flex items-center justify-between border-b-2 border-ochre-500">
+        <div>
+          <p id="detailModalKicker" class="text-[11px] uppercase tracking-wider text-ochre-400 font-bold"></p>
+          <h3 id="detailModalTitle" class="text-base sm:text-lg font-bold"></h3>
+        </div>
+        <button id="closeDetailModal" type="button" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white cursor-pointer">✕</button>
+      </div>
+      <div class="p-4 border-b border-[#E5E2DA] bg-sand-50">
+        <input id="detailSearchInput" type="text" placeholder="Buscar en el listado..."
+          class="w-full px-3.5 py-2 text-sm rounded-xl bg-white border border-[#D4DDE4] focus:outline-none focus:ring-2 focus:ring-petrol-500" />
+      </div>
+      <div id="detailModalList" class="p-4 overflow-y-auto scroll-ochre space-y-1.5 flex-1"></div>
+      <div class="px-5 py-3 bg-sand-50 border-t border-[#E5E2DA] flex items-center justify-between text-xs text-slate-600">
+        <span id="detailModalCount">0 registros únicos</span>
+        <button id="closeDetailModalBtn" type="button" class="px-4 py-1.5 rounded-full bg-petrol-700 text-white font-semibold hover:bg-petrol-800 cursor-pointer">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastContainer" class="fixed bottom-16 right-4 z-[900] flex flex-col gap-2 pointer-events-none no-print"></div>
+
+  <!-- ===================================================================== -->
+  <!-- MOTOR UNIFICADO DE DATOS, GRÁFICOS, FILTROS MATRICIALES Y MAPA        -->
+  <!-- ===================================================================== -->
+  <script>
+    if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
+      Chart.register(ChartDataLabels);
+    }
+
+    // -------------------------------------------------------------------------
+    // 1. CONFIGURACIÓN, PALETA Y REFERENCIAS GEOGRÁFICAS
+    // -------------------------------------------------------------------------
+    const CONFIG = {
+      xlsxUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT-D7aukUo7wQz5gijlXdy-DvQvxNO0pP8OQ8An-Yfi64RH7r-TXo_dEBjHYXrZDQ/pub?output=xlsx',
+      csvUrl:  'https://docs.google.com/spreadsheets/d/e/2PACX-1vT-D7aukUo7wQz5gijlXdy-DvQvxNO0pP8OQ8An-Yfi64RH7r-TXo_dEBjHYXrZDQ/pub?output=csv',
+      targetSheet: 'Comunidades y Coordenadas'
+    };
+
+    const PALETTE = {
+      petrol: '#0B556F', petrolDark: '#083344', petrolMid: '#0E7490',
+      ochre: '#A87932', ochreDark: '#8F6324', forest: '#2B7A56',
+      typologies: [
+        '#0B556F', '#A87932', '#C05621', '#0E7490', '#2B7A56',
+        '#6D28D9', '#B45309', '#0F766E', '#BE123C', '#334155',
+        '#136F8A', '#8F6324', '#1E6243', '#475569', '#0C4A6E'
+      ]
+    };
+
+    const LA_GUAJIRA_GEOJSON = {
+      type: 'Feature',
+      properties: { name: 'Departamento de La Guajira' },
+      geometry: {
+        type: 'Polygon',
+        coordinates: [[
+          [-73.66,11.25],[-73.53,11.27],[-73.33,11.25],[-73.13,11.35],[-72.91,11.55],
+          [-72.65,11.73],[-72.44,11.78],[-72.30,11.98],[-72.18,12.21],[-71.90,12.39],
+          [-71.67,12.46],[-71.40,12.37],[-71.22,12.23],[-71.13,12.01],[-71.18,11.87],
+          [-71.33,11.85],[-71.56,11.78],[-71.88,11.65],[-72.02,11.51],[-72.11,11.36],
+          [-72.22,11.26],[-72.42,11.12],[-72.58,10.97],[-72.73,10.83],[-72.83,10.67],
+          [-72.92,10.52],[-73.01,10.42],[-73.12,10.45],[-73.20,10.62],[-73.26,10.79],
+          [-73.40,10.96],[-73.56,11.11],[-73.66,11.25]
+        ]]
+      }
+    };
+
+    const GUAJIRA_LANDMARKS = [
+      { name: 'Riohacha', lat: 11.5444, lng: -72.9072 }, { name: 'Uribia', lat: 11.7140, lng: -72.2659 },
+      { name: 'Manaure', lat: 11.7751, lng: -72.4445 },  { name: 'Maicao', lat: 11.3832, lng: -72.2432 },
+      { name: 'Albania', lat: 11.1608, lng: -72.5922 },  { name: 'Fonseca', lat: 10.8856, lng: -72.8483 },
+      { name: 'San Juan del Cesar', lat: 10.7711, lng: -73.0031 }, { name: 'Cabo de la Vela', lat: 12.2036, lng: -72.1489 }
+    ];
+
+    const COLOMBIA_RING = [
+      [-71.70,12.56],[-71.22,12.46],[-71.02,12.05],[-71.28,11.78],[-72.00,11.52],
+      [-72.42,11.08],[-72.88,10.22],[-72.70,9.10],[-72.30,8.30],[-72.05,7.05],
+      [-69.95,7.05],[-67.35,6.22],[-67.78,4.00],[-66.80,1.95],[-66.83,1.12],
+      [-69.80,1.08],[-69.38,-1.22],[-69.92,-4.28],[-70.65,-3.92],[-71.85,-2.50],
+      [-74.85,-0.38],[-76.25,0.35],[-77.88,0.72],[-79.12,1.55],[-78.05,3.80],
+      [-77.70,6.00],[-77.98,7.25],[-77.45,8.75],[-76.20,9.55],[-75.72,10.58],
+      [-74.92,11.22],[-74.25,11.42],[-73.30,11.45],[-72.95,11.68],[-72.45,11.95],
+      [-72.20,12.32],[-71.70,12.56]
+    ];
+
+    // Estado Unificado de la Aplicación
+    const app = {
+      activeView: 'consulta',
+      loaded: false,
+      records: [],           // Registros unificados para ambas vistas
+      typologyColorMap: new Map(),
+      estadoColorMap: new Map(),
+
+      // Estado Vista 1: Consulta Previa (Front)
+      front: {
+        allYears: [],
+        selectedYears: new Set(),
+        chart: null,
+        modalItems: []
+      },
+
+      // Estado Vista 2: Proyectos y Conflictividades (Mapa)
+      mapa: {
+        initialized: false,
+        universes: { empresas: [], proyectos: [], comunidades: [], tipologias: [], estados: [], anios: [] },
+        filters: {
+          empresas: new Set(), proyectos: new Set(), comunidades: new Set(),
+          tipologias: new Set(), estados: new Set(), anios: new Set()
+        },
+        lastMissingCoords: [],
+        hoveredCommunityKey: null,
+        map: null,
+        basemaps: [],
+        activeBasemapIdx: 0,
+        markersLayer: null,
+        markerByKey: new Map()
+      }
+    };
+
+    // -------------------------------------------------------------------------
+    // 2. UTILIDADES COMPARTIDAS (TEXTO, FECHAS, COORDENADAS, CSV Y UI)
+    // -------------------------------------------------------------------------
+    const cleanText = (v) => v == null ? '' : String(v).replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim();
+    const normalizeKey = (v) => cleanText(v).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+    const formatNumber = (n) => new Intl.NumberFormat('es-CO').format(Number(n) || 0);
+    const escapeHtml = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    const escapeJsArg = (s) => escapeHtml(String(s ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\r/g, '\\r').replace(/\n/g, '\\n'));
+
+    function extractYear(val) {
+      if (val == null || val === '') return '';
+      if (val instanceof Date && !isNaN(val)) {
+        const y = val.getUTCFullYear();
+        return y >= 1900 && y <= 2100 ? String(y) : '';
+      }
+      if (typeof val === 'number' && !isNaN(val)) {
+        if (val >= 1900 && val <= 2100) return String(Math.trunc(val));
+        if (val > 20000 && val < 80000) {
+          const y = new Date(Math.round((val - 25569) * 86400 * 1000)).getUTCFullYear();
+          if (y >= 1900 && y <= 2100) return String(y);
+        }
+      }
+      const m = cleanText(val).match(/\b(19\d{2}|20\d{2}|2100)\b/);
+      return m ? m[1] : '';
+    }
+
+    function parseSingleCoord(raw) {
+      if (raw == null || raw === '') return null;
+      if (typeof raw === 'number' && !isNaN(raw)) return raw;
+      const str = cleanText(raw).toUpperCase();
+      if (!str) return null;
+      const isNeg = /[SWO]/.test(str), isPos = /[NE]/.test(str);
+
+      if (/[°º'′]/.test(str)) {
+        const m = str.match(/(-?\d+(?:[.,]\d+)?)\s*[°º]\s*(\d+(?:[.,]\d+)?)?\s*['’′]?\s*(\d+(?:[.,]\d+)?)?\s*["”″]?/);
+        if (m) {
+          const d = parseFloat(m[1].replace(',', '.'));
+          const min = m[2] ? parseFloat(m[2].replace(',', '.')) : 0;
+          const sec = m[3] ? parseFloat(m[3].replace(',', '.')) : 0;
+          if (!isNaN(d)) {
+            let dec = Math.abs(d) + min / 60 + sec / 3600;
+            if (d < 0 || isNeg) dec = -dec;
+            else if (isPos) dec = Math.abs(dec);
+            return dec;
+          }
+        }
+      }
+
+      let c = str.replace(/[^\d.,-]/g, '');
+      if (!c) return null;
+      if (c.includes(',') && !c.includes('.')) c = c.replace(',', '.');
+      else if (c.includes(',') && c.includes('.')) {
+        c = c.lastIndexOf(',') > c.lastIndexOf('.') ? c.replace(/\./g, '').replace(',', '.') : c.replace(/,/g, '');
+      }
+      const num = parseFloat(c);
+      return isNaN(num) ? null : (isNeg ? -Math.abs(num) : num);
+    }
+
+    function isInsideColombia(lat, lng) {
+      if (typeof lat !== 'number' || typeof lng !== 'number' || isNaN(lat) || isNaN(lng)) return false;
+      if (lat >= 12.45 && lat <= 13.45 && lng >= -81.82 && lng <= -81.30) return true; // San Andrés y Providencia
+      if (lat < -4.28 || lat > 12.56 || lng < -79.12 || lng > -66.80) return false;
+      let inside = false;
+      for (let i = 0, j = COLOMBIA_RING.length - 1; i < COLOMBIA_RING.length; j = i++) {
+        const [xi, yi] = COLOMBIA_RING[i], [xj, yj] = COLOMBIA_RING[j];
+        if ((yi > lat) !== (yj > lat) && lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) inside = !inside;
+      }
+      return inside;
+    }
+
+    function resolveColombiaLatLng(rawB, rawC, colBIsLonHint = false) {
+      const tB = cleanText(rawB), tC = cleanText(rawC);
+      if (!tB && !tC) return { valid: false, lat: null, lng: null, reason: 'Sin coordenadas registradas' };
+      if (!tB || !tC) return { valid: false, lat: null, lng: null, reason: 'Coordenada incompleta' };
+      const vB = parseSingleCoord(rawB), vC = parseSingleCoord(rawC);
+      if (vB === null || vC === null) return { valid: false, lat: null, lng: null, reason: 'Formato de coordenada no válido' };
+
+      let lat, lng;
+      const aB = Math.abs(vB), aC = Math.abs(vC);
+      if (aB >= 66 && aB <= 82 && vC >= -5 && vC <= 14) { lng = -aB; lat = vC; }
+      else if (aC >= 66 && aC <= 82 && vB >= -5 && vB <= 14) { lat = vB; lng = -aC; }
+      else if (colBIsLonHint) { lng = vB >= 66 && vB <= 82 ? -vB : vB; lat = vC; }
+      else { lat = vB; lng = vC >= 66 && vC <= 82 ? -vC : vC; }
+
+      return isInsideColombia(lat, lng)
+        ? { valid: true, lat, lng, reason: '' }
+        : { valid: false, lat: null, lng: null, reason: `Fuera de Colombia (Lat: ${lat.toFixed(4)}, Lon: ${lng.toFixed(4)})` };
+    }
+
+    function parseCSVToMatrix(csvText) {
+      const text = csvText.replace(/^\uFEFF/, '');
+      const first = text.split(/\r?\n/)[0] || '';
+      const delim = (first.match(/;/g) || []).length > (first.match(/,/g) || []).length ? ';' : ',';
+      const rows = []; let row = [], val = '', inQ = false;
+      for (let i = 0; i < text.length; i++) {
+        const ch = text[i], nx = text[i + 1];
+        if (inQ) {
+          if (ch === '"' && nx === '"') { val += '"'; i++; }
+          else if (ch === '"') inQ = false;
+          else val += ch;
+        } else if (ch === '"') inQ = true;
+        else if (ch === delim) { row.push(val); val = ''; }
+        else if (ch === '\r' && nx === '\n') { row.push(val); rows.push(row); row = []; val = ''; i++; }
+        else if (ch === '\n' || ch === '\r') { row.push(val); rows.push(row); row = []; val = ''; }
+        else val += ch;
+      }
+      if (val.length || row.length) { row.push(val); rows.push(row); }
+      return rows;
+    }
+
+    async function fetchWithTimeout(url, timeoutMs = 12000) {
+      const ctrl = new AbortController();
+      const id = setTimeout(() => ctrl.abort(), timeoutMs);
+      try {
+        const res = await fetch(url, { mode: 'cors', cache: 'no-store', signal: ctrl.signal });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res;
+      } finally { clearTimeout(id); }
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      if (!container) return;
+      const styles = {
+        success: 'bg-forest-700 text-white border-forest-600',
+        warning: 'bg-ochre-600 text-white border-ochre-500',
+        error:   'bg-[#BE123C] text-white border-rose-400',
+        info:    'bg-petrol-800 text-white border-petrol-700'
+      };
+      const el = document.createElement('div');
+      el.className = `pointer-events-auto max-w-sm px-4 py-2.5 rounded-2xl border shadow-lg text-xs font-semibold transition-all duration-300 opacity-0 translate-y-2 ${styles[type] || styles.info}`;
+      el.textContent = message;
+      container.appendChild(el);
+      requestAnimationFrame(() => el.classList.remove('opacity-0', 'translate-y-2'));
+      setTimeout(() => { el.classList.add('opacity-0', 'translate-y-2'); setTimeout(() => el.remove(), 300); }, 3600);
+    }
+
+    function showAlertBanner({ type = 'info', title = '', message = '', actions = [] }) {
+      const wrap = document.getElementById('alertBanner');
+      const box = document.getElementById('alertBannerBox');
+      const palette = {
+        warning: { cls: 'bg-amber-50 border-amber-300 text-amber-950', icon: '<svg class="w-5 h-5 text-ochre-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' },
+        info:    { cls: 'bg-petrol-50 border-petrol-200 text-petrol-900', icon: '<svg class="w-5 h-5 text-petrol-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>' }
+      };
+      const st = palette[type] || palette.info;
+      box.className = `rounded-2xl border p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${st.cls}`;
+      document.getElementById('alertIcon').innerHTML = st.icon;
+      document.getElementById('alertTitle').textContent = title;
+      document.getElementById('alertMessage').textContent = message;
+      const actEl = document.getElementById('alertActions');
+      actEl.innerHTML = '';
+      actions.forEach((a) => {
+        const b = document.createElement('button');
+        b.type = 'button'; b.textContent = a.label;
+        b.className = a.primary
+          ? 'px-3.5 py-1.5 rounded-full text-xs font-bold bg-petrol-700 text-white hover:bg-petrol-800 transition cursor-pointer'
+          : 'px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white border border-[#D4DDE4] text-petrol-800 hover:bg-sand-50 transition cursor-pointer';
+        b.onclick = a.onClick;
+        actEl.appendChild(b);
+      });
+      wrap.classList.remove('hidden');
+    }
+
+    const hideAlertBanner = () => document.getElementById('alertBanner')?.classList.add('hidden');
+
+    function getEstadoColor(label, idx) {
+      const n = normalizeKey(label);
+      if (/RESUELT|CERRAD|SUPERAD|ACUERD/.test(n)) return '#2B7A56';
+      if (/ACTIV|ABIERT|CRITIC|ESCAL/.test(n)) return '#BE123C';
+      if (/PROCESO|GESTION|DIALOG|SEGUIM/.test(n)) return '#A87932';
+      if (/LATENT|ALERTA|SUSPEND|PEND/.test(n)) return '#C05621';
+      return PALETTE.typologies[idx % PALETTE.typologies.length];
+    }
+
+    // -------------------------------------------------------------------------
+    // 3. NAVEGACIÓN ENTRE SECCIONES (CONSULTA PREVIA <-> MAPA TERRITORIAL)
+    // -------------------------------------------------------------------------
+    function switchView(view) {
+      app.activeView = view;
+      const isMapa = view === 'mapa';
+      document.getElementById('view-consulta').classList.toggle('hidden', isMapa);
+      document.getElementById('view-mapa').classList.toggle('hidden', !isMapa);
+
+      const body = document.getElementById('appBody');
+      body.classList.toggle('lg:h-screen', isMapa);
+      body.classList.toggle('lg:overflow-hidden', isMapa);
+
+      const activeCls = 'px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer flex items-center gap-1.5 bg-petrol-700 text-white shadow-sm';
+      const idleCls   = 'px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer flex items-center gap-1.5 text-petrol-800 hover:bg-white/80';
+      document.getElementById('tab-consulta').className = isMapa ? idleCls : activeCls;
+      document.getElementById('tab-mapa').className = isMapa ? activeCls : idleCls;
+
+      if (isMapa) {
+        if (!app.mapa.initialized) initMap();
+        setTimeout(() => {
+          app.mapa.map?.invalidateSize();
+          if (app.loaded) renderMapView(true);
+        }, 60);
+      } else {
+        window.scrollTo({ top: 0, behavior: 'instant' });
+        if (app.front.chart) app.front.chart.resize();
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // 4. CARGA Y PROCESAMIENTO UNIFICADO DE DATOS (GOOGLE SHEETS / LOCAL / DEMO)
+    // -------------------------------------------------------------------------
+    function pickTargetSheet(workbook) {
+      if (!workbook?.SheetNames?.length) return null;
+      const target = normalizeKey(CONFIG.targetSheet);
+      const exact = workbook.SheetNames.find((n) => normalizeKey(n) === target)
+        || workbook.SheetNames.find((n) => normalizeKey(n).includes('COMUNIDAD') && normalizeKey(n).includes('COORD'));
+      if (exact) return workbook.Sheets[exact];
+
+      let best = workbook.Sheets[workbook.SheetNames[0]], bestScore = -1;
+      for (const name of workbook.SheetNames) {
+        const ws = workbook.Sheets[name];
+        const m = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+        let score = m.length + (/COMUNIDAD|COORD|CONFLICT/.test(normalizeKey(name)) ? 500 : 0);
+        const preview = m.slice(0, 5).flat().map(normalizeKey).join(' ');
+        if (preview.includes('COMUNIDAD') && preview.includes('PROYECTO')) score += 1000;
+        if (score > bestScore) { bestScore = score; best = ws; }
+      }
+      return best;
+    }
+
+    function ingestMatrix(matrix) {
+      if (!Array.isArray(matrix) || !matrix.length) {
+        showToast('La hoja seleccionada no contiene datos.', 'warning');
+        return;
+      }
+
+      // Detección inteligente de fila de encabezados
+      let headerIdx = 0;
+      for (let i = 0; i < Math.min(10, matrix.length); i++) {
+        const row = matrix[i] || [];
+        const txt = row.map(normalizeKey).join(' ');
+        if (/COMUNIDAD|PROYECTO|EMPRESA|TIPOLOG|LATITUD/.test(txt) || row.filter((c) => cleanText(c)).length >= 2) {
+          headerIdx = i;
+          break;
+        }
+      }
+      const headerRow = matrix[headerIdx] || [];
+      const hB = normalizeKey(headerRow[1] || ''), hC = normalizeKey(headerRow[2] || '');
+      const colBIsLonHint = (hB.includes('LON') || hB.includes('ESTE') || hB === 'X') && (hC.includes('LAT') || hC.includes('NORTE') || hC === 'Y');
+      const startIdx = extractYear(headerRow[6]) ? headerIdx : headerIdx + 1;
+
+      const records = [];
+      const yearsValidSet = new Set();
+      const typFreq = new Map();
+
+      for (let i = startIdx; i < matrix.length; i++) {
+        const row = matrix[i] || [];
+        const comunidadRaw = cleanText(row[0]);
+        const rawCoordB = cleanText(row[1]);
+        const rawCoordC = cleanText(row[2]);
+        const proyectoFront = cleanText(row[3]);  // Col D (Consulta Previa)
+        const proyectoMapaRaw = cleanText(row[4]); // Col E (Proyectos y Conflictividades)
+        const empresaRaw = cleanText(row[5]);      // Col F
+        const anioValid = extractYear(row[6]);     // Col G
+        const tipologiaRaw = cleanText(row[7]);    // Col H
+        const estadoRaw = cleanText(row[9]);       // Col J
+
+        if (!comunidadRaw && !proyectoFront && !proyectoMapaRaw && !empresaRaw && !anioValid && !tipologiaRaw && !estadoRaw) continue;
+
+        const geo = resolveColombiaLatLng(row[1], row[2], colBIsLonHint);
+        const comunidadMapa = comunidadRaw || 'Sin comunidad registrada';
+        const proyectoMapa = proyectoMapaRaw || 'Sin proyecto asignado';
+        const empresa = empresaRaw || 'Sin empresa';
+        const anioMapa = anioValid || 'Sin año';
+        const tipologiaMapa = tipologiaRaw || 'Sin tipología';
+        const estado = estadoRaw || 'Sin estado';
+
+        if (anioValid) yearsValidSet.add(anioValid);
+        const tipKey = normalizeKey(tipologiaRaw);
+        if (tipKey) typFreq.set(tipKey, (typFreq.get(tipKey) || 0) + 1);
+
+        records.push({
+          // Campos Front (Consulta Previa)
+          comunidadRaw, comunidadRawKey: normalizeKey(comunidadRaw),
+          proyectoFront, proyectoFrontKey: normalizeKey(proyectoFront),
+          anioValid,
+          tipologiaRaw, tipologiaRawKey: tipKey,
+
+          // Campos Mapa (Proyectos y Conflictividades)
+          comunidad: comunidadMapa, comunidadKey: normalizeKey(comunidadMapa),
+          rawCoordB, rawCoordC, hasValidCoord: geo.valid, lat: geo.lat, lng: geo.lng, coordReason: geo.reason,
+          proyecto: proyectoMapa, proyectoKey: normalizeKey(proyectoMapa),
+          empresa, empresaKey: normalizeKey(empresa),
+          anio: anioMapa, anioKey: normalizeKey(anioMapa),
+          tipologia: tipologiaMapa, tipologiaKey: normalizeKey(tipologiaMapa),
+          estado, estadoKey: normalizeKey(estado)
+        });
+      }
+
+      app.records = records;
+      app.loaded = true;
+
+      // Inicializar años del Front
+      app.front.allYears = [...yearsValidSet].sort((a, b) => Number(a) - Number(b));
+      app.front.selectedYears = new Set(app.front.allYears);
+
+      // Construir universos únicos para el Mapa
+      const dims = { empresas: new Map(), proyectos: new Map(), comunidades: new Map(), tipologias: new Map(), estados: new Map(), anios: new Map() };
+      for (const r of records) {
+        if (!dims.empresas.has(r.empresaKey)) dims.empresas.set(r.empresaKey, r.empresa);
+        if (!dims.proyectos.has(r.proyectoKey)) dims.proyectos.set(r.proyectoKey, r.proyecto);
+        if (!dims.comunidades.has(r.comunidadKey)) dims.comunidades.set(r.comunidadKey, r.comunidad);
+        if (!dims.tipologias.has(r.tipologiaKey)) dims.tipologias.set(r.tipologiaKey, r.tipologia);
+        if (!dims.estados.has(r.estadoKey)) dims.estados.set(r.estadoKey, r.estado);
+        if (!dims.anios.has(r.anioKey)) dims.anios.set(r.anioKey, r.anio);
+      }
+
+      const sortAlpha = (a, b) => a.label.localeCompare(b.label, 'es', { sensitivity: 'base' });
+      const sortYears = (a, b) => {
+        const na = parseInt(a.label, 10), nb = parseInt(b.label, 10);
+        if (!isNaN(na) && !isNaN(nb)) return na - nb;
+        return !isNaN(na) ? -1 : !isNaN(nb) ? 1 : sortAlpha(a, b);
+      };
+
+      for (const [k, map] of Object.entries(dims)) {
+        app.mapa.universes[k] = [...map.entries()].map(([key, label]) => ({ key, label })).sort(k === 'anios' ? sortYears : sortAlpha);
+      }
+
+      // Paleta consistente de tipologías (ordenada por frecuencia para colores principales) y estados
+      app.typologyColorMap.clear();
+      const sortedTyp = [...app.mapa.universes.tipologias].sort((a, b) => (typFreq.get(b.key) || 0) - (typFreq.get(a.key) || 0));
+      sortedTyp.forEach((t, idx) => app.typologyColorMap.set(t.key, PALETTE.typologies[idx % PALETTE.typologies.length]));
+
+      app.estadoColorMap.clear();
+      app.mapa.universes.estados.forEach((e, idx) => app.estadoColorMap.set(e.key, getEstadoColor(e.label, idx)));
+
+      document.getElementById('loadingOverlay').classList.add('hidden');
+      document.getElementById('map-loading-overlay').classList.add('hidden');
+      document.getElementById('dashboardContent').classList.remove('hidden');
+
+      renderFrontFilters();
+      renderFrontDashboard();
+      if (app.activeView === 'mapa') renderMapView(true);
+    }
+
+    async function loadLiveData(isManual = false) {
+      hideAlertBanner();
+      const reloadIcon = document.getElementById('reload-icon');
+      reloadIcon?.classList.add('animate-spin');
+
+      if (!isManual) {
+        document.getElementById('loadingOverlay').classList.remove('hidden');
+        document.getElementById('dashboardContent').classList.add('hidden');
+      }
+      if (app.activeView === 'mapa') document.getElementById('map-loading-overlay').classList.remove('hidden');
+
+      const stepEl = document.getElementById('loadingStepText');
+      const attempts = [
+        { name: 'Cargando fuente de datos principal', type: 'xlsx', url: CONFIG.xlsxUrl },
+        { name: 'Cargando formato alternativo', type: 'csv', url: CONFIG.csvUrl },
+        { name: 'Conectando por ruta segura', type: 'xlsx', url: `https://corsproxy.io/?${encodeURIComponent(CONFIG.xlsxUrl)}` },
+        { name: 'Conectando por ruta alternativa', type: 'csv', url: `https://api.allorigins.win/raw?url=${encodeURIComponent(CONFIG.csvUrl)}` }
+      ];
+
+      for (const att of attempts) {
+        try {
+          if (stepEl) stepEl.textContent = `${att.name}...`;
+          const res = await fetchWithTimeout(att.url, 12000);
+          if (att.type === 'xlsx') {
+            const buf = await res.arrayBuffer();
+            if (!buf || buf.byteLength < 100) throw new Error('XLSX vacío');
+            const wb = XLSX.read(buf, { type: 'array', cellDates: false });
+            const ws = pickTargetSheet(wb);
+            if (!ws) throw new Error('Sin hojas');
+            ingestMatrix(XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: true }));
+          } else {
+            const txt = await res.text();
+            if (!txt || txt.trim().length < 20 || txt.trim().startsWith('<!DOCTYPE')) throw new Error('CSV inválido');
+            ingestMatrix(parseCSVToMatrix(txt));
+          }
+          reloadIcon?.classList.remove('animate-spin');
+          if (isManual) showToast(`Datos actualizados: ${formatNumber(app.records.length)} registros sincronizados.`, 'success');
+          return;
+        } catch (err) {
+          console.warn(`Intento fallido [${att.name}]:`, err.message);
+        }
+      }
+
+      reloadIcon?.classList.remove('animate-spin');
+      document.getElementById('loadingOverlay').classList.add('hidden');
+      document.getElementById('map-loading-overlay').classList.add('hidden');
+
+      showAlertBanner({
+        type: 'warning',
+        title: 'No fue posible descargar automáticamente el archivo en este entorno',
+        message: 'La red o el navegador restringieron el acceso directo al enlace externo. Puede cargar su archivo local (.xlsx o .csv), reintentar o abrir la demostración.',
+        actions: [
+          { label: 'Reintentar conexión', primary: true, onClick: () => loadLiveData(false) },
+          { label: 'Cargar archivo (.xlsx / .csv)', primary: false, onClick: () => document.getElementById('localFileInput').click() },
+          { label: 'Ver datos de ejemplo', primary: false, onClick: loadDemoDataset }
+        ]
+      });
+    }
+
+    function handleLocalFileUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      const isCSV = file.name.toLowerCase().endsWith('.csv');
+      reader.onload = (ev) => {
+        try {
+          hideAlertBanner();
+          if (isCSV) ingestMatrix(parseCSVToMatrix(ev.target.result));
+          else {
+            const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array', cellDates: false });
+            const ws = pickTargetSheet(wb);
+            ingestMatrix(XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: true }));
+          }
+          showToast(`Archivo "${file.name}" procesado exitosamente.`, 'success');
+        } catch (err) {
+          showToast('Error al leer el archivo. Verifique que sea un .xlsx o .csv válido.', 'error');
+        }
+      };
+      isCSV ? reader.readAsText(file, 'UTF-8') : reader.readAsArrayBuffer(file);
+      e.target.value = '';
+    }
+
+    function loadDemoDataset() {
+      const demo = [
+        ['Comunidad', 'Latitud', 'Longitud', 'Proyecto Front', 'Proyecto Mapa', 'Empresa', 'Año', 'Tipología', 'Obs', 'Estado'],
+        ['COMUNIDAD JEPÍRACHI', 12.2305, -72.0731, 'PARQUE EÓLICO JEPÍRACHI', 'PARQUE EÓLICO JEPÍRACHI', 'EPM', 2022, 'Territorial y linderos', '', 'En gestión'],
+        ['COMUNIDAD KASIWOLIN', 12.2152, -72.0940, 'PARQUE EÓLICO JEPÍRACHI', 'PARQUE EÓLICO JEPÍRACHI', 'EPM', 2023, 'Compensación y beneficios', '', 'Resuelto'],
+        ['COMUNIDAD MEDIA LUNA', 12.2175, -71.9301, 'PARQUE EÓLICO ALPHA', 'PARQUE EÓLICO ALPHA', 'EDPR', 2023, 'Representatividad y autoridades', '', 'Activo'],
+        ['COMUNIDAD ISHANAA', 11.8842, -72.2480, 'PARQUE EÓLICO BETA', 'PARQUE EÓLICO BETA', 'EDPR', 2024, 'Consulta previa y acuerdos', '', 'En gestión'],
+        ['COMUNIDAD WARRAPAO', 11.7911, -72.3125, 'GUAJIRA I - WESP01', 'GUAJIRA I - WESP01', 'ISAGEN', 2022, 'Compensación y beneficios', '', 'Resuelto'],
+        ['COMUNIDAD JAMUCHENCHON', 11.7320, -72.3712, 'GUAJIRA I - WESP01', 'GUAJIRA I - WESP01', 'ISAGEN', 2023, 'Ambiental y uso del suelo', '', 'En seguimiento'],
+        ['COMUNIDAD CUESTECITAS', 11.1795, -72.6078, 'COLECTORA 1 - CUESTECITAS', 'LINEAS DE TRANSMISIÓN COLECTORA 1 - CUESTECITAS', 'GEB', 2023, 'Servidumbres y paso de línea', '', 'Activo'],
+        ['COMUNIDAD PALOMINO WAYUU', 11.5522, -72.7420, "PARQUE EÓLICO JEMEIWAA KA'I", "PARQUE EÓLICO JEMEIWAA KA'I", 'AES', 2024, 'Territorial y linderos', '', 'En gestión'],
+        ['COMUNIDAD PARASHÍ', 11.9810, -72.1820, 'PARQUE EÓLICO ALPHA', 'PARQUE EÓLICO ALPHA', 'EDPR', 2024, 'Consulta previa y acuerdos', '', 'Activo'],
+        ['COMUNIDAD SIN COORDENADA DEMO', '', '', 'PARQUE EÓLICO BETA', 'PARQUE EÓLICO BETA', 'CELSIA', 2024, 'Ambiental y uso del suelo', '', 'Pendiente']
+      ];
+      ingestMatrix(demo);
+      showAlertBanner({
+        type: 'info',
+        title: 'Visualizando datos de ejemplo',
+        message: 'Se muestran registros ilustrativos para validar ambas secciones. Cargue su archivo .xlsx real o reintente la conexión.',
+        actions: [
+          { label: 'Cargar archivo .xlsx real', primary: true, onClick: () => document.getElementById('localFileInput').click() },
+          { label: 'Reintentar conexión', primary: false, onClick: () => loadLiveData(false) }
+        ]
+      });
+    }
+
+    // -------------------------------------------------------------------------
+    // 5. VISTA 1 (FRONT): CONSULTA PREVIA Y CONFLICTIVIDADES
+    // -------------------------------------------------------------------------
+    function renderFrontFilters() {
+      const container = document.getElementById('yearFilterPills');
+      container.innerHTML = '';
+      if (!app.front.allYears.length) {
+        container.innerHTML = '<span class="text-xs text-slate-400">No se detectaron años válidos en los datos.</span>';
+        return;
+      }
+      app.front.allYears.forEach((year) => {
+        const active = app.front.selectedYears.has(year);
+        const btn = document.createElement('button');
+        btn.type = 'button'; btn.textContent = year;
+        btn.className = active
+          ? 'filter-pill px-3.5 py-1.5 rounded-full text-xs font-bold bg-petrol-700 text-white shadow-sm border border-petrol-700 cursor-pointer'
+          : 'filter-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-sand-50 text-petrol-800 border border-[#D4DDE4] hover:border-petrol-600 cursor-pointer';
+        btn.onclick = () => {
+          if (app.front.selectedYears.has(year)) {
+            if (app.front.selectedYears.size > 1) app.front.selectedYears.delete(year);
+            else { showToast('Debe mantener al menos un año seleccionado.', 'info'); return; }
+          } else app.front.selectedYears.add(year);
+          renderFrontFilters();
+          renderFrontDashboard();
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    function renderFrontDashboard() {
+      const activeYears = app.front.allYears.filter((y) => app.front.selectedYears.has(y));
+      const yearsSet = new Set(activeYears);
+      const projects = new Map(), communities = new Map(), conflicts = new Map();
+      const commByYear = new Map(activeYears.map((y) => [y, new Map()]));
+      let totalConflicts = 0;
+
+      for (const r of app.records) {
+        if (!r.anioValid || !yearsSet.has(r.anioValid)) continue;
+        if (r.proyectoFrontKey && !projects.has(r.proyectoFrontKey)) projects.set(r.proyectoFrontKey, r.proyectoFront);
+        if (r.comunidadRawKey) {
+          if (!communities.has(r.comunidadRawKey)) communities.set(r.comunidadRawKey, r.comunidadRaw);
+          const ym = commByYear.get(r.anioValid);
+          if (ym && !ym.has(r.comunidadRawKey)) ym.set(r.comunidadRawKey, r.comunidadRaw);
+        }
+        if (r.tipologiaRawKey) {
+          totalConflicts++;
+          let entry = conflicts.get(r.tipologiaRawKey);
+          if (!entry) {
+            entry = { key: r.tipologiaRawKey, label: r.tipologiaRaw, total: 0, byYear: new Map() };
+            conflicts.set(r.tipologiaRawKey, entry);
+          }
+          entry.total++;
+          entry.byYear.set(r.anioValid, (entry.byYear.get(r.anioValid) || 0) + 1);
+        }
+      }
+
+      // KPIs
+      document.getElementById('kpiTotalProjects').textContent = formatNumber(projects.size);
+      document.getElementById('kpiTotalCommunities').textContent = formatNumber(communities.size);
+      document.getElementById('kpiTotalTypologies').textContent = formatNumber(conflicts.size);
+      document.getElementById('kpiTotalConflicts').textContent = formatNumber(totalConflicts);
+      if (activeYears.length) {
+        const a = activeYears[0], b = activeYears[activeYears.length - 1];
+        document.getElementById('kpiYearRange').textContent = a === b ? a : `${a} - ${b}`;
+        document.getElementById('kpiYearSub').textContent = `${activeYears.length} ${activeYears.length === 1 ? 'vigencia seleccionada' : 'vigencias seleccionadas'}`;
+      } else {
+        document.getElementById('kpiYearRange').textContent = '-';
+        document.getElementById('kpiYearSub').textContent = 'Sin vigencias seleccionadas';
+      }
+
+      // Sección 1: Gráfico Comunidades por Año
+      const counts = activeYears.map((y) => commByYear.get(y).size);
+      if (app.front.chart) app.front.chart.destroy();
+      const ctx = document.getElementById('communitiesChart').getContext('2d');
+      app.front.chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: activeYears,
+          datasets: [
+            {
+              type: 'bar', label: 'Comunidades Únicas', data: counts,
+              backgroundColor: PALETTE.ochre, hoverBackgroundColor: PALETTE.ochreDark,
+              borderRadius: 8, borderSkipped: false, maxBarThickness: 62, order: 2
+            },
+            {
+              type: 'line', label: 'Tendencia', data: counts,
+              borderColor: PALETTE.petrol, backgroundColor: PALETTE.petrol,
+              borderWidth: 2.5, tension: 0.25, pointRadius: 4,
+              pointBackgroundColor: '#FFFFFF', pointBorderColor: PALETTE.petrol, pointBorderWidth: 2.5,
+              order: 1, datalabels: { display: false }
+            }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          layout: { padding: { top: 26, right: 16, left: 8, bottom: 4 } },
+          onHover: (ev, els) => { if (ev?.native?.target) ev.native.target.style.cursor = els.length ? 'pointer' : 'default'; },
+          onClick: (_ev, els) => {
+            if (!els?.length) return;
+            const year = activeYears[els[0].index];
+            if (!year) return;
+            const items = [...commByYear.get(year).values()].sort((a, b) => a.localeCompare(b, 'es'));
+            openDetailModal(`Comunidades con Conflictos (${year})`, `Comunidades registradas en ${year}`, items);
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: PALETTE.petrolDark, padding: 10,
+              titleFont: { family: 'Inter', size: 13, weight: 'bold' },
+              bodyFont: { family: 'Inter', size: 12 },
+              filter: (item) => item.datasetIndex === 0,
+              callbacks: { label: (c) => ` Comunidades únicas: ${formatNumber(c.parsed.y)}` }
+            },
+            datalabels: {
+              anchor: 'end', align: 'top', offset: 4,
+              color: PALETTE.petrolDark, font: { family: 'Inter', weight: '800', size: 12 },
+              formatter: (v) => formatNumber(v)
+            }
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { color: '#334155', font: { family: 'Inter', weight: '700', size: 12 } } },
+            y: { beginAtZero: true, suggestedMax: Math.ceil(Math.max(...counts, 5) * 1.2), grid: { color: '#E2E8F0', borderDash: [4, 4] }, ticks: { precision: 0, color: '#64748B', font: { family: 'Inter', size: 11 } } }
+          }
+        }
+      });
+
+      // Sección 2: Matriz de Tipologías x Año
+      const typList = [...conflicts.values()].sort((a, b) => b.total - a.total);
+      document.getElementById('sec3TotalBadge').textContent = formatNumber(totalConflicts);
+      document.getElementById('matrixTypologyBadge').textContent =
+        `${formatNumber(typList.length)} ${typList.length === 1 ? 'Tipología Diferente' : 'Tipologías Diferentes'}`;
+
+      document.getElementById('conflictsMatrixHead').innerHTML = `
+        <tr>
+          <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider sticky left-0 bg-petrol-800 z-10 min-w-[210px]">Tipología de Conflicto</th>
+          ${activeYears.map((y) => `<th class="px-3 py-3 text-center text-xs font-bold uppercase tracking-wider">${escapeHtml(y)}</th>`).join('')}
+          <th class="px-4 py-3 text-right text-xs font-bold uppercase tracking-wider bg-petrol-900 text-ochre-400">Total</th>
+        </tr>`;
+
+      let maxCell = 1;
+      typList.forEach((t) => activeYears.forEach((y) => { maxCell = Math.max(maxCell, t.byYear.get(y) || 0); }));
+
+      const tbody = document.getElementById('conflictsMatrixBody');
+      if (!typList.length) {
+        tbody.innerHTML = `<tr><td colspan="${activeYears.length + 2}" class="px-4 py-6 text-center text-xs text-slate-500">No hay registros de tipologías de conflicto para los filtros seleccionados.</td></tr>`;
+      } else {
+        tbody.innerHTML = typList.map((t) => {
+          const color = app.typologyColorMap.get(t.key) || PALETTE.petrol;
+          const cells = activeYears.map((y) => {
+            const v = t.byYear.get(y) || 0;
+            if (!v) return '<td class="px-3 py-2.5 text-center text-xs text-slate-300 font-medium">0</td>';
+            const alpha = Math.max(0.10, Math.min(0.42, (v / maxCell) * 0.42)).toFixed(2);
+            return `<td class="px-3 py-2.5 text-center text-xs font-bold text-petrol-900" style="background-color:rgba(168,121,50,${alpha});">${formatNumber(v)}</td>`;
+          }).join('');
+          return `
+            <tr class="hover:bg-sand-50 transition">
+              <td class="px-4 py-2.5 text-xs font-semibold text-slate-800 sticky left-0 bg-white border-r border-slate-100">
+                <div class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color:${color}"></span>
+                  <span>${escapeHtml(t.label)}</span>
+                </div>
+              </td>
+              ${cells}
+              <td class="px-4 py-2.5 text-right text-xs font-extrabold text-petrol-800 bg-petrol-50/70">${formatNumber(t.total)}</td>
+            </tr>`;
+        }).join('');
+      }
+
+      const footTotals = activeYears.map((y) => {
+        const sum = typList.reduce((acc, t) => acc + (t.byYear.get(y) || 0), 0);
+        return `<td class="px-3 py-3 text-center text-xs font-extrabold">${formatNumber(sum)}</td>`;
+      }).join('');
+
+      document.getElementById('conflictsMatrixFoot').innerHTML = `
+        <tr>
+          <td class="px-4 py-3 text-xs uppercase tracking-wider sticky left-0 bg-sand-100 border-r border-ochre-500/30">Total Conflictos por Año</td>
+          ${footTotals}
+          <td class="px-4 py-3 text-right text-sm font-extrabold bg-ochre-500 text-white">${formatNumber(totalConflicts)}</td>
+        </tr>`;
+    }
+
+    // Modal de Detalle de Comunidades por Año
+    function openDetailModal(kicker, title, items) {
+      app.front.modalItems = items;
+      document.getElementById('detailModalKicker').textContent = kicker;
+      document.getElementById('detailModalTitle').textContent = title;
+      document.getElementById('detailSearchInput').value = '';
+      renderDetailModalList(items);
+      const m = document.getElementById('detailModal');
+      m.classList.remove('hidden'); m.classList.add('flex');
+    }
+
+    function renderDetailModalList(items) {
+      document.getElementById('detailModalCount').textContent = `${formatNumber(items.length)} ${items.length === 1 ? 'registro único' : 'registros únicos'}`;
+      document.getElementById('detailModalList').innerHTML = !items.length
+        ? '<p class="text-xs text-slate-400 text-center py-6">No se encontraron coincidencias.</p>'
+        : items.map((it, i) => `
+          <div class="flex items-center gap-3 px-3 py-2 rounded-xl bg-sand-50 border border-[#E5E2DA] text-xs text-slate-800">
+            <span class="w-6 h-6 rounded-lg bg-petrol-50 text-petrol-700 font-bold flex items-center justify-center shrink-0 text-[11px]">${i + 1}</span>
+            <span class="font-medium">${escapeHtml(it)}</span>
+          </div>`).join('');
+    }
+
+    function closeDetailModal() {
+      const m = document.getElementById('detailModal');
+      m.classList.add('hidden'); m.classList.remove('flex');
+    }
+
+    // -------------------------------------------------------------------------
+    // 6. VISTA 2 (SECCIÓN TERRITORIAL): FILTROS MATRICIALES CRUZADOS Y MAPA
+    // -------------------------------------------------------------------------
+    function rowMatchesMapFilters(row, excludeDim = null) {
+      const f = app.mapa.filters;
+      if (excludeDim !== 'empresas' && f.empresas.size && !f.empresas.has(row.empresaKey)) return false;
+      if (excludeDim !== 'proyectos' && f.proyectos.size && !f.proyectos.has(row.proyectoKey)) return false;
+      if (excludeDim !== 'comunidades' && f.comunidades.size && !f.comunidades.has(row.comunidadKey)) return false;
+      if (excludeDim !== 'tipologias' && f.tipologias.size && !f.tipologias.has(row.tipologiaKey)) return false;
+      if (excludeDim !== 'estados' && f.estados.size && !f.estados.has(row.estadoKey)) return false;
+      if (excludeDim !== 'anios' && f.anios.size && !f.anios.has(row.anioKey)) return false;
+      return true;
+    }
+
+    function computeMapCounts(dim, keyField) {
+      const map = new Map();
+      for (const r of app.records) {
+        if (!rowMatchesMapFilters(r, dim)) continue;
+        map.set(r[keyField], (map.get(r[keyField]) || 0) + 1);
+      }
+      return map;
+    }
+
+    function toggleMapFilter(dim, key, focusOnMap = false) {
+      const set = app.mapa.filters[dim];
+      if (!set) return;
+      const was = set.has(key);
+      was ? set.delete(key) : set.add(key);
+      renderMapView(true);
+      if (focusOnMap && dim === 'comunidades' && !was) {
+        const m = app.mapa.markerByKey.get(key);
+        if (m && app.mapa.map) {
+          app.mapa.map.setView(m.getLatLng(), Math.max(app.mapa.map.getZoom(), 11), { animate: true });
+          setTimeout(() => m.openPopup(), 260);
+        }
+      }
+    }
+
+    function clearMapDimension(dim) {
+      app.mapa.filters[dim]?.clear();
+      renderMapView(true);
+    }
+
+    function clearAllMapFilters() {
+      Object.values(app.mapa.filters).forEach((s) => s.clear());
+      document.getElementById('search-proyectos').value = '';
+      document.getElementById('search-comunidades').value = '';
+      renderMapView(true);
+      showToast('Filtros restablecidos', 'info');
+    }
+
+    // Renderizador compacto reutilizable para barras horizontales (Empresas, Tipologías, Estados)
+    function renderHorizontalBar({ dim, keyField, barId, badgeId, clearId, emptyText, colorMap = null, warmBorder = false }) {
+      const container = document.getElementById(barId);
+      const counts = computeMapCounts(dim, keyField);
+      const selected = app.mapa.filters[dim];
+      const items = app.mapa.universes[dim];
+      const avail = items.filter((it) => (counts.get(it.key) || 0) > 0).length;
+
+      document.getElementById(badgeId).textContent = selected.size ? `${selected.size}/${avail}` : avail;
+      document.getElementById(clearId).classList.toggle('hidden', !selected.size);
+
+      if (!items.length) {
+        container.innerHTML = `<span class="text-xs text-slate-400 italic py-1">${emptyText}</span>`;
+        return;
+      }
+
+      container.innerHTML = items.map((it) => {
+        const cnt = counts.get(it.key) || 0, sel = selected.has(it.key), dimm = !cnt && !sel;
+        const cls = sel
+          ? 'bg-petrol-700 text-white border-petrol-700 shadow-sm'
+          : dimm
+          ? 'bg-white/60 text-slate-400 border-slate-200 opacity-50 hover:opacity-80'
+          : `bg-white text-petrol-800 ${warmBorder ? 'border-[#D4CFC4]' : 'border-[#D4DDE4]'} hover:border-petrol-600 hover:bg-petrol-50`;
+        const bCls = sel ? 'bg-white/25 text-white' : dimm ? 'bg-slate-200 text-slate-400' : (warmBorder ? 'bg-sand-100 text-petrol-800' : 'bg-petrol-50 text-petrol-700');
+        const dot = colorMap
+          ? `<span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color:${sel ? '#FFFFFF' : (colorMap.get(it.key) || PALETTE.petrol)};"></span>`
+          : '';
+        return `
+          <button type="button" onclick="toggleMapFilter('${dim}', '${escapeJsArg(it.key)}')"
+            class="filter-pill shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-xs font-semibold cursor-pointer ${cls}"
+            title="${escapeHtml(it.label)} (${cnt} registros)">
+            ${dot}<span class="whitespace-nowrap">${escapeHtml(it.label)}</span>
+            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none ${bCls}">${cnt}</span>
+          </button>`;
+      }).join('');
+    }
+
+    function renderMapSidebars() {
+      const geoSet = new Set(app.records.filter((r) => r.hasValidCoord).map((r) => r.comunidadKey));
+      const specs = [
+        { dim: 'proyectos', keyField: 'proyectoKey', listId: 'list-proyectos', badgeId: 'badge-proyectos', clearId: 'clear-proyectos', searchId: 'search-proyectos', empty: 'No hay proyectos coincidentes', isCom: false },
+        { dim: 'comunidades', keyField: 'comunidadKey', listId: 'list-comunidades', badgeId: 'badge-comunidades', clearId: 'clear-comunidades', searchId: 'search-comunidades', empty: 'No hay comunidades coincidentes', isCom: true }
+      ];
+
+      specs.forEach((s) => {
+        const counts = computeMapCounts(s.dim, s.keyField);
+        const sel = app.mapa.filters[s.dim];
+        const q = normalizeKey(document.getElementById(s.searchId)?.value || '');
+        const avail = app.mapa.universes[s.dim].filter((it) => (counts.get(it.key) || 0) > 0).length;
+
+        document.getElementById(s.badgeId).textContent = sel.size ? `${sel.size}/${avail}` : avail;
+        document.getElementById(s.clearId).classList.toggle('hidden', !sel.size);
+
+        const visible = app.mapa.universes[s.dim]
+          .filter((it) => !q || it.key.includes(q))
+          .sort((a, b) => {
+            const sa = sel.has(a.key) ? 2 : (counts.get(a.key) || 0) > 0 ? 1 : 0;
+            const sb = sel.has(b.key) ? 2 : (counts.get(b.key) || 0) > 0 ? 1 : 0;
+            return sa !== sb ? sb - sa : a.label.localeCompare(b.label, 'es', { sensitivity: 'base' });
+          });
+
+        const el = document.getElementById(s.listId);
+        if (!visible.length) { el.innerHTML = `<div class="text-xs text-slate-400 text-center py-6">${s.empty}</div>`; return; }
+
+        el.innerHTML = visible.map((it) => {
+          const cnt = counts.get(it.key) || 0, isSel = sel.has(it.key), dimm = !cnt && !isSel;
+          const cls = isSel
+            ? 'bg-petrol-700 text-white border-petrol-700 shadow-sm'
+            : dimm
+            ? 'bg-white/60 text-slate-400 border-slate-200 opacity-50 hover:opacity-80'
+            : 'bg-white text-petrol-800 border-[#D5DFE6] hover:border-petrol-600 hover:bg-petrol-50/70';
+          const pCls = isSel
+            ? 'bg-white/25 text-white'
+            : dimm
+            ? 'bg-slate-200 text-slate-400'
+            : (s.isCom ? 'bg-petrol-50 text-petrol-700' : 'bg-sand-100 text-ochre-600 border border-sand-300');
+
+          const arg = escapeJsArg(it.key);
+          const dot = s.isCom
+            ? `<span class="w-2 h-2 rounded-full shrink-0 ${geoSet.has(it.key) ? (isSel ? 'bg-amber-300' : 'bg-forest-600') : (isSel ? 'bg-white/50' : 'bg-amber-400')}" title="${geoSet.has(it.key) ? 'Georreferenciada en Colombia' : 'Sin coordenada válida en Colombia'}"></span>`
+            : '';
+          const hover = s.isCom ? `onmouseenter="highlightCommunity('${arg}')" onmouseleave="unhighlightCommunity()"` : '';
+
+          return `
+            <button type="button" onclick="toggleMapFilter('${s.dim}', '${arg}', ${s.isCom})" ${hover}
+              class="filter-pill w-full text-left px-3 py-2 rounded-2xl border flex items-center justify-between gap-2 cursor-pointer ${cls}"
+              title="${escapeHtml(it.label)} (${cnt} registros)">
+              <span class="flex items-center gap-2 min-w-0">
+                ${dot}
+                <span class="text-[11px] ${s.isCom ? 'font-semibold' : 'font-bold'} leading-snug break-words">${escapeHtml(it.label)}</span>
+              </span>
+              <span class="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${pCls}">${cnt}</span>
+            </button>`;
+        }).join('');
+      });
+    }
+
+    function renderMapYearsBar() {
+      const container = document.getElementById('bar-anios');
+      const counts = computeMapCounts('anios', 'anioKey');
+      const sel = app.mapa.filters.anios;
+      const items = app.mapa.universes.anios;
+      if (!items.length) { container.innerHTML = '<span class="text-xs text-slate-400 px-2">Sin años</span>'; return; }
+
+      const allBtn = `
+        <button type="button" onclick="clearMapDimension('anios')"
+          class="filter-pill shrink-0 px-2.5 py-1 rounded-full text-[11px] font-bold cursor-pointer border ${
+            !sel.size ? 'bg-petrol-700 text-white border-petrol-700 shadow-sm' : 'bg-sand-50 text-petrol-800 border-[#D6DFE6] hover:bg-petrol-50'
+          }">Todos</button>`;
+
+      const btns = items.map((it) => {
+        const cnt = counts.get(it.key) || 0, isSel = sel.has(it.key), dimm = !cnt && !isSel;
+        const cls = isSel
+          ? 'bg-ochre-500 text-white border-ochre-600 shadow-sm'
+          : dimm
+          ? 'bg-slate-50 text-slate-400 border-slate-200 opacity-50 hover:opacity-80'
+          : 'bg-white text-petrol-800 border-[#D2DCE4] hover:border-petrol-600 hover:bg-petrol-50';
+        const bCls = isSel ? 'bg-white/25 text-white' : dimm ? 'bg-slate-200 text-slate-400' : 'bg-petrol-50 text-petrol-700';
+        return `
+          <button type="button" onclick="toggleMapFilter('anios', '${escapeJsArg(it.key)}')"
+            class="filter-pill shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full border text-[11px] font-bold cursor-pointer ${cls}"
+            title="Año ${escapeHtml(it.label)} (${cnt} registros)">
+            <span>${escapeHtml(it.label)}</span>
+            <span class="text-[9px] px-1.5 py-0.5 rounded-full leading-none ${bCls}">${cnt}</span>
+          </button>`;
+      }).join('');
+
+      container.innerHTML = allBtn + btns;
+    }
+
+    function renderMapView(autoFit = false) {
+      const filtered = app.records.filter((r) => rowMatchesMapFilters(r, null));
+
+      // Resumen territorial superior y botón limpiar
+      document.getElementById('kpi-proyectos').textContent = new Set(filtered.map((r) => r.proyectoKey)).size;
+      document.getElementById('kpi-comunidades').textContent = new Set(filtered.map((r) => r.comunidadKey)).size;
+      const totalActive = Object.values(app.mapa.filters).reduce((acc, s) => acc + s.size, 0);
+      const btnClear = document.getElementById('btn-clear-all');
+      btnClear.classList.toggle('hidden', !totalActive);
+      btnClear.classList.toggle('inline-flex', !!totalActive);
+      document.getElementById('active-filter-count').textContent = totalActive;
+
+      renderHorizontalBar({ dim: 'empresas', keyField: 'empresaKey', barId: 'bar-empresas', badgeId: 'badge-empresas', clearId: 'clear-empresas', emptyText: 'Sin empresas registradas' });
+      renderMapSidebars();
+      renderHorizontalBar({ dim: 'tipologias', keyField: 'tipologiaKey', barId: 'bar-tipologias', badgeId: 'badge-tipologias', clearId: 'clear-tipologias', emptyText: 'Sin tipologías registradas', colorMap: app.typologyColorMap, warmBorder: true });
+      renderHorizontalBar({ dim: 'estados', keyField: 'estadoKey', barId: 'bar-estados', badgeId: 'badge-estados', clearId: 'clear-estados', emptyText: 'Sin estados registrados', colorMap: app.estadoColorMap, warmBorder: true });
+      renderMapYearsBar();
+      renderMapMarkers(filtered, autoFit);
+    }
+
+    // -------------------------------------------------------------------------
+    // 7. MOTOR GEOGRÁFICO LEAFLET (PROVEEDORES LIBRES + EXPORTACIÓN EXCEL)
+    // -------------------------------------------------------------------------
+    function initMap() {
+      if (app.mapa.initialized) return;
+      app.mapa.initialized = true;
+      app.mapa.map = L.map('guajira-map', { center: [11.55, -72.35], zoom: 8, minZoom: 5, maxZoom: 18 });
+
+      app.mapa.basemaps = [
+        { name: 'Relieve', layer: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', { attribution: '&copy; Esri, USGS, NOAA', maxZoom: 18 }) },
+        { name: 'Calles',  layer: L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors', maxZoom: 19 }) },
+        { name: 'Satélite', layer: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '&copy; Esri, Maxar, Earthstar', maxZoom: 18 }) }
+      ];
+      app.mapa.basemaps[0].layer.addTo(app.mapa.map);
+      document.getElementById('map-layer-label').textContent = 'Relieve';
+
+      L.geoJSON(LA_GUAJIRA_GEOJSON, {
+        style: { color: PALETTE.petrol, weight: 2, dashArray: '5, 5', fillColor: PALETTE.petrolMid, fillOpacity: 0.06 },
+        interactive: false
+      }).addTo(app.mapa.map);
+
+      GUAJIRA_LANDMARKS.forEach((lm) => {
+        L.marker([lm.lat, lm.lng], {
+          interactive: false,
+          icon: L.divIcon({
+            className: '', iconSize: [0, 0], iconAnchor: [-4, 6],
+            html: `<div style="font-size:10px;font-weight:600;color:#475569;text-shadow:0 0 4px #fff,0 0 4px #fff;white-space:nowrap;pointer-events:none;">${escapeHtml(lm.name)}</div>`
+          })
+        }).addTo(app.mapa.map);
+      });
+
+      app.mapa.markersLayer = L.layerGroup().addTo(app.mapa.map);
+    }
+
+    function cycleBasemap() {
+      if (!app.mapa.map) return;
+      app.mapa.map.removeLayer(app.mapa.basemaps[app.mapa.activeBasemapIdx].layer);
+      app.mapa.activeBasemapIdx = (app.mapa.activeBasemapIdx + 1) % app.mapa.basemaps.length;
+      const next = app.mapa.basemaps[app.mapa.activeBasemapIdx];
+      next.layer.addTo(app.mapa.map);
+      document.getElementById('map-layer-label').textContent = next.name;
+    }
+
+    function buildMarkerIcon(count, isSel, isHi) {
+      const size = (count >= 6 ? 30 : count >= 3 ? 25 : 21) + (isSel || isHi ? 5 : 0);
+      const bg = isSel || isHi ? PALETTE.ochre : count >= 6 ? PALETTE.petrolDark : count >= 3 ? PALETTE.petrol : PALETTE.petrolMid;
+      const ring = isSel || isHi ? '<span class="marker-pulse-ring" style="position:absolute;inset:-5px;border-radius:9999px;border:2.5px solid #A87932;"></span>' : '';
+      return L.divIcon({
+        className: '', iconSize: [size, size], iconAnchor: [size / 2, size / 2], popupAnchor: [0, -size / 2 - 4],
+        html: `<div style="position:relative;width:${size}px;height:${size}px;display:flex;align-items:center;justify-content:center;">${ring}<div style="width:${size}px;height:${size}px;border-radius:9999px;background:${bg};color:#fff;border:2.5px solid #fff;box-shadow:0 3px 10px rgba(8,51,68,.34);display:flex;align-items:center;justify-content:center;font-size:${count > 99 ? '9px' : '10px'};font-weight:800;line-height:1;cursor:pointer;">${count}</div></div>`
+      });
+    }
+
+    function renderMapMarkers(filteredRows, autoFit = false) {
+      if (!app.mapa.markersLayer) return;
+      app.mapa.markersLayer.clearLayers();
+      app.mapa.markerByKey.clear();
+
+      const comMap = new Map();
+      for (const r of filteredRows) {
+        let e = comMap.get(r.comunidadKey);
+        if (!e) {
+          e = {
+            key: r.comunidadKey, label: r.comunidad, count: 0, hasValidCoord: false, lat: null, lng: null,
+            rawCoordsSet: new Set(), rawCoordBFirst: '', rawCoordCFirst: '', reasons: new Set(),
+            proyectos: new Set(), empresas: new Set(), anios: new Set(), tipologias: new Map(), estados: new Map()
+          };
+          comMap.set(r.comunidadKey, e);
+        }
+        e.count++; e.proyectos.add(r.proyecto); e.empresas.add(r.empresa); e.anios.add(r.anio);
+        const tp = e.tipologias.get(r.tipologiaKey) || { label: r.tipologia, count: 0 }; tp.count++; e.tipologias.set(r.tipologiaKey, tp);
+        const ep = e.estados.get(r.estadoKey) || { label: r.estado, count: 0 }; ep.count++; e.estados.set(r.estadoKey, ep);
+
+        if (r.hasValidCoord && !e.hasValidCoord) { e.hasValidCoord = true; e.lat = r.lat; e.lng = r.lng; }
+        else if (!r.hasValidCoord) {
+          if (!e.rawCoordBFirst && r.rawCoordB) e.rawCoordBFirst = r.rawCoordB;
+          if (!e.rawCoordCFirst && r.rawCoordC) e.rawCoordCFirst = r.rawCoordC;
+          if (r.rawCoordB || r.rawCoordC) e.rawCoordsSet.add(`${r.rawCoordB || '(vacío)'} | ${r.rawCoordC || '(vacío)'}`);
+          if (r.coordReason) e.reasons.add(r.coordReason);
+        }
+      }
+
+      const geoList = [], missingList = [];
+      for (const c of comMap.values()) (c.hasValidCoord && isInsideColombia(c.lat, c.lng) ? geoList : missingList).push(c);
+      app.mapa.lastMissingCoords = missingList.sort((a, b) => a.label.localeCompare(b.label, 'es', { sensitivity: 'base' }));
+
+      document.getElementById('map-stat-geolocated').textContent = geoList.length;
+      document.getElementById('map-stat-events').textContent = filteredRows.length;
+      const mWrap = document.getElementById('map-missing-coords');
+      mWrap.classList.toggle('hidden', !missingList.length);
+      mWrap.classList.toggle('flex', !!missingList.length);
+      document.getElementById('map-missing-count').textContent = missingList.length;
+
+      const coordUsage = new Map(), pts = [];
+      const pillsHtml = (map, colorMap, bg, fg, bdr) => [...map.entries()].sort((a, b) => b[1].count - a[1].count).map(([k, v]) =>
+        `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:600;background:${bg};color:${fg};border:1px solid ${bdr};"><span style="width:6px;height:6px;border-radius:999px;background:${colorMap.get(k) || PALETTE.petrol};"></span>${escapeHtml(v.label)} (${v.count})</span>`
+      ).join('');
+
+      for (const com of geoList) {
+        const cid = `${com.lat.toFixed(5)},${com.lng.toFixed(5)}`;
+        const dup = coordUsage.get(cid) || 0; coordUsage.set(cid, dup + 1);
+        let lat = com.lat, lng = com.lng;
+        if (dup > 0) { const ang = dup * 2.39996, rad = 0.0045 * Math.sqrt(dup); lat += Math.cos(ang) * rad; lng += Math.sin(ang) * rad; }
+
+        const isSel = app.mapa.filters.comunidades.has(com.key), isHi = app.mapa.hoveredCommunityKey === com.key;
+        const marker = L.marker([lat, lng], {
+          icon: buildMarkerIcon(com.count, isSel, isHi),
+          zIndexOffset: isSel || isHi ? 600 : com.count * 10
+        });
+        marker._meta = { count: com.count, isSel };
+
+        marker.bindPopup(`
+          <div style="font-family:'Inter',sans-serif;">
+            <div style="background:linear-gradient(135deg,#0B556F,#0E7490);color:#fff;padding:10px 12px;">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+                <div style="font-size:12px;font-weight:800;line-height:1.3;">${escapeHtml(com.label)}</div>
+                <span style="flex-shrink:0;background:rgba(255,255,255,0.22);padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;">${com.count} ${com.count === 1 ? 'evento' : 'eventos'}</span>
+              </div>
+              <div style="font-size:10px;opacity:0.88;margin-top:3px;">Lat: ${com.lat.toFixed(5)} · Lon: ${com.lng.toFixed(5)}</div>
+            </div>
+            <div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;font-size:11px;color:#334155;">
+              <div><div style="font-size:10px;font-weight:700;color:#0B556F;text-transform:uppercase;margin-bottom:2px;">Proyectos</div><div style="font-weight:600;color:#1E293B;line-height:1.35;">${escapeHtml([...com.proyectos].join(' · '))}</div></div>
+              <div style="display:flex;gap:12px;">
+                <div style="flex:1;"><div style="font-size:10px;font-weight:700;color:#0B556F;text-transform:uppercase;margin-bottom:2px;">Empresas</div><div style="font-weight:600;color:#1E293B;">${escapeHtml([...com.empresas].join(', '))}</div></div>
+                <div><div style="font-size:10px;font-weight:700;color:#0B556F;text-transform:uppercase;margin-bottom:2px;">Años</div><div style="font-weight:700;color:#8F6324;">${escapeHtml([...com.anios].sort().join(', '))}</div></div>
+              </div>
+              <div><div style="font-size:10px;font-weight:700;color:#0B556F;text-transform:uppercase;margin-bottom:4px;">Tipología del Conflicto</div><div style="display:flex;flex-wrap:wrap;gap:4px;">${pillsHtml(com.tipologias, app.typologyColorMap, '#F4F2EC', '#0C4A6E', '#DDD6C9')}</div></div>
+              <div><div style="font-size:10px;font-weight:700;color:#0B556F;text-transform:uppercase;margin-bottom:4px;">Estado del Conflicto</div><div style="display:flex;flex-wrap:wrap;gap:4px;">${pillsHtml(com.estados, app.estadoColorMap, '#EFF7FA', '#0B556F', '#B5DAE6')}</div></div>
+              <button type="button" onclick="toggleMapFilter('comunidades', '${escapeJsArg(com.key)}')"
+                style="width:100%;padding:6px 10px;border-radius:999px;border:none;font-size:11px;font-weight:700;cursor:pointer;background:${isSel ? '#F4F2EC' : '#0B556F'};color:${isSel ? '#8F6324' : '#fff'};margin-top:2px;">
+                ${isSel ? 'Quitar filtro de esta comunidad' : 'Filtrar tablero por esta comunidad'}
+              </button>
+            </div>
+          </div>`, { maxWidth: 320 });
+
+        marker.addTo(app.mapa.markersLayer);
+        app.mapa.markerByKey.set(com.key, marker);
+        pts.push([lat, lng]);
+      }
+
+      if (autoFit && pts.length) {
+        pts.length === 1
+          ? app.mapa.map.setView(pts[0], 11, { animate: true })
+          : app.mapa.map.fitBounds(L.latLngBounds(pts), { padding: [55, 55], maxZoom: 12, animate: true });
+      }
+    }
+
+    function fitMapToMarkers() {
+      if (!app.mapa.map) return;
+      const pts = [...app.mapa.markerByKey.values()].map((m) => m.getLatLng());
+      if (!pts.length) app.mapa.map.setView([11.55, -72.35], 8, { animate: true });
+      else if (pts.length === 1) app.mapa.map.setView(pts[0], 11, { animate: true });
+      else app.mapa.map.fitBounds(L.latLngBounds(pts), { padding: [55, 55], maxZoom: 12, animate: true });
+    }
+
+    function highlightCommunity(key) {
+      app.mapa.hoveredCommunityKey = key;
+      const m = app.mapa.markerByKey.get(key);
+      if (m?._meta) { m.setIcon(buildMarkerIcon(m._meta.count, m._meta.isSel, true)); m.setZIndexOffset(900); }
+    }
+
+    function unhighlightCommunity() {
+      const k = app.mapa.hoveredCommunityKey; app.mapa.hoveredCommunityKey = null;
+      const m = k && app.mapa.markerByKey.get(k);
+      if (m?._meta) { m.setIcon(buildMarkerIcon(m._meta.count, m._meta.isSel, false)); m.setZIndexOffset(m._meta.isSel ? 600 : m._meta.count * 10); }
+    }
+
+    function downloadMissingCoordsExcel() {
+      const list = app.mapa.lastMissingCoords;
+      if (!list.length) { showToast('No hay comunidades sin coordenadas válidas en la selección actual.', 'info'); return; }
+
+      const rows = list.map((c) => ({
+        Comunidad: c.label,
+        'Coordenada Original 1 (Col B)': c.rawCoordBFirst || '',
+        'Coordenada Original 2 (Col C)': c.rawCoordCFirst || '',
+        'Todas las Coordenadas Registradas': [...c.rawCoordsSet].join(' ; '),
+        Motivo: [...c.reasons].join(' / ') || 'Sin coordenadas válidas en Colombia',
+        Eventos: c.count,
+        Proyectos: [...c.proyectos].join(' | '),
+        Empresas: [...c.empresas].join(' | '),
+        Años: [...c.anios].sort().join(', '),
+        'Tipologías del Conflicto': [...c.tipologias.values()].map((t) => `${t.label} (${t.count})`).join(' | '),
+        'Estados del Conflicto': [...c.estados.values()].map((e) => `${e.label} (${e.count})`).join(' | ')
+      }));
+
+      const fileName = `Comunidades_Sin_Coordenadas_Colombia_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      try {
+        const ws = XLSX.utils.json_to_sheet(rows);
+        ws['!cols'] = [34, 24, 24, 30, 36, 10, 42, 24, 16, 38, 30].map((wch) => ({ wch }));
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Sin_Coordenadas');
+        XLSX.writeFile(wb, fileName);
+        showToast(`Se descargaron ${list.length} comunidades sin coordenadas válidas en Colombia.`, 'success');
+      } catch {
+        const hdr = Object.keys(rows[0]);
+        const csv = [hdr, ...rows.map((r) => hdr.map((h) => r[h] ?? ''))].map((l) => l.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+        const url = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' }));
+        Object.assign(document.createElement('a'), { href: url, download: fileName.replace('.xlsx', '.csv') }).click();
+        URL.revokeObjectURL(url);
+        showToast(`Se descargó listado CSV con ${list.length} comunidades sin coordenadas.`, 'success');
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // 8. INICIALIZACIÓN Y EVENTOS
+    // -------------------------------------------------------------------------
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('localFileInput').addEventListener('change', handleLocalFileUpload);
+      document.getElementById('btnResetFilters').addEventListener('click', () => {
+        app.front.selectedYears = new Set(app.front.allYears);
+        renderFrontFilters();
+        renderFrontDashboard();
+      });
+
+      document.getElementById('closeDetailModal').addEventListener('click', closeDetailModal);
+      document.getElementById('closeDetailModalBtn').addEventListener('click', closeDetailModal);
+      document.getElementById('detailModal').addEventListener('click', (e) => { if (e.target.id === 'detailModal') closeDetailModal(); });
+      document.getElementById('detailSearchInput').addEventListener('input', (e) => {
+        const q = normalizeKey(e.target.value);
+        renderDetailModalList(app.front.modalItems.filter((it) => normalizeKey(it).includes(q)));
+      });
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDetailModal(); });
+      window.addEventListener('resize', () => { if (app.activeView === 'mapa') app.mapa.map?.invalidateSize(); });
+
+      loadLiveData(false);
+    });
+  </script>
+</body>
+</html>
